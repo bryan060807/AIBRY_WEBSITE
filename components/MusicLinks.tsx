@@ -1,43 +1,36 @@
 "use client";
 
-import {
-  Youtube,
-  Music2,
-  Soundcloud,
-  Spotify,
-  Apple,
-  Music,
-} from "lucide-react";
+import Image from "next/image";
 
 const links = [
   {
     name: "SoundCloud",
-    href: "https://soundcloud.com/your-profile",
-    icon: <Soundcloud className="w-5 h-5" />,
+    href: "https://soundcloud.com/bryan-miller-27",
+    icon: "/icons/soundcloud.svg",
     color: "bg-orange-500",
   },
   {
     name: "YouTube",
-    href: "https://youtube.com/your-channel",
-    icon: <Youtube className="w-5 h-5" />,
+    href: "https://www.youtube.com/channel/UCQDPCw7xwl3sQWjUjtnL1AQ",
+    icon: "/icons/youtube.svg",
     color: "bg-red-600",
   },
   {
     name: "Apple Music",
-    href: "https://music.apple.com/your-profile",
-    icon: <Apple className="w-5 h-5" />,
+    href: "https://music.apple.com/us/artist/aibry/1830943798",
+    icon: "/icons/apple.svg",
     color: "bg-gray-800",
   },
   {
     name: "Spotify",
-    href: "https://spotify.com/your-artist-page",
-    icon: <Spotify className="w-5 h-5" />,
+    href: "https://open.spotify.com/artist/6gw6SIOYGPhuMqOfLwJE9h",
+    icon: "/icons/spotify.svg",
     color: "bg-green-600",
   },
   {
     name: "Bandcamp",
-    href: "https://yourartist.bandcamp.com",
-    icon: <Music className="w-5 h-5" />,
+    href: "https://aibry.bandcamp.com/",
+    icon: "/icons/bandcamp.svg",
     color: "bg-sky-500",
   },
 ];
@@ -53,7 +46,7 @@ export default function MusicLinks() {
           rel="noopener noreferrer"
           className={`flex items-center gap-2 px-4 py-2 rounded-md font-semibold text-white shadow-sm ${color} hover:brightness-110 transition`}
         >
-          {icon}
+          <Image src={icon} alt={name} width={20} height={20} />
           <span>{name}</span>
         </a>
       ))}
