@@ -1,4 +1,5 @@
 import Image from "next/image";
+import MusicLinks from "@/components/MusicLinks";
 
 export const metadata = {
   title: "AIBRY",
@@ -19,58 +20,12 @@ export default function HomePage() {
         />
       </div>
 
-      <p className="mb-12 text-lg text-gray-300">
+      <p className="mb-6 text-lg text-gray-300">
         Welcome to my website — the official hub for my music and merch.
       </p>
 
-      {/* Music Links */}
-      <div className="mb-16 flex flex-wrap justify-center gap-4">
-        <a
-          href="https://soundcloud.com/bryan-miller-27"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 px-4 py-2 rounded-md text-white bg-orange-500 hover:bg-orange-600 transition"
-        >
-          <Image src="/icons/soundcloud.svg" alt="SoundCloud" width={20} height={20} />
-          <span>SoundCloud</span>
-        </a>
-        <a
-          href="https://www.youtube.com/channel/UCQDPCw7xwl3sQWjUjtnL1AQ"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 px-4 py-2 rounded-md text-white bg-red-600 hover:bg-red-700 transition"
-        >
-          <Image src="/icons/youtube.svg" alt="YouTube" width={20} height={20} />
-          <span>YouTube</span>
-        </a>
-        <a
-          href="https://music.apple.com/us/artist/aibry/1830943798"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 px-4 py-2 rounded-md text-white bg-gray-800 hover:bg-gray-700 transition"
-        >
-          <Image src="/icons/apple.svg" alt="Apple Music" width={20} height={20} />
-          <span>Apple Music</span>
-        </a>
-        <a
-          href="https://open.spotify.com/artist/6gw6SIOYGPhuMqOfLwJE9h"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 px-4 py-2 rounded-md text-white bg-green-600 hover:bg-green-700 transition"
-        >
-          <Image src="/icons/spotify.svg" alt="Spotify" width={20} height={20} />
-          <span>Spotify</span>
-        </a>
-        <a
-          href="https://aibry.bandcamp.com/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 px-4 py-2 rounded-md text-white bg-sky-500 hover:bg-sky-600 transition"
-        >
-          <Image src="/icons/bandcamp.svg" alt="Bandcamp" width={20} height={20} />
-          <span>Bandcamp</span>
-        </a>
-      </div>
+      {/* Music Link Buttons */}
+      <MusicLinks />
 
       {/* Merch Preview */}
       <section className="mt-20 rounded-lg border border-gray-800 bg-gray-900 p-8 shadow-lg">
