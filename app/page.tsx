@@ -29,46 +29,46 @@ export default function HomePage() {
           href="https://soundcloud.com/bryan-miller-27"
           target="_blank"
           rel="noopener noreferrer"
-          className="btn soundcloud"
+          className="flex items-center gap-2 px-4 py-2 rounded-md text-white bg-orange-500 hover:bg-orange-600 transition"
         >
           <Image src="/icons/soundcloud.svg" alt="SoundCloud" width={20} height={20} />
-          SoundCloud
+          <span>SoundCloud</span>
         </a>
         <a
           href="https://www.youtube.com/channel/UCQDPCw7xwl3sQWjUjtnL1AQ"
           target="_blank"
           rel="noopener noreferrer"
-          className="btn youtube"
+          className="flex items-center gap-2 px-4 py-2 rounded-md text-white bg-red-600 hover:bg-red-700 transition"
         >
           <Image src="/icons/youtube.svg" alt="YouTube" width={20} height={20} />
-          YouTube
+          <span>YouTube</span>
         </a>
         <a
           href="https://music.apple.com/us/artist/aibry/1830943798"
           target="_blank"
           rel="noopener noreferrer"
-          className="btn apple"
+          className="flex items-center gap-2 px-4 py-2 rounded-md text-white bg-gray-800 hover:bg-gray-700 transition"
         >
           <Image src="/icons/apple.svg" alt="Apple Music" width={20} height={20} />
-          Apple Music
+          <span>Apple Music</span>
         </a>
         <a
           href="https://open.spotify.com/artist/6gw6SIOYGPhuMqOfLwJE9h"
           target="_blank"
           rel="noopener noreferrer"
-          className="btn spotify"
+          className="flex items-center gap-2 px-4 py-2 rounded-md text-white bg-green-600 hover:bg-green-700 transition"
         >
           <Image src="/icons/spotify.svg" alt="Spotify" width={20} height={20} />
-          Spotify
+          <span>Spotify</span>
         </a>
         <a
           href="https://aibry.bandcamp.com/"
           target="_blank"
           rel="noopener noreferrer"
-          className="btn bandcamp"
+          className="flex items-center gap-2 px-4 py-2 rounded-md text-white bg-sky-500 hover:bg-sky-600 transition"
         >
           <Image src="/icons/bandcamp.svg" alt="Bandcamp" width={20} height={20} />
-          Bandcamp
+          <span>Bandcamp</span>
         </a>
       </div>
 
