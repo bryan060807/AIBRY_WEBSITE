@@ -1,0 +1,57 @@
+# --- Node.js ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Next.js ---
+.next/
+out/
+dist/
+
+# --- Environment Files ---
+.env*
+!.env.example
+
+# --- OS Files ---
+.DS_Store
+Thumbs.db
+
+# --- VSCode / Editors ---
+.vscode/
+*.code-workspace
+
+# --- Logs ---
+*.log
+
+# --- Testing ---
+coverage/
+jest.config.js
+
+# --- Optional Lock Files ---
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# --- IDEs ---
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+
+# --- Git ---
+*.orig
+
+# --- Mac Specific ---
+.AppleDouble
+.LSOverride
+Icon?
+
+# --- Windows Specific ---
+ehthumbs.db
+Desktop.ini
+
+# --- Misc ---
+*.bak
+*.tmp
