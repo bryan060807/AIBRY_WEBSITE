@@ -44,7 +44,19 @@ export default function StorePage() {
             Whispers Beneath the Ash by AIBRY
           </a>
         </iframe>
+
+        {/* Album: The Cassette Tapes */}
+        <iframe
+          style={{ border: 0, width: "100%", height: "470px" }}
+          src="https://bandcamp.com/EmbeddedPlayer/album=3106363030/size=large/bgcol=000000/linkcol=ffffff/tracklist=false/transparent=true/"
+          seamless
+        >
+          <a href="https://aibry.bandcamp.com/album/the-cassette-tapes">
+            The Cassette Tapes by AIBRY
+          </a>
+        </iframe>
       </div>
     </main>
   );
 }
+
