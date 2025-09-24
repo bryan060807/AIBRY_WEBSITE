@@ -45,6 +45,18 @@ export default function StorePage() {
           </a>
         </iframe>
 
+         {/* Album: Choir of Broken Mouths */}
+       <iframe 
+         style={{ border: 0, width: "100%", height: "470px" }} 
+         src="https://bandcamp.com/EmbeddedPlayer/album=1635215421/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/" 
+         seamless
+       >
+         <a href="https://aibry.bandcamp.com/album/choir-of-broken-mouths">
+           Choir of Broken Mouths by AIBRY
+         </a>
+       </iframe>
+        >
+          
         {/* Album: The Cassette Tapes */}
         <iframe
           style={{ border: 0, width: "100%", height: "470px" }}
