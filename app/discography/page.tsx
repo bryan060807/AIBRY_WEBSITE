@@ -5,7 +5,7 @@ export const metadata = {
   description: "Explore AIBRY's albums and singles.",
 };
 
-type Release = {
+interface Release {
   title: string;
   year: number;
   cover: string;
@@ -16,7 +16,7 @@ type Release = {
     youtube: string;
     soundcloud: string;
   };
-};
+}
 
 const releases: Release[] = [
   {
@@ -25,7 +25,7 @@ const releases: Release[] = [
     cover: "/images/discography/boots-on-heart-open.jpg",
     links: {
       bandcamp: "https://aibry.bandcamp.com/album/boots-on-heart-open",
-      spotify: "https://open.spotify.com/album/6gw6SIOYGPhuMqOfLwJE9h", // replace
+      spotify: "https://open.spotify.com/album/6gw6SIOYGPhuMqOfLwJE9h",
       apple: "https://music.apple.com/us/album/boots-on-heart-open/1830943798",
       youtube: "https://www.youtube.com/channel/UCQDPCw7xwl3sQWjUjtnL1AQ",
       soundcloud: "https://soundcloud.com/bryan-miller-27",
@@ -49,7 +49,7 @@ const releases: Release[] = [
     cover: "/images/discography/whispers-beneath-the-ash.jpg",
     links: {
       bandcamp: "https://aibry.bandcamp.com/album/whispers-beneath-the-ash",
-      spotify: "https://open.spotify.com/album/whispersbeneathid", // placeholder
+      spotify: "https://open.spotify.com/album/whispersbeneathid",
       apple: "https://music.apple.com/us/album/whispers-beneath-the-ash/1830943798",
       youtube: "https://www.youtube.com/channel/UCQDPCw7xwl3sQWjUjtnL1AQ",
       soundcloud: "https://soundcloud.com/bryan-miller-27",
@@ -61,7 +61,7 @@ const releases: Release[] = [
     cover: "/images/discography/choir-of-broken-mouths.jpg",
     links: {
       bandcamp: "https://aibry.bandcamp.com/album/choir-of-broken-mouths",
-      spotify: "https://open.spotify.com/album/choirofbrokenid", // placeholder
+      spotify: "https://open.spotify.com/album/choirofbrokenid",
       apple: "https://music.apple.com/us/album/choir-of-broken-mouths/1830943798",
       youtube: "https://www.youtube.com/channel/UCQDPCw7xwl3sQWjUjtnL1AQ",
       soundcloud: "https://soundcloud.com/bryan-miller-27",
@@ -128,38 +128,46 @@ export default function DiscographyPage() {
                   Bandcamp
                 </a>
                 <div className="grid grid-cols-2 gap-2">
-                  <a
-                    href={release.links.spotify}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded bg-green-600 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-green-700"
-                  >
-                    Spotify
-                  </a>
-                  <a
-                    href={release.links.apple}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded bg-gray-700 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-gray-800"
-                  >
-                    Apple Music
-                  </a>
-                  <a
-                    href={release.links.youtube}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded bg-red-600 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-red-700"
-                  >
-                    YouTube
-                  </a>
-                  <a
-                    href={release.links.soundcloud}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded bg-orange-500 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-orange-600"
-                  >
-                    SoundCloud
-                  </a>
+                  {release.links.spotify !== "#" && (
+                    <a
+                      href={release.links.spotify}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded bg-green-600 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-green-700"
+                    >
+                      Spotify
+                    </a>
+                  )}
+                  {release.links.apple !== "#" && (
+                    <a
+                      href={release.links.apple}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded bg-gray-700 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-gray-800"
+                    >
+                      Apple Music
+                    </a>
+                  )}
+                  {release.links.youtube !== "#" && (
+                    <a
+                      href={release.links.youtube}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded bg-red-600 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-red-700"
+                    >
+                      YouTube
+                    </a>
+                  )}
+                  {release.links.soundcloud !== "#" && (
+                    <a
+                      href={release.links.soundcloud}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded bg-orange-500 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-orange-600"
+                    >
+                      SoundCloud
+                    </a>
+                  )}
                 </div>
               </div>
             </div>
