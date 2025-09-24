@@ -25,7 +25,7 @@ const releases: Release[] = [
     cover: "/images/discography/boots-on-heart-open.jpg",
     links: {
       bandcamp: "https://aibry.bandcamp.com/album/boots-on-heart-open",
-      spotify: "https://open.spotify.com/album/6gw6SIOYGPhuMqOfLwJE9h", // replace
+      spotify: "https://open.spotify.com/album/6gw6SIOYGPhuMqOfLwJE9h", // replace with real
       apple: "https://music.apple.com/us/album/boots-on-heart-open/1830943798",
       youtube: "https://www.youtube.com/channel/UCQDPCw7xwl3sQWjUjtnL1AQ",
       soundcloud: "https://soundcloud.com/bryan-miller-27",
@@ -108,6 +108,7 @@ export default function DiscographyPage() {
               </h2>
               <p className="mb-4 text-sm text-gray-400">{release.year}</p>
               <div className="flex flex-col gap-2">
+                {/* Bandcamp is always required */}
                 <a
                   href={release.links.bandcamp}
                   target="_blank"
@@ -116,6 +117,7 @@ export default function DiscographyPage() {
                 >
                   Bandcamp
                 </a>
+
                 <div className="grid grid-cols-2 gap-2">
                   {release.links.spotify && (
                     <a
@@ -166,4 +168,3 @@ export default function DiscographyPage() {
     </main>
   );
 }
-
