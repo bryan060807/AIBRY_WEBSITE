@@ -25,9 +25,6 @@ const releases: Release[] = [
     cover: "/images/discography/boots-on-heart-open.jpg",
     links: {
       bandcamp: "https://aibry.bandcamp.com/album/boots-on-heart-open",
-      spotify: "https://open.spotify.com/album/6gw6SIOYGPhuMqOfLwJE9h", // replace
-      apple: "https://music.apple.com/us/album/boots-on-heart-open/1830943798",
-      youtube: "https://www.youtube.com/channel/UCQDPCw7xwl3sQWjUjtnL1AQ",
       soundcloud: "https://soundcloud.com/bryan-miller-27",
     },
   },
@@ -55,29 +52,28 @@ const releases: Release[] = [
   {
     title: "Choir of Broken Mouths",
     year: 2025,
-    cover: "/images/discography/Choir_of_Broken_Mouths_cover_art_front(V2).jpg",
+    cover: "/images/discography/choir-of-broken-mouths.jpg",
     links: {
       bandcamp: "https://aibry.bandcamp.com/album/choir-of-broken-mouths",
-      spotify: "https://open.spotify.com/album/choirofbrokenid", // placeholder
-      apple: "https://music.apple.com/us/album/choir-of-broken-mouths/1830943798",
-      youtube: "https://www.youtube.com/channel/UCQDPCw7xwl3sQWjUjtnL1AQ",
       soundcloud: "https://soundcloud.com/bryan-miller-27",
     },
   },
   {
     title: "The Cassette Tapes",
     year: 2025,
-    cover: "/images/discography/cassatte_tapesJ_cover_art.jpg",
+    cover: "/images/discography/the-cassette-tapes.jpg",
     links: {
       bandcamp: "https://aibry.bandcamp.com/album/the-cassette-tapes",
+      soundcloud: "https://soundcloud.com/bryan-miller-27",
     },
   },
   {
     title: "I Stayed, I Wish You Had Too",
     year: 2025,
-    cover: "/images/discography/I Stayed, I Wish You Had Too.jpg",
+    cover: "/images/discography/i-stayed-i-wish-you-had-too.jpg",
     links: {
       bandcamp: "https://aibry.bandcamp.com/track/i-stayed-i-wish-you-had-too",
+      soundcloud: "https://soundcloud.com/bryan-miller-27",
     },
   },
 ];
