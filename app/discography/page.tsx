@@ -18,7 +18,7 @@ type Release = {
   };
 };
 
-const releases: Release[] = [
+const releases = [
   {
     title: "Boots On, Heart Open",
     year: 2024,
@@ -91,7 +91,7 @@ const releases: Release[] = [
       soundcloud: "#",
     },
   },
-];
+] satisfies Release[];
 
 export default function DiscographyPage() {
   return (
@@ -156,16 +156,4 @@ export default function DiscographyPage() {
                     href={release.links.soundcloud}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="rounded bg-orange-500 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-orange-600"
-                  >
-                    SoundCloud
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </main>
-  );
-}
+                    className="rounded bg-orange-500 px-3 py-2 text-center
