@@ -5,7 +5,7 @@ export const metadata = {
   description: "Explore AIBRY's albums and singles.",
 };
 
-interface Release {
+type Release = {
   title: string;
   year: number;
   cover: string;
@@ -16,7 +16,7 @@ interface Release {
     youtube: string;
     soundcloud: string;
   };
-}
+};
 
 const releases: Release[] = [
   {
@@ -128,46 +128,38 @@ export default function DiscographyPage() {
                   Bandcamp
                 </a>
                 <div className="grid grid-cols-2 gap-2">
-                  {release.links.spotify !== "#" && (
-                    <a
-                      href={release.links.spotify}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded bg-green-600 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-green-700"
-                    >
-                      Spotify
-                    </a>
-                  )}
-                  {release.links.apple !== "#" && (
-                    <a
-                      href={release.links.apple}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded bg-gray-700 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-gray-800"
-                    >
-                      Apple Music
-                    </a>
-                  )}
-                  {release.links.youtube !== "#" && (
-                    <a
-                      href={release.links.youtube}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded bg-red-600 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-red-700"
-                    >
-                      YouTube
-                    </a>
-                  )}
-                  {release.links.soundcloud !== "#" && (
-                    <a
-                      href={release.links.soundcloud}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded bg-orange-500 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-orange-600"
-                    >
-                      SoundCloud
-                    </a>
-                  )}
+                  <a
+                    href={release.links.spotify}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded bg-green-600 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-green-700"
+                  >
+                    Spotify
+                  </a>
+                  <a
+                    href={release.links.apple}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded bg-gray-700 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-gray-800"
+                  >
+                    Apple Music
+                  </a>
+                  <a
+                    href={release.links.youtube}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded bg-red-600 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-red-700"
+                  >
+                    YouTube
+                  </a>
+                  <a
+                    href={release.links.soundcloud}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded bg-orange-500 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-orange-600"
+                  >
+                    SoundCloud
+                  </a>
                 </div>
               </div>
             </div>
