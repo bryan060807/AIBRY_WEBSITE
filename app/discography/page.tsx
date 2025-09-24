@@ -9,31 +9,19 @@ export const metadata = {
 const releases = [
   {
     title: "Boots On, Heart Open",
-    year: 2024,
+    year: 2025,
     cover: "/images/discography/boots-on-heart-open.jpg",
     links: {
       bandcamp: "https://aibry.bandcamp.com/album/boots-on-heart-open",
-      spotify:
-        "https://open.spotify.com/album/6gw6SIOYGPhuMqOfLwJE9h", // replace with real
-      apple:
-        "https://music.apple.com/us/album/boots-on-heart-open/1830943798", // replace with real
-      youtube:
-        "https://www.youtube.com/channel/UCQDPCw7xwl3sQWjUjtnL1AQ",
-      soundcloud: "https://soundcloud.com/bryan-miller-27",
+      soundcloud: "https://soundcloud.com/bryan-miller-27/sets/boots-on-heart-open",
     },
   },
   {
     title: "Forty Years in the Fire",
-    year: 2024,
+    year: 2025,
     cover: "/images/discography/forty-years-in-the-fire.jpg",
     links: {
       bandcamp: "https://aibry.bandcamp.com/track/forty-years-in-the-fire",
-      spotify:
-        "https://open.spotify.com/track/40yearsid", // placeholder
-      apple:
-        "https://music.apple.com/us/album/forty-years-in-the-fire/1830943798", // placeholder
-      youtube:
-        "https://www.youtube.com/channel/UCQDPCw7xwl3sQWjUjtnL1AQ",
       soundcloud: "https://soundcloud.com/bryan-miller-27",
     },
   },
@@ -42,15 +30,37 @@ const releases = [
     year: 2025,
     cover: "/images/discography/whispers-beneath-the-ash.jpg",
     links: {
-      bandcamp:
-        "https://aibry.bandcamp.com/album/whispers-beneath-the-ash",
-      spotify:
-        "https://open.spotify.com/album/whispersbeneathid", // placeholder
-      apple:
-        "https://music.apple.com/us/album/whispers-beneath-the-ash/1830943798", // placeholder
-      youtube:
-        "https://www.youtube.com/channel/UCQDPCw7xwl3sQWjUjtnL1AQ",
-      soundcloud: "https://soundcloud.com/bryan-miller-27",
+      bandcamp: "https://aibry.bandcamp.com/album/whispers-beneath-the-ash",
+      apple: "https://music.apple.com/us/album/whispers-beneath-the-ash/1830944015", 
+      youtube: "https://www.youtube.com/channel/UCQDPCw7xwl3sQWjUjtnL1AQ",
+      soundcloud: "https://soundcloud.com/bryan-miller-27/sets/whispers-beneath-the-ash",
+    },
+  },
+  {
+    title: "Choir of Broken Mouths",
+    year: 2025,
+    cover: "/images/discography/Choir-of-Broken-Mouths_cover_art_front(V2).jpg",
+    links: {
+      bandcamp: "https://aibry.bandcamp.com/album/choir-of-broken-mouths",
+      soundcloud: "https://soundcloud.com/bryan-miller-27/sets/choir-of-broken-mouths",
+    },
+  },
+  {
+    title: "The Cassette Tapes",
+    year: 2025,
+    cover: "/images/discography/cassatte_tapesJ_cover_art.jpg",
+    links: {
+      bandcamp: "https://aibry.bandcamp.com/album/the-cassette-tapes",
+      soundcloud: "https://soundcloud.com/bryan-miller-27/sets/cassette-tapes",
+    },
+  },
+  {
+    title: "I Stayed, I Wish You Had Too",
+    year: 2025,
+    cover: "/images/discography/I Stayed, I Wish You Had Too.jpg",
+    links: {
+      bandcamp: "https://aibry.bandcamp.com/track/i-stayed-i-wish-you-had-too",
+      soundcloud: "https://soundcloud.com/bryan-miller-27/i-stayed-i-wish-you-had-too",
     },
   },
 ];
