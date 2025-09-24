@@ -18,28 +18,28 @@ type Release = {
   };
 };
 
-const releases = [
+const releases: Release[] = [
   {
     title: "Boots On, Heart Open",
-    year: 2024,
+    year: 2025,
     cover: "/images/discography/boots-on-heart-open.jpg",
     links: {
       bandcamp: "https://aibry.bandcamp.com/album/boots-on-heart-open",
-      spotify: "https://open.spotify.com/album/6gw6SIOYGPhuMqOfLwJE9h",
-      apple: "https://music.apple.com/us/album/boots-on-heart-open/1830943798",
+      spotify: "https://open.spotify.com/artist/6gw6SIOYGPhuMqOfLwJE9h",
+      apple: "https://music.apple.com/us/artist/aibry/1830943798",
       youtube: "https://www.youtube.com/channel/UCQDPCw7xwl3sQWjUjtnL1AQ",
       soundcloud: "https://soundcloud.com/bryan-miller-27",
     },
   },
   {
     title: "Forty Years in the Fire",
-    year: 2024,
+    year: 2025,
     cover: "/images/discography/forty-years-in-the-fire.jpg",
     links: {
       bandcamp: "https://aibry.bandcamp.com/track/forty-years-in-the-fire",
-      spotify: "#",
-      apple: "#",
-      youtube: "#",
+      spotify: "https://open.spotify.com/artist/6gw6SIOYGPhuMqOfLwJE9h",
+      apple: "https://music.apple.com/us/artist/aibry/1830943798",
+      youtube: "https://www.youtube.com/channel/UCQDPCw7xwl3sQWjUjtnL1AQ",
       soundcloud: "https://soundcloud.com/bryan-miller-27",
     },
   },
@@ -49,8 +49,8 @@ const releases = [
     cover: "/images/discography/whispers-beneath-the-ash.jpg",
     links: {
       bandcamp: "https://aibry.bandcamp.com/album/whispers-beneath-the-ash",
-      spotify: "https://open.spotify.com/album/whispersbeneathid",
-      apple: "https://music.apple.com/us/album/whispers-beneath-the-ash/1830943798",
+      spotify: "https://open.spotify.com/artist/6gw6SIOYGPhuMqOfLwJE9h",
+      apple: "https://music.apple.com/us/artist/aibry/1830943798",
       youtube: "https://www.youtube.com/channel/UCQDPCw7xwl3sQWjUjtnL1AQ",
       soundcloud: "https://soundcloud.com/bryan-miller-27",
     },
@@ -61,8 +61,8 @@ const releases = [
     cover: "/images/discography/choir-of-broken-mouths.jpg",
     links: {
       bandcamp: "https://aibry.bandcamp.com/album/choir-of-broken-mouths",
-      spotify: "https://open.spotify.com/album/choirofbrokenid",
-      apple: "https://music.apple.com/us/album/choir-of-broken-mouths/1830943798",
+      spotify: "https://open.spotify.com/artist/6gw6SIOYGPhuMqOfLwJE9h",
+      apple: "https://music.apple.com/us/artist/aibry/1830943798",
       youtube: "https://www.youtube.com/channel/UCQDPCw7xwl3sQWjUjtnL1AQ",
       soundcloud: "https://soundcloud.com/bryan-miller-27",
     },
@@ -73,10 +73,10 @@ const releases = [
     cover: "/images/discography/the-cassette-tapes.jpg",
     links: {
       bandcamp: "https://aibry.bandcamp.com/album/the-cassette-tapes",
-      spotify: "#",
-      apple: "#",
-      youtube: "#",
-      soundcloud: "#",
+      spotify: "https://open.spotify.com/artist/6gw6SIOYGPhuMqOfLwJE9h",
+      apple: "https://music.apple.com/us/artist/aibry/1830943798",
+      youtube: "https://www.youtube.com/channel/UCQDPCw7xwl3sQWjUjtnL1AQ",
+      soundcloud: "https://soundcloud.com/bryan-miller-27",
     },
   },
   {
@@ -85,13 +85,14 @@ const releases = [
     cover: "/images/discography/i-stayed-i-wish-you-had-too.jpg",
     links: {
       bandcamp: "https://aibry.bandcamp.com/track/i-stayed-i-wish-you-had-too",
-      spotify: "#",
-      apple: "#",
-      youtube: "#",
-      soundcloud: "#",
+      spotify: "https://open.spotify.com/artist/6gw6SIOYGPhuMqOfLwJE9h",
+      apple: "https://music.apple.com/us/artist/aibry/1830943798",
+      youtube: "https://www.youtube.com/channel/UCQDPCw7xwl3sQWjUjtnL1AQ",
+      soundcloud: "https://soundcloud.com/bryan-miller-27",
     },
   },
-] satisfies Release[];
+];
+
 
 export default function DiscographyPage() {
   return (
@@ -156,4 +157,16 @@ export default function DiscographyPage() {
                     href={release.links.soundcloud}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="rounded bg-orange-500 px-3 py-2 text-center
+                    className="rounded bg-orange-500 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-orange-600"
+                  >
+                    SoundCloud
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </main>
+  );
+}
