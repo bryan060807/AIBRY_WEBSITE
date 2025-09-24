@@ -1,24 +1,39 @@
 import Image from "next/image";
-import { Youtube, Music2, Headphones, Radio } from "lucide-react"; // icons for links
 
 export const metadata = {
   title: "AIBRY Discography",
   description: "Explore AIBRY's albums and singles.",
 };
 
-const releases = [
+type Release = {
+  title: string;
+  year: number;
+  cover: string;
+  links: {
+    bandcamp: string;
+    spotify?: string;
+    apple?: string;
+    youtube?: string;
+    soundcloud?: string;
+  };
+};
+
+const releases: Release[] = [
   {
     title: "Boots On, Heart Open",
-    year: 2025,
+    year: 2024,
     cover: "/images/discography/boots-on-heart-open.jpg",
     links: {
       bandcamp: "https://aibry.bandcamp.com/album/boots-on-heart-open",
-      soundcloud: "https://soundcloud.com/bryan-miller-27/sets/boots-on-heart-open",
+      spotify: "https://open.spotify.com/album/6gw6SIOYGPhuMqOfLwJE9h", // replace
+      apple: "https://music.apple.com/us/album/boots-on-heart-open/1830943798",
+      youtube: "https://www.youtube.com/channel/UCQDPCw7xwl3sQWjUjtnL1AQ",
+      soundcloud: "https://soundcloud.com/bryan-miller-27",
     },
   },
   {
     title: "Forty Years in the Fire",
-    year: 2025,
+    year: 2024,
     cover: "/images/discography/forty-years-in-the-fire.jpg",
     links: {
       bandcamp: "https://aibry.bandcamp.com/track/forty-years-in-the-fire",
@@ -31,18 +46,22 @@ const releases = [
     cover: "/images/discography/whispers-beneath-the-ash.jpg",
     links: {
       bandcamp: "https://aibry.bandcamp.com/album/whispers-beneath-the-ash",
-      apple: "https://music.apple.com/us/album/whispers-beneath-the-ash/1830944015", 
+      spotify: "https://open.spotify.com/album/whispersbeneathid", // placeholder
+      apple: "https://music.apple.com/us/album/whispers-beneath-the-ash/1830943798",
       youtube: "https://www.youtube.com/channel/UCQDPCw7xwl3sQWjUjtnL1AQ",
-      soundcloud: "https://soundcloud.com/bryan-miller-27/sets/whispers-beneath-the-ash",
+      soundcloud: "https://soundcloud.com/bryan-miller-27",
     },
   },
   {
     title: "Choir of Broken Mouths",
     year: 2025,
-    cover: "/images/discography/Choir-of-Broken-Mouths_cover_art_front(V2).jpg",
+    cover: "/images/discography/Choir_of_Broken_Mouths_cover_art_front(V2).jpg",
     links: {
       bandcamp: "https://aibry.bandcamp.com/album/choir-of-broken-mouths",
-      soundcloud: "https://soundcloud.com/bryan-miller-27/sets/choir-of-broken-mouths",
+      spotify: "https://open.spotify.com/album/choirofbrokenid", // placeholder
+      apple: "https://music.apple.com/us/album/choir-of-broken-mouths/1830943798",
+      youtube: "https://www.youtube.com/channel/UCQDPCw7xwl3sQWjUjtnL1AQ",
+      soundcloud: "https://soundcloud.com/bryan-miller-27",
     },
   },
   {
@@ -51,7 +70,6 @@ const releases = [
     cover: "/images/discography/cassatte_tapesJ_cover_art.jpg",
     links: {
       bandcamp: "https://aibry.bandcamp.com/album/the-cassette-tapes",
-      soundcloud: "https://soundcloud.com/bryan-miller-27/sets/cassette-tapes",
     },
   },
   {
@@ -60,7 +78,6 @@ const releases = [
     cover: "/images/discography/I Stayed, I Wish You Had Too.jpg",
     links: {
       bandcamp: "https://aibry.bandcamp.com/track/i-stayed-i-wish-you-had-too",
-      soundcloud: "https://soundcloud.com/bryan-miller-27/i-stayed-i-wish-you-had-too",
     },
   },
 ];
@@ -100,38 +117,46 @@ export default function DiscographyPage() {
                   Bandcamp
                 </a>
                 <div className="grid grid-cols-2 gap-2">
-                  <a
-                    href={release.links.spotify}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded bg-green-600 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-green-700"
-                  >
-                    Spotify
-                  </a>
-                  <a
-                    href={release.links.apple}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded bg-gray-700 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-gray-800"
-                  >
-                    Apple Music
-                  </a>
-                  <a
-                    href={release.links.youtube}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded bg-red-600 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-red-700"
-                  >
-                    YouTube
-                  </a>
-                  <a
-                    href={release.links.soundcloud}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded bg-orange-500 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-orange-600"
-                  >
-                    SoundCloud
-                  </a>
+                  {release.links.spotify && (
+                    <a
+                      href={release.links.spotify}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded bg-green-600 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-green-700"
+                    >
+                      Spotify
+                    </a>
+                  )}
+                  {release.links.apple && (
+                    <a
+                      href={release.links.apple}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded bg-gray-700 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-gray-800"
+                    >
+                      Apple Music
+                    </a>
+                  )}
+                  {release.links.youtube && (
+                    <a
+                      href={release.links.youtube}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded bg-red-600 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-red-700"
+                    >
+                      YouTube
+                    </a>
+                  )}
+                  {release.links.soundcloud && (
+                    <a
+                      href={release.links.soundcloud}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded bg-orange-500 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-orange-600"
+                    >
+                      SoundCloud
+                    </a>
+                  )}
                 </div>
               </div>
             </div>
