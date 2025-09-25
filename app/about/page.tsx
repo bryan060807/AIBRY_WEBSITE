@@ -22,8 +22,8 @@ export default function AboutPage() {
       {/* Banner Image */}
       <div className="relative mb-10 w-full overflow-hidden rounded-lg shadow-lg">
         <Image
-  src="/images/about/fire-portrait.jpg"
-  alt="AIBRY artistic portrait with fire"
+  src="/images/about/throne.jpg"
+  alt="AIBRY artistic portrait on a throne"
   width={1200}
   height={800}
   className="w-full rounded-lg object-contain"
