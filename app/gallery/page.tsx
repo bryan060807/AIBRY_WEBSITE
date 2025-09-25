@@ -44,7 +44,7 @@ export default function GalleryPage() {
   useEffect(() => {
     const interval = setInterval(nextImage, 5000); // 5 seconds
     return () => clearInterval(interval); // Cleanup
-  }, [current]);
+  }, [nextImage]);
 
   // --- Swipe Handlers ---
   const swipeHandlers = useSwipeable({

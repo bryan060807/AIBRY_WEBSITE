@@ -1,78 +1,81 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useCallback, useEffect } from "react";
+import { useSwipeable } from "react-swipeable";
 import { FaQuoteLeft, FaQuoteRight } from "react-icons/fa";
 
 const testimonials = [
   {
-    text: "Your music is hauntingly beautiful.",
-    source: "SoundCloud",
+    user: "@noirnoise",
+    quote: "Your sound is haunting and beautiful — I had chills the first time I listened.",
   },
   {
-    text: "This feels like a forgotten memory — incredible work.",
-    source: "SoundCloud",
+    user: "@ambientalchemy",
+    quote: "This belongs in a film score. It's cinematic, eerie, and unforgettable.",
   },
   {
-    text: "I keep coming back to this track. Absolute masterpiece.",
-    source: "SoundCloud",
+    user: "@voidwalker",
+    quote: "AIBRY doesn’t make tracks — they craft sonic rituals.",
   },
   {
-    text: "Atmospheric and powerful. Love the guitar tones.",
-    source: "SoundCloud",
+    user: "@nocturnelover",
+    quote: "I've had this on repeat for hours. Deeply moving.",
+  },
+  {
+    user: "@topfan92",
+    quote: "Been following since Bandcamp days. AIBRY only gets better.",
   },
 ];
 
 export default function TestimonialsCarousel() {
   const [index, setIndex] = useState(0);
-  const total = testimonials.length;
 
-  const next = () => setIndex((prev) => (prev + 1) % total);
-  const prev = () => setIndex((prev) => (prev - 1 + total) % total);
+  const next = useCallback(() => {
+    setIndex((prev) => (prev + 1) % testimonials.length);
+  }, []);
 
-  // Auto-slide every 6 seconds
+  const prev = useCallback(() => {
+    setIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+  }, []);
+
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => next(),
+    onSwipedRight: () => prev(),
+    preventScrollOnSwipe: true,
+    trackTouch: true,
+    trackMouse: false,
+});
+
   useEffect(() => {
     const timer = setInterval(next, 6000);
     return () => clearInterval(timer);
   }, [next]);
 
   return (
-    <section className="relative mx-auto max-w-3xl px-6 py-16 text-center text-white">
-      <h2 className="mb-8 text-2xl font-bold tracking-wide">What Listeners Say</h2>
+    <section className="mt-20 px-4 text-center" {...swipeHandlers}>
+      <h2 className="mb-6 text-2xl font-bold text-white">What Listeners Are Saying</h2>
 
-      <div className="relative min-h-[120px]">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.5 }}
-            className="px-4"
+      <div className="relative mx-auto max-w-xl rounded bg-[#1b1b1b] p-6 text-white shadow-lg">
+        <FaQuoteLeft className="mb-2 text-2xl text-cassette-red" />
+        <p className="text-lg italic">{testimonials[index].quote}</p>
+        <FaQuoteRight className="mt-2 text-2xl text-cassette-red" />
+        <p className="mt-4 text-sm text-gray-400">{testimonials[index].user}</p>
+
+        {/* Navigation buttons (optional) */}
+        <div className="mt-6 flex justify-center gap-4">
+          <button
+            onClick={prev}
+            className="rounded-full border border-gray-500 px-3 py-1 text-sm hover:bg-gray-700"
           >
-            <div className="mb-4 text-xl text-gray-200 italic">
-              <FaQuoteLeft className="inline mr-2 text-cassette-red" />
-              {testimonials[index].text}
-              <FaQuoteRight className="inline ml-2 text-cassette-red" />
-            </div>
-            <p className="text-sm text-gray-400">— {testimonials[index].source}</p>
-          </motion.div>
-        </AnimatePresence>
-      </div>
-
-      <div className="mt-6 flex justify-center gap-4">
-        <button
-          onClick={prev}
-          className="rounded bg-gray-800 px-3 py-1 text-white hover:bg-gray-700"
-        >
-          ◀
-        </button>
-        <button
-          onClick={next}
-          className="rounded bg-gray-800 px-3 py-1 text-white hover:bg-gray-700"
-        >
-          ▶
-        </button>
+            ← Prev
+          </button>
+          <button
+            onClick={next}
+            className="rounded-full border border-gray-500 px-3 py-1 text-sm hover:bg-gray-700"
+          >
+            Next →
+          </button>
+        </div>
       </div>
     </section>
   );

@@ -52,7 +52,7 @@ export default function NewsletterPage() {
       </form>
 
       {status === "success" && (
-        <p className="mt-4 text-green-400">You're subscribed! 🔥</p>
+        <p className="mt-4 text-green-400">You&apos;re subscribed! 🔥</p>
       )}
       {status === "error" && (
         <p className="mt-4 text-red-400">Something went wrong. Try again.</p>
