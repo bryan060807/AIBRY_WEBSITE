@@ -1,5 +1,7 @@
 import Image from "next/image";
 import MusicLinks from "@/components/MusicLinks";
+import TestimonialsCarousel from "@/components/TestimonialsCarousel";
+import TestimonialForm from "@/components/TestimonialForm";
 
 export const metadata = {
   title: "AIBRY",
@@ -40,6 +42,12 @@ export default function HomePage() {
           Visit Merch Store
         </a>
       </section>
+
+      {/* Testimonials */}
+      <TestimonialsCarousel />
+
+      {/* Testimonial Submission Form */}
+      <TestimonialForm />
     </main>
   );
 }
