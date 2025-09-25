@@ -14,7 +14,7 @@ const imageFilenames = [
   "epitaphs-series4.jpg",
   "epitaphs1.jpg",
   "epitaphs2.jpg",
-  "fire-portait.jpg",
+  "fire-portrait.jpg",
   "firey-image1.jpg",
   "forest.jpg",
   "graveyard.jpg",
