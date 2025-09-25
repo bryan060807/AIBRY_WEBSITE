@@ -44,6 +44,39 @@ export default function StorePage() {
             Whispers Beneath the Ash by AIBRY
           </a>
         </iframe>
+
+        {/* Album: Choir of Broken Mouths */}
+        <iframe
+          style={{ border: 0, width: "100%", height: "786px" }}
+          src="https://bandcamp.com/EmbeddedPlayer/album=1635215421/size=large/bgcol=333333/linkcol=2ebd35/transparent=true/"
+          seamless
+        >
+          <a href="https://aibry.bandcamp.com/album/choir-of-broken-mouths">
+            Choir of Broken Mouths by AIBRY
+          </a>
+        </iframe>
+
+        {/* Album: The Cassette Tapes */}
+        <iframe
+          style={{ border: 0, width: "100%", height: "786px" }}
+          src="https://bandcamp.com/EmbeddedPlayer/album=3106363030/size=large/bgcol=333333/linkcol=2ebd35/transparent=true/"
+          seamless
+        >
+          <a href="https://aibry.bandcamp.com/album/the-cassette-tapes">
+            The Cassette Tapes by AIBRY
+          </a>
+        </iframe>
+
+        {/* Track: I Stayed, I Wish You Had Too */}
+        <iframe
+          style={{ border: 0, width: "100%", height: "442px" }}
+          src="https://bandcamp.com/EmbeddedPlayer/track=4075630752/size=large/bgcol=333333/linkcol=2ebd35/tracklist=false/transparent=true/"
+          seamless
+        >
+          <a href="https://aibry.bandcamp.com/track/i-stayed-i-wish-you-had-too">
+            I Stayed, I Wish You Had Too by AIBRY
+          </a>
+        </iframe>
       </div>
     </main>
   );

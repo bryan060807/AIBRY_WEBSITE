@@ -21,15 +21,10 @@ export default function Footer() {
 
         {/* Center: Nav Links */}
         <nav className="flex gap-6 text-sm">
-          <Link href="/discography" className="hover:text-cassette-red">
-            Discography
-          </Link>
-          <Link href="/store" className="hover:text-cassette-red">
-            Store
-          </Link>
-          <Link href="/about" className="hover:text-cassette-red">
-            About
-          </Link>
+          <Link href="/discography" className="hover:text-cassette-red">Discography</Link>
+          <Link href="/store" className="hover:text-cassette-red">Store</Link>
+          <Link href="/about" className="hover:text-cassette-red">About</Link>
+          <Link href="/gallery" className="hover:text-cassette-red">Gallery</Link>
         </nav>
 
         {/* Right: Social / Platforms */}

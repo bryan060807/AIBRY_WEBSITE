@@ -13,7 +13,7 @@ export default function Header() {
         {/* Logo / Home */}
         <Link href="/" className="flex items-center">
           <Image
-            src="/images/logo.png" // put your logo here in /public/images/logo.png
+            src="/images/logo.png"
             alt="AIBRY Logo"
             width={140}
             height={40}
@@ -23,21 +23,12 @@ export default function Header() {
 
         {/* Desktop Nav */}
         <nav className="hidden space-x-6 md:flex">
-          <Link href="/" className="hover:text-[#629aa9]">
-            Home
-          </Link>
-          <Link href="/discography" className="hover:text-[#629aa9]">
-            Discography
-          </Link>
-          <Link href="/store" className="hover:text-[#629aa9]">
-            Store
-          </Link>
-          <Link href="/merch" className="hover:text-[#629aa9]">
-            Merch
-          </Link>
-          <Link href="/about" className="hover:text-[#629aa9]">
-            About
-          </Link>
+          <Link href="/" className="hover:text-[#629aa9]">Home</Link>
+          <Link href="/discography" className="hover:text-[#629aa9]">Discography</Link>
+          <Link href="/store" className="hover:text-[#629aa9]">Store</Link>
+          <Link href="/merch" className="hover:text-[#629aa9]">Merch</Link>
+          <Link href="/about" className="hover:text-[#629aa9]">About</Link>
+          <Link href="/gallery" className="hover:text-[#629aa9]">Gallery</Link>
         </nav>
 
         {/* Mobile Menu Button */}
@@ -70,21 +61,12 @@ export default function Header() {
       {/* Mobile Nav */}
       {isOpen && (
         <nav className="flex flex-col space-y-4 border-t border-gray-800 bg-black px-4 py-6 md:hidden">
-          <Link href="/" className="hover:text-[#629aa9]">
-            Home
-          </Link>
-          <Link href="/discography" className="hover:text-[#629aa9]">
-            Discography
-          </Link>
-          <Link href="/store" className="hover:text-[#629aa9]">
-            Store
-          </Link>
-          <Link href="/merch" className="hover:text-[#629aa9]">
-            Merch
-          </Link>
-          <Link href="/about" className="hover:text-[#629aa9]">
-            About
-          </Link>
+          <Link href="/" className="hover:text-[#629aa9]">Home</Link>
+          <Link href="/discography" className="hover:text-[#629aa9]">Discography</Link>
+          <Link href="/store" className="hover:text-[#629aa9]">Store</Link>
+          <Link href="/merch" className="hover:text-[#629aa9]">Merch</Link>
+          <Link href="/about" className="hover:text-[#629aa9]">About</Link>
+          <Link href="/gallery" className="hover:text-[#629aa9]">Gallery</Link>
         </nav>
       )}
     </header>
