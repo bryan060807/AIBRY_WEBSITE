@@ -83,7 +83,7 @@ export default function NewsletterModal({
                 {error && <p className="text-sm text-red-500">{error}</p>}
               </form>
             ) : (
-              <p className="text-green-600 font-semibold">You're subscribed! 🎉</p>
+              <p className="text-green-600 font-semibold">You&apos;re subscribed! 🎉</p>
             )}
           </motion.div>
         </motion.div>

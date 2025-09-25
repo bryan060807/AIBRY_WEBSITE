@@ -34,7 +34,7 @@ export default function TestimonialsCarousel() {
   useEffect(() => {
     const timer = setInterval(next, 6000);
     return () => clearInterval(timer);
-  }, [index]);
+  }, [next]);
 
   return (
     <section className="relative mx-auto max-w-3xl px-6 py-16 text-center text-white">
