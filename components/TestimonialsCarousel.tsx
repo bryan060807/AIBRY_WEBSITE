@@ -44,7 +44,7 @@ export default function TestimonialsCarousel() {
     preventScrollOnSwipe: true,
     trackTouch: true,
     trackMouse: false,
-});
+  });
 
   useEffect(() => {
     const timer = setInterval(next, 6000);
@@ -55,13 +55,17 @@ export default function TestimonialsCarousel() {
     <section className="mt-20 px-4 text-center" {...swipeHandlers}>
       <h2 className="mb-6 text-2xl font-bold text-white">What Listeners Are Saying</h2>
 
-      <div className="relative mx-auto max-w-xl rounded bg-[#1b1b1b] p-6 text-white shadow-lg">
-        <FaQuoteLeft className="mb-2 text-2xl text-cassette-red" />
-        <p className="text-lg italic">{testimonials[index].quote}</p>
-        <FaQuoteRight className="mt-2 text-2xl text-cassette-red" />
+      <div className="relative mx-auto max-w-xl rounded bg-[#1b1b1b] p-8 text-white shadow-lg">
+        <div className="flex items-start justify-center gap-3">
+          <FaQuoteLeft className="text-3xl text-cassette-red mt-1" />
+          <p className="text-lg italic leading-relaxed">
+            &ldquo;{testimonials[index].quote}&rdquo;
+          </p>
+          <FaQuoteRight className="text-3xl text-cassette-red mt-1" />
+        </div>
+
         <p className="mt-4 text-sm text-gray-400">{testimonials[index].user}</p>
 
-        {/* Navigation buttons (optional) */}
         <div className="mt-6 flex justify-center gap-4">
           <button
             onClick={prev}
