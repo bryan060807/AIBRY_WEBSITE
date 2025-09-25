@@ -6,24 +6,24 @@ import { FaQuoteLeft, FaQuoteRight } from "react-icons/fa";
 
 const testimonials = [
   {
-    user: "@noirnoise",
-    quote: "Your sound is haunting and beautiful — I had chills the first time I listened.",
+    user: "@2NDBLE$$ING",
+    quote: "These lyrics touched my freaking soul 💯 Please keep making music",
   },
   {
-    user: "@ambientalchemy",
-    quote: "This belongs in a film score. It's cinematic, eerie, and unforgettable.",
+    user: "@Kade Hansen",
+    quote: "Holy. you guys need to blow up!",
   },
   {
-    user: "@voidwalker",
-    quote: "AIBRY doesn’t make tracks — they craft sonic rituals.",
+    user: "@Ali Sher",
+    quote: "Thats so dope mannnnnnn 🔥",
   },
   {
-    user: "@nocturnelover",
-    quote: "I've had this on repeat for hours. Deeply moving.",
+    user: "@Ray xavi",
+    quote: "Pure talent and you got an amazing system",
   },
   {
-    user: "@topfan92",
-    quote: "Been following since Bandcamp days. AIBRY only gets better.",
+    user: "@User 202949736",
+    quote: "on repeat!!!",
   },
 ];
 
