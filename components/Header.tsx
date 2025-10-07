@@ -23,6 +23,7 @@ export default function Header() {
           <Link href="/discography" className="hover:text-[#629aa9]">Discography</Link>
           <Link href="/store" className="hover:text-[#629aa9]">Store</Link>
           <Link href="/merch" className="hover:text-[#629aa9]">Merch</Link>
+          <Link href="/ai-archive" className="hover:text-[#629aa9]">AI Archive</Link>
           <Link href="/about" className="hover:text-[#629aa9]">About</Link>
           <Link href="/gallery" className="hover:text-[#629aa9]">Gallery</Link>
           <button

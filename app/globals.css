@@ -34,3 +34,33 @@ body {
 .btn.bandcamp {
   @apply bg-[#629aa9] hover:bg-[#4f7f86];
 }
+
+/* New Custom CSS for the AI Archive Page */
+.content-container {
+    padding-top: 5rem; /* Adjust as needed to clear the header. 5rem is a good starting point */
+}
+
+.glitch-text {
+    text-shadow: 2px 2px 0 #ff00ff, -2px -2px 0 #00ffff;
+    animation: glitch 1.5s infinite alternate;
+}
+@keyframes glitch {
+    0% {
+        transform: translate(0);
+    }
+    20% {
+        transform: translate(-2px, 2px);
+    }
+    40% {
+        transform: translate(-2px, -2px);
+    }
+    60% {
+        transform: translate(2px, 2px);
+    }
+    80% {
+        transform: translate(2px, -2px);
+    }
+    100% {
+        transform: translate(0);
+    }
+}
