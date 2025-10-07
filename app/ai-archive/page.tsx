@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef, FC } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from 'firebase/auth'; 
+import { getAuth, signInAnonymously, onAuthStateChanged, signOut, linkWithCredential, EmailAuthProvider, Auth } from 'firebase/auth'; 
 import { getFirestore, collection, query, onSnapshot, addDoc, serverTimestamp, doc, getDoc, setDoc, deleteDoc, DocumentData, Firestore } from 'firebase/firestore';
 
 // --- Local Configuration Placeholders (To be replaced by environment variables locally) ---
@@ -453,11 +453,14 @@ const TrackCard: FC<TrackCardProps> = ({ track, currentPlaying, setCurrentPlayin
 interface UserProfileSetupProps {
     db: Firestore | null;
     userId: string | null;
+    auth: Auth | null;
     onProfileSet: (name: string, role: string) => void;
 }
 
-const UserProfileSetup: FC<UserProfileSetupProps> = ({ db, userId, onProfileSet }) => {
+const UserProfileSetup: FC<UserProfileSetupProps> = ({ db, userId, auth, onProfileSet }) => {
     const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -469,6 +472,16 @@ const UserProfileSetup: FC<UserProfileSetupProps> = ({ db, userId, onProfileSet 
         setError(null);
         
         try {
+            // Check if email and password are provided to create a permanent account
+            if (email.trim() && password.trim() && auth && auth.currentUser) {
+                // Create a credential object with the email and password
+                const credential = EmailAuthProvider.credential(email, password);
+                
+                // Link the anonymous account to an email/password account
+                await linkWithCredential(auth.currentUser, credential);
+            }
+
+            // Save the profile data in a private user document
             const profileDocRef = doc(db, `/artifacts/${appId}/users/${userId}/profile/user_data`);
             
             await setDoc(profileDocRef, { 
@@ -509,6 +522,35 @@ const UserProfileSetup: FC<UserProfileSetupProps> = ({ db, userId, onProfileSet 
                             placeholder="e.g., AIBRY"
                         />
                     </div>
+                    {/* Add Email and Password fields for linking the account */}
+                    <p className="text-xs text-gray-400 mt-6 mb-2">
+                        To save your identity permanently, enter an email and password.
+                    </p>
+                    <div className="mb-4">
+                        <label htmlFor="email" className="block text-sm font-medium text-red-400 mb-1">
+                            Email
+                        </label>
+                        <input
+                            type="email"
+                            id="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full px-4 py-2 bg-gray-900 text-gray-200 border border-gray-700 rounded-lg focus:border-red-500 focus:ring-1 focus:ring-red-500 transition duration-150"
+                            placeholder="your-email@example.com"
+                        />
+                    </div>
+                    <div className="mb-4">
+                        <label htmlFor="password" className="block text-sm font-medium text-red-400 mb-1">
+                            Password
+                        </label>
+                        <input
+                            type="password"
+                            id="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full px-4 py-2 bg-gray-900 text-gray-200 border border-gray-700 rounded-lg focus:border-red-500 focus:ring-1 focus:ring-red-500 transition duration-150"
+                        />
+                    </div>
 
                     {error && <p className="text-red-500 mb-4">{error}</p>}
 
@@ -534,6 +576,7 @@ const UserProfileSetup: FC<UserProfileSetupProps> = ({ db, userId, onProfileSet 
         </div>
     );
 };
+
 
 interface CreativeDirectorModalProps {
     onCancel: () => void;
@@ -927,7 +970,7 @@ const AddTrackForm: FC<AddTrackFormProps> = ({ db, userId, userName, onCancel })
 const App: FC = () => {
     const [route, setRoute] = useState('landing');
     const [db, setDb] = useState<Firestore | null>(null);
-    const [auth, setAuth] = useState<any>(null);
+    const [auth, setAuth] = useState<Auth | null>(null);
     const [userId, setUserId] = useState<string | null>(null);
     const [userName, setUserName] = useState<string | null>(null);
     const [userRole, setUserRole] = useState<string | null>(null);
@@ -991,11 +1034,8 @@ const App: FC = () => {
                 }
             };
             
-            // First, assign the function to the window object using a type assertion.
-            (window as any).aibraryGrantAccess = grantAccess;
-
-            // Second, assign the userId property.
-            (window as any).aibraryGrantAccess.userId = userId;
+            window.aibraryGrantAccess = grantAccess;
+            window.aibraryGrantAccess.userId = userId;
 
             console.log(`\n--- ADMIN INSTRUCTIONS ---`);
             console.log(`Your current User ID is: ${userId}`);
@@ -1212,6 +1252,7 @@ const App: FC = () => {
                     <UserProfileSetup 
                         db={db} 
                         userId={userId} 
+                        auth={auth}
                         onProfileSet={handleProfileSet}
                     />
                 )}
