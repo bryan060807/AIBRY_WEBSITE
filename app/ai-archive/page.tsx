@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, FC } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from 'firebase/auth'; 
-import { getFirestore, collection, query, onSnapshot, addDoc, serverTimestamp, doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
+import { getFirestore, collection, query, onSnapshot, addDoc, serverTimestamp, doc, getDoc, setDoc, deleteDoc, DocumentData, Firestore } from 'firebase/firestore';
 
 // --- Local Configuration Placeholders (To be replaced by environment variables locally) ---
 
@@ -24,7 +24,18 @@ const MOCK_AUDIO_URL = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-
 
 // --- Shared Form Components (Moved outside render functions for stability) ---
 
-const Input = ({ name, label, type = 'text', readOnly = false, value, onChange, placeholder, required = true }) => (
+interface InputProps {
+    name: string;
+    label: string;
+    type?: string;
+    readOnly?: boolean;
+    value: string;
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    placeholder?: string;
+    required?: boolean;
+}
+
+const Input: FC<InputProps> = ({ name, label, type = 'text', readOnly = false, value, onChange, placeholder, required = true }) => (
     <div className="mb-4">
         <label htmlFor={name} className="block text-sm font-medium text-cyan-400 mb-1">
             {label}
@@ -47,7 +58,14 @@ const Input = ({ name, label, type = 'text', readOnly = false, value, onChange, 
     </div>
 );
 
-const TextArea = ({ name, label, value, onChange }) => (
+interface TextAreaProps {
+    name: string;
+    label: string;
+    value: string;
+    onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+}
+
+const TextArea: FC<TextAreaProps> = ({ name, label, value, onChange }) => (
     <div className="mb-4">
         <label htmlFor={name} className="block text-sm font-medium text-cyan-400 mb-1">
             {label}
@@ -57,17 +75,19 @@ const TextArea = ({ name, label, value, onChange }) => (
             name={name}
             value={value}
             onChange={onChange}
-            rows="4"
+            rows={4}
             className="w-full px-4 py-2 bg-gray-900 text-gray-200 border border-gray-700 rounded-lg focus:border-red-500 focus:ring-1 focus:ring-red-500 transition duration-150 resize-none"
             required
         />
     </div>
 );
 
-/**
- * Custom Play/Stop Button with a neon glitch effect.
- */
-const PlayButton = ({ isPlaying, onClick }) => (
+interface PlayButtonProps {
+    isPlaying: boolean;
+    onClick: () => void;
+}
+
+const PlayButton: FC<PlayButtonProps> = ({ isPlaying, onClick }) => (
     <button
         onClick={onClick}
         className={`
@@ -95,28 +115,48 @@ const PlayButton = ({ isPlaying, onClick }) => (
     </button>
 );
 
-/**
- * Displays detailed track information, focusing on the AI generation data.
- */
-const TrackCard = ({ track, currentPlaying, setCurrentPlaying, db, userId, userRole, fetchGeminiGeneration }) => {
+interface Track {
+    id: string;
+    title: string;
+    artist: string;
+    style: string;
+    ai_role: string;
+    audio_url: string;
+    generation_prompt: string;
+    tags: string[];
+    uploader_id: string;
+    creator_name: string;
+    timestamp: {
+        seconds: number;
+    }
+}
+
+interface TrackCardProps {
+    track: Track;
+    currentPlaying: { id: string, audioRef: React.RefObject<HTMLAudioElement> } | null;
+    setCurrentPlaying: (track: { id: string, audioRef: React.RefObject<HTMLAudioElement> } | null) => void;
+    db: Firestore | null;
+    userId: string | null;
+    userRole: string | null;
+    fetchGeminiGeneration: (userQuery: string, systemPrompt: string, useSearch: boolean, responseSchema?: object | null) => Promise<{ text: string } | null>;
+}
+
+const TrackCard: FC<TrackCardProps> = ({ track, currentPlaying, setCurrentPlaying, db, userId, userRole, fetchGeminiGeneration }) => {
     const isPlaying = currentPlaying?.id === track.id;
-    // Use the stored audio_url or fallback if it's just a file name/placeholder
     const audioSource = track.audio_url && track.audio_url.startsWith('http') ? track.audio_url : MOCK_AUDIO_URL;
-    const audioRef = React.useRef(null);
+    const audioRef = useRef<HTMLAudioElement>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [aiDescription, setAiDescription] = useState(null); 
-    const [aiCoverConcepts, setAiCoverConcepts] = useState(null); 
+    const [aiDescription, setAiDescription] = useState<string | null>(null); 
+    const [aiCoverConcepts, setAiCoverConcepts] = useState<string[] | null>(null); 
     const [isGeneratingPitch, setIsGeneratingPitch] = useState(false);
     const [isGeneratingCover, setIsGeneratingCover] = useState(false); 
 
-    // Check if the current user can delete the track
     const canDelete = userId && (
         track.uploader_id === userId || 
         userRole === 'admin' || 
         userRole === 'moderator'
     );
     
-    // --- GEMINI: AI Pitch Generator ---
     const handleGeneratePitch = async () => {
         if (!fetchGeminiGeneration || isGeneratingPitch) return;
 
@@ -155,12 +195,11 @@ const TrackCard = ({ track, currentPlaying, setCurrentPlaying, db, userId, userR
         }
     };
 
-    // --- GEMINI: AI Cover Art Concept Generator ---
     const handleGenerateCoverConcepts = async () => {
         if (!fetchGeminiGeneration || isGeneratingCover) return;
 
         setIsGeneratingCover(true);
-        setAiCoverConcepts(null); // Clear previous concepts
+        setAiCoverConcepts(null);
 
         const systemPrompt = `You are a visual design director for the AIBRY brand, specializing in dark, cinematic, intense, and surreal cover art for trapmetal and industrial music. The designs must integrate themes of resilience, trauma, and identity using fragmented faces, fire, glitch effects, ruined buildings, or neon lighting. Provide exactly three unique, evocative visual concepts (1-2 sentences each).`;
         const userQuery = `Generate cover art concepts for this track. Title: "${track.title}". Source Prompt: "${track.generation_prompt}". Style/Tags: ${track.style}, ${track.tags.join(', ')}.`;
@@ -200,18 +239,14 @@ const TrackCard = ({ track, currentPlaying, setCurrentPlaying, db, userId, userR
         }
     };
 
-
-    // --- Track Deletion Logic ---
     const handleDelete = async () => {
         if (!canDelete || !db || !track.id) return;
 
         try {
-            // Stop any playing audio before deleting
             if (currentPlaying?.id === track.id) {
                  setCurrentPlaying(null); 
             }
 
-            // Reference to the public track document
             const trackPath = `/artifacts/${appId}/public/data/ai_assisted_tracks/${track.id}`;
             const docRef = doc(db, trackPath);
             
@@ -219,30 +254,26 @@ const TrackCard = ({ track, currentPlaying, setCurrentPlaying, db, userId, userR
             console.log("Track deleted successfully:", track.id);
         } catch (error) {
             console.error("Error deleting document:", error);
-            // In a real app, this would show a failure message to the user.
         }
         setShowDeleteConfirm(false);
     };
 
-    // --- Play/Pause Logic ---
     const handlePlayPause = () => {
         if (isPlaying) {
-            audioRef.current.pause();
-            audioRef.current.currentTime = 0;
+            audioRef.current?.pause();
+            if (audioRef.current) audioRef.current.currentTime = 0;
             setCurrentPlaying(null);
         } else {
-            // Stop any currently playing track
             if (currentPlaying && currentPlaying.id !== track.id) {
-                currentPlaying.audioRef.current.pause();
-                currentPlaying.audioRef.current.currentTime = 0;
+                currentPlaying.audioRef.current?.pause();
+                if (currentPlaying.audioRef.current) currentPlaying.audioRef.current.currentTime = 0;
             }
             
-            audioRef.current.play().catch(e => console.error("Audio playback failed:", e));
+            audioRef.current?.play().catch(e => console.error("Audio playback failed:", e));
             setCurrentPlaying({ id: track.id, audioRef });
         }
     };
 
-    // Ensure audio stops when component is unmounted or stopped externally
     useEffect(() => {
         const audio = audioRef.current;
         if (audio) {
@@ -255,7 +286,6 @@ const TrackCard = ({ track, currentPlaying, setCurrentPlaying, db, userId, userR
         };
     }, [setCurrentPlaying]);
 
-
     const titleClass = "text-xl font-extrabold tracking-wider mb-2 text-red-500 font-mono";
     const detailClass = "text-sm text-gray-300 mb-1";
     const labelClass = "text-xs font-semibold uppercase text-cyan-400 mr-2";
@@ -265,7 +295,6 @@ const TrackCard = ({ track, currentPlaying, setCurrentPlaying, db, userId, userR
             <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">
                     <h3 className={titleClass}>{track.title || "Untitled Fragment"}</h3>
-                    {/* Display the creator's name, or the generic artist if the uploader name is missing */}
                     <p className="text-md text-gray-400 mb-2">
                         {track.creator_name || track.artist || "Unknown Entity"} 
                         {track.uploader_id && (
@@ -280,7 +309,6 @@ const TrackCard = ({ track, currentPlaying, setCurrentPlaying, db, userId, userR
                 </div>
             </div>
 
-            {/* Audio Display and Playability Note */}
             <audio ref={audioRef} src={audioSource} preload="none" className="hidden" />
             
             <div className="text-xs text-gray-500 mt-2 p-2 rounded bg-gray-900 border border-gray-700">
@@ -297,7 +325,6 @@ const TrackCard = ({ track, currentPlaying, setCurrentPlaying, db, userId, userR
                 )}
             </div>
 
-            {/* AI Metadata Section */}
             <div className="mt-4 pt-4 border-t border-gray-700">
                 <h4 className="text-lg font-bold text-cyan-400 mb-3 tracking-wider uppercase">AI/Source Code</h4>
                 
@@ -329,7 +356,6 @@ const TrackCard = ({ track, currentPlaying, setCurrentPlaying, db, userId, userR
                     </div>
                 </div>
 
-                {/* --- AI Pitch Generation Feature --- */}
                 <div className="mt-4 pt-4 border-t border-gray-700">
                     <button
                         onClick={handleGeneratePitch}
@@ -358,8 +384,7 @@ const TrackCard = ({ track, currentPlaying, setCurrentPlaying, db, userId, userR
                     )}
                 </div>
 
-                {/* --- AI Cover Art Concept Feature --- */}
-                 <div className="mt-4 pt-4 border-t border-gray-700">
+                <div className="mt-4 pt-4 border-t border-gray-700">
                     <button
                         onClick={handleGenerateCoverConcepts}
                         disabled={isGeneratingCover || !track.generation_prompt || !fetchGeminiGeneration}
@@ -390,7 +415,6 @@ const TrackCard = ({ track, currentPlaying, setCurrentPlaying, db, userId, userR
                             </div>
                     )}
                 </div>
-
 
                 {/* Delete/Admin Control Section */}
                 {canDelete && (
@@ -427,32 +451,32 @@ const TrackCard = ({ track, currentPlaying, setCurrentPlaying, db, userId, userR
     );
 };
 
+interface UserProfileSetupProps {
+    db: Firestore | null;
+    userId: string | null;
+    onProfileSet: (name: string, role: string) => void;
+}
 
-/**
- * Modal to prompt the user to set their public display name.
- */
-const UserProfileSetup = ({ db, userId, onProfileSet }) => {
+const UserProfileSetup: FC<UserProfileSetupProps> = ({ db, userId, onProfileSet }) => {
     const [name, setName] = useState('');
     const [isSaving, setIsSaving] = useState(false);
-    const [error, setError] = useState(null);
+    const [error, setError] = useState<string | null>(null);
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!name.trim()) return;
+        if (!name.trim() || !db || !userId) return;
 
         setIsSaving(true);
         setError(null);
         
         try {
-            // Save the profile data in a private user document
             const profileDocRef = doc(db, `/artifacts/${appId}/users/${userId}/profile/user_data`);
             
-            // Set the name and initialize the role as 'creator'
             await setDoc(profileDocRef, { 
                 name: name.trim(), 
-                role: 'creator', // Default role
+                role: 'creator', 
                 created_at: serverTimestamp() 
-            }, { merge: true }); // Use merge so we don't overwrite role if it exists
+            }, { merge: true }); 
             
             onProfileSet(name.trim(), 'creator');
         } catch (err) {
@@ -468,7 +492,7 @@ const UserProfileSetup = ({ db, userId, onProfileSet }) => {
             <div className="bg-gray-800 p-8 rounded-xl w-full max-w-sm shadow-2xl border-4 border-cyan-500">
                 <h2 className="text-2xl font-bold mb-4 text-cyan-400 font-mono tracking-wider">SET ARTIST ID</h2>
                 <p className="text-sm text-gray-400 mb-6">
-                    Choose a **Public Display Name**. This name will be associated with your unique ID ({userId.substring(0, 8)}...) and used for track attribution. Your default role is **CREATOR**.
+                    Choose a **Public Display Name**. This name will be associated with your unique ID ({userId?.substring(0, 8)}...) and used for track attribution. Your default role is **CREATOR**.
                 </p>
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4">
@@ -512,17 +536,19 @@ const UserProfileSetup = ({ db, userId, onProfileSet }) => {
     );
 };
 
-/**
- * Modal for generating creative prompts and concepts.
- */
-const CreativeDirectorModal = ({ onCancel, fetchGeminiGeneration }) => {
-    const [mode, setMode] = useState('song'); // 'song' or 'cover'
-    const [theme, setTheme] = useState('');
-    const [resultText, setResultText] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(null);
+interface CreativeDirectorModalProps {
+    onCancel: () => void;
+    fetchGeminiGeneration: (userQuery: string, systemPrompt: string, useSearch: boolean, responseSchema?: object | null) => Promise<{ text: string } | null>;
+}
 
-    const handleGenerate = async (e) => {
+const CreativeDirectorModal: FC<CreativeDirectorModalProps> = ({ onCancel, fetchGeminiGeneration }) => {
+    const [mode, setMode] = useState('song');
+    const [theme, setTheme] = useState('');
+    const [resultText, setResultText] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const handleGenerate = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!theme.trim()) return;
 
@@ -533,13 +559,12 @@ const CreativeDirectorModal = ({ onCancel, fetchGeminiGeneration }) => {
         let systemPrompt = "";
         let userQuery = "";
         
-        // Use AIBRY's persona and style guidelines
         const coreStyle = "trapmetal, industrial, aggressive, cinematic, glitches, 808s, distorted guitars. Themes: trauma, resilience, inner conflict.";
 
         if (mode === 'song') {
             systemPrompt = `You are a music producer and lyricist for the artist AIBRY. Your task is to generate a full, detailed song generation prompt for an AI model based on the user's core theme. The song must adhere to AIBRY's style (${coreStyle}). The output must be production-ready and include suggested instrumentation, tempo, and vocal cues (scream, rap, spoken word).`;
             userQuery = `Generate a full, highly detailed, production-ready AI music generation prompt for a new song based on the core theme: "${theme}".`;
-        } else { // mode === 'cover'
+        } else {
             systemPrompt = `You are an art director for the AIBRY brand. Your task is to generate a detailed, cinematic, high-quality, text-to-image prompt suitable for an image generation model (like Imagen or Midjourney) based on the user's theme. The visual must be dark, surreal, and intense, using the AIBRY aesthetic (fragmented faces, neon lighting, ruined cityscapes). The output must be a single, long, detailed text-to-image prompt.`;
             userQuery = `Generate one single, complex, ready-to-use text-to-image prompt for a cover art based on the core theme: "${theme}". Style must be: high-detail, cinematic lighting, photorealistic digital art, dark contrast, neon red and cyan accents, glitch effects.`;
         }
@@ -553,7 +578,7 @@ const CreativeDirectorModal = ({ onCancel, fetchGeminiGeneration }) => {
             }
         } catch (err) {
             console.error("Gemini API Error:", err);
-            setError(`Request failed: ${err.message}.`);
+            setError(`Request failed: ${(err as Error).message}.`);
         } finally {
             setIsLoading(false);
         }
@@ -561,7 +586,6 @@ const CreativeDirectorModal = ({ onCancel, fetchGeminiGeneration }) => {
 
     const handleCopy = () => {
         if (resultText) {
-            // Using document.execCommand('copy') for compatibility in iframes
             const tempTextArea = document.createElement('textarea');
             tempTextArea.value = resultText;
             document.body.appendChild(tempTextArea);
@@ -569,7 +593,6 @@ const CreativeDirectorModal = ({ onCancel, fetchGeminiGeneration }) => {
             document.execCommand('copy');
             document.body.removeChild(tempTextArea);
             
-            // Replaced alert() with a custom message box or console log
             console.log('Copied to clipboard!');
         }
     };
@@ -579,7 +602,6 @@ const CreativeDirectorModal = ({ onCancel, fetchGeminiGeneration }) => {
             <div className="bg-gray-800 p-8 rounded-xl w-full max-w-4xl shadow-2xl border-4 border-cyan-500">
                 <h2 className="text-2xl font-bold mb-6 text-cyan-400 font-mono tracking-wider">AI CREATIVE DIRECTOR</h2>
                 
-                {/* Mode Selector */}
                 <div className="flex space-x-4 mb-6 border-b border-gray-700 pb-4">
                     <button
                         onClick={() => { setMode('song'); setResultText(null); setError(null); }}
@@ -671,31 +693,30 @@ const CreativeDirectorModal = ({ onCancel, fetchGeminiGeneration }) => {
     );
 };
 
+interface AddTrackFormProps {
+    db: Firestore | null;
+    userId: string | null;
+    userName: string | null;
+    onCancel: () => void;
+}
 
-/**
- * Form for adding new tracks with AI-specific fields.
- */
-const AddTrackForm = ({ db, userId, userName, onCancel }) => {
+const AddTrackForm: FC<AddTrackFormProps> = ({ db, userId, userName, onCancel }) => {
     const [formData, setFormData] = useState({
         title: '',
         artist: userName || 'AIBRY',
         style: 'Trapmetal/Spoken Word',
         ai_role: 'Lyrics & Melody Generation',
-        // audio_url will temporarily hold the local object URL or file name/placeholder
         audio_url: '', 
         generation_prompt: '',
         tags: 'trauma, resilience, glitch',
     });
-    // New state for file handling
-    const [selectedFile, setSelectedFile] = useState(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isSaving, setIsSaving] = useState(false);
-    const [error, setError] = useState(null);
+    const [error, setError] = useState<string | null>(null);
     
-    // --- File Handling ---
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
         if (file) {
-            // Check if it's an audio file
             if (!file.type.startsWith('audio/')) {
                 setError("Please select a valid audio file (e.g., mp3, wav, flac).");
                 setSelectedFile(null);
@@ -706,16 +727,13 @@ const AddTrackForm = ({ db, userId, userName, onCancel }) => {
             setError(null);
             setSelectedFile(file);
             
-            // Create a temporary local URL for preview in the audio player
             const localUrl = URL.createObjectURL(file);
 
-            // Store the local URL and file name for display/submission
             setFormData(prev => ({ 
                 ...prev, 
-                audio_url: localUrl, // Temporary URL for immediate playback/preview
+                audio_url: localUrl, 
             }));
             
-            // Clean up the object URL when the form closes or component unmounts
             return () => URL.revokeObjectURL(localUrl);
         } else {
             setSelectedFile(null);
@@ -723,12 +741,11 @@ const AddTrackForm = ({ db, userId, userName, onCancel }) => {
         }
     };
 
-
-    const handleChange = (e) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!selectedFile && !formData.audio_url) {
@@ -740,22 +757,18 @@ const AddTrackForm = ({ db, userId, userName, onCancel }) => {
         setError(null);
         
         try {
-            const tracksCollectionRef = collection(db, `/artifacts/${appId}/public/data/ai_assisted_tracks`);
+            const tracksCollectionRef = collection(db!, `/artifacts/${appId}/public/data/ai_assisted_tracks`);
             
-            // Final audio URL/Placeholder logic for Firestore
-            let finalAudioUrl = formData.audio_url; // Default to existing URL (if external link was manually typed)
+            let finalAudioUrl = formData.audio_url; 
             let audioFileName = selectedFile ? selectedFile.name : (finalAudioUrl.startsWith('http') ? finalAudioUrl : 'N/A');
 
             if (selectedFile) {
-                // IMPORTANT: Since we can't upload to Storage in a single file, 
-                // we store the file name as a placeholder and use the mock URL.
-                // In a real app, this is where the Firebase Storage upload function would go.
                 finalAudioUrl = audioFileName; 
             }
 
             const newTrack = {
                 ...formData,
-                audio_url: finalAudioUrl, // Store the file name or external link
+                audio_url: finalAudioUrl,
                 uploader_id: userId,
                 creator_name: userName || formData.artist,
                 tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
@@ -763,7 +776,7 @@ const AddTrackForm = ({ db, userId, userName, onCancel }) => {
             };
 
             await addDoc(tracksCollectionRef, newTrack);
-            onCancel(); // Use onCancel to close the form after successful submission
+            onCancel(); 
         } catch (err) {
             console.error("Error adding document: ", err);
             setError("Failed to log track. Check console for details. Ensure you are authenticated.");
@@ -772,7 +785,6 @@ const AddTrackForm = ({ db, userId, userName, onCancel }) => {
         }
     };
     
-    // Cleanup local object URL when component unmounts
     useEffect(() => {
         return () => {
             if (formData.audio_url && !formData.audio_url.startsWith('http')) {
@@ -802,7 +814,7 @@ const AddTrackForm = ({ db, userId, userName, onCancel }) => {
                             label="Artist Name (Human Contributor - Locked to Profile)" 
                             readOnly={true} 
                             value={formData.artist}
-                            onChange={handleChange} // Needs onChange even if readOnly for stability
+                            onChange={handleChange}
                         />
                     </div>
                     
@@ -813,7 +825,6 @@ const AddTrackForm = ({ db, userId, userName, onCancel }) => {
                         onChange={handleChange}
                     />
 
-                    {/* --- Audio File Upload / Link Section --- */}
                     <div className="mb-6 p-4 bg-gray-900 rounded-lg border border-red-800">
                         <label htmlFor="audioFile" className="block text-sm font-medium text-red-400 mb-2">
                             Audio Source (File Upload or Streaming Link)
@@ -837,7 +848,6 @@ const AddTrackForm = ({ db, userId, userName, onCancel }) => {
                             {selectedFile ? `Selected: ${selectedFile.name}` : "Or paste an external streaming link below."}
                         </p>
 
-                        {/* Fallback to manual link input if no file is selected */}
                          {!selectedFile && (
                             <div className="mt-4">
                                 <Input 
@@ -856,11 +866,9 @@ const AddTrackForm = ({ db, userId, userName, onCancel }) => {
                         </p>
                     </div>
                     
-                    {/* AI Specific Inputs */}
                     <div className="border-t border-gray-700 pt-4 mt-4">
                         <h3 className="text-xl text-cyan-400 font-semibold mb-3">AI Generation Details</h3>
                         
-                        {/* Main Prompt Area */}
                         <TextArea 
                             name="generation_prompt" 
                             label="Core AI Generation Prompt (The Input Text Used to Create the Song)" 
@@ -916,22 +924,19 @@ const AddTrackForm = ({ db, userId, userName, onCancel }) => {
 };
 
 
-// --- Main Application Component ---
-
 const App = () => {
-    const [route, setRoute] = useState('landing'); // 'landing' or 'archive'
-    const [db, setDb] = useState(null);
-    const [auth, setAuth] = useState(null);
-    const [userId, setUserId] = useState(null);
-    const [userName, setUserName] = useState(null);
-    const [userRole, setUserRole] = useState(null); // 'creator', 'moderator', 'admin'
-    const [tracks, setTracks] = useState([]);
+    const [route, setRoute] = useState('landing');
+    const [db, setDb] = useState<Firestore | null>(null);
+    const [auth, setAuth] = useState<any>(null);
+    const [userId, setUserId] = useState<string | null>(null);
+    const [userName, setUserName] = useState<string | null>(null);
+    const [userRole, setUserRole] = useState<string | null>(null);
+    const [tracks, setTracks] = useState<Track[]>([]);
     const [showAddForm, setShowAddForm] = useState(false);
     const [showCreativeDirector, setShowCreativeDirector] = useState(false);
-    const [currentPlaying, setCurrentPlaying] = useState(null);
+    const [currentPlaying, setCurrentPlaying] = useState<{ id: string, audioRef: React.RefObject<HTMLAudioElement> } | null>(null);
     const [isAuthReady, setIsAuthReady] = useState(false);
 
-    // --- Core Firebase Initialization and Authentication ---
     useEffect(() => {
         try {
             const app = initializeApp(firebaseConfig);
@@ -940,14 +945,12 @@ const App = () => {
             setDb(firestore);
             setAuth(firebaseAuth);
 
-            // 1. Set up Auth State Listener
             const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
                 if (user) {
                     const currentUserId = user.uid;
                     setUserId(currentUserId);
                     console.log("User authenticated. UID:", currentUserId);
 
-                    // 2. Fetch User Profile (Name and Role)
                     const profileDocRef = doc(firestore, `/artifacts/${appId}/users/${currentUserId}/profile/user_data`);
                     const profileSnap = await getDoc(profileDocRef);
 
@@ -956,31 +959,25 @@ const App = () => {
                         setUserName(data.name);
                         setUserRole(data.role || 'creator');
                     } else {
-                        // User exists but no profile name set yet, prompt them later.
                         setUserName(null);
                         setUserRole('creator');
                     }
                 } else {
-                    // Sign in anonymously if no token is provided (or after sign out)
                     await signInAnonymously(firebaseAuth)
                         .catch(e => console.error("Anonymous Sign-In Failed:", e));
                 }
                 setIsAuthReady(true);
             });
 
-            // Clean up the listener on component unmount
             return () => unsubscribe();
         } catch (e) {
             console.error("Firebase Initialization Failed:", e);
         }
     }, []);
 
-    // --- Grant Access Utility (Exposed to Console for Admin Setup) ---
-    // NOTE: This must be exposed after db and auth are confirmed available.
     useEffect(() => {
         if (db && userId) {
-            // Function to grant admin/moderator access (for owner use in console only)
-            const grantAccess = async (targetUserId, role) => {
+            const grantAccess = async (targetUserId: string, role: string) => {
                 if (!db || !targetUserId || !['admin', 'moderator', 'creator'].includes(role)) {
                     console.error("Invalid input for aibraryGrantAccess.");
                     return;
@@ -994,7 +991,6 @@ const App = () => {
                 }
             };
             
-            // Expose the function globally for easy access
             window.aibraryGrantAccess = grantAccess;
             window.aibraryGrantAccess.userId = userId;
 
@@ -1006,7 +1002,6 @@ const App = () => {
         }
     }, [db, userId]);
 
-    // --- Firestore Real-time Data Fetching ---
     useEffect(() => {
         if (!db || !isAuthReady) return;
 
@@ -1018,17 +1013,15 @@ const App = () => {
                 const fetchedTracks = snapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data()
-                }));
-                // Sort tracks by timestamp descending for latest first
+                })) as Track[];
                 fetchedTracks.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
                 setTracks(fetchedTracks);
             } catch (error) {
                 console.error("Error processing tracks snapshot:", error);
             }
         }, (error) => {
-            // Error listener for onSnapshot
-            console.error("Error fetching tracks:", error.message);
-            if (error.code === 'permission-denied') {
+            console.error("Error fetching tracks:", (error as Error).message);
+            if ((error as {code: string}).code === 'permission-denied') {
                  console.error("Missing or insufficient permissions. Ensure Firebase Security Rules allow public read/authenticated write access to the tracks collection.");
             }
         });
@@ -1036,8 +1029,7 @@ const App = () => {
         return () => unsubscribe();
     }, [db, isAuthReady]); 
     
-    // --- Gemini API Call Logic ---
-    const fetchGeminiGeneration = useCallback(async (userQuery, systemPrompt, useSearch, responseSchema = null) => {
+    const fetchGeminiGeneration = useCallback(async (userQuery: string, systemPrompt: string, useSearch: boolean, responseSchema: object | null = null) => {
         if (!GEMINI_API_KEY) {
             throw new Error("Gemini API Key is missing. Please set the GEMINI_API_KEY environment variable.");
         }
@@ -1082,31 +1074,25 @@ const App = () => {
                 }
             } catch (error) {
                 if (attempt === maxRetries) {
-                    throw new Error(`Gemini API Failed after ${maxRetries} attempts: ${error.message}`);
+                    throw new Error(`Gemini API Failed after ${maxRetries} attempts: ${(error as Error).message}`);
                 }
-                // Exponential backoff
                 await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
             }
         }
-        return null; // Should be unreachable
-    }, []); // Removed GEMINI_API_KEY from the dependency array
-    // --- Handlers ---
+        return null; 
+    }, []); 
 
     const handleSignOut = () => {
         if (auth) {
-            // Sign out the current user, which triggers onAuthStateChanged 
-            // to sign in anonymously again (resetting the session).
             signOut(auth).catch(e => console.error("Sign Out Failed:", e));
         }
     };
 
-    const handleProfileSet = (name, role) => {
+    const handleProfileSet = (name: string, role: string) => {
         setUserName(name);
         setUserRole(role);
     };
     
-    // --- View Renderer ---
-
     const renderContent = () => {
         if (route === 'landing') {
             return (
@@ -1130,7 +1116,6 @@ const App = () => {
             );
         }
 
-        // Archive View
         return (
             <div className="p-4 md:p-8">
                 <header className="flex justify-between items-center mb-8 pb-4 border-b-2 border-cyan-700">
@@ -1155,7 +1140,6 @@ const App = () => {
                     </div>
                 </header>
 
-                {/* Control Panel */}
                 <div className="flex flex-wrap justify-start md:justify-end gap-3 mb-8">
                     <button
                         onClick={() => setShowCreativeDirector(true)}
@@ -1173,7 +1157,6 @@ const App = () => {
                     </button>
                 </div>
 
-                {/* Track List */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {tracks.length > 0 ? (
                         tracks.map(track => (
@@ -1195,7 +1178,6 @@ const App = () => {
                     )}
                 </div>
 
-                {/* Modals */}
                 {showAddForm && (
                     <AddTrackForm 
                         db={db} 
@@ -1212,7 +1194,6 @@ const App = () => {
                     />
                 )}
 
-                {/* Profile Setup Modal */}
                 {isAuthReady && userId && !userName && (
                     <UserProfileSetup 
                         db={db} 
@@ -1229,6 +1210,7 @@ const App = () => {
             {renderContent()}
         </div>
     );
+);
 };
 
 export default App;
