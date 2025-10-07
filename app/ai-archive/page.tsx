@@ -991,10 +991,7 @@ const App: FC = () => {
                 }
             };
             
-            // Assign the function to the window object using a type assertion
-            (window.aibraryGrantAccess as any) = grantAccess;
-
-            // Then, assign the userId property.
+            window.aibraryGrantAccess = grantAccess;
             window.aibraryGrantAccess.userId = userId;
 
             console.log(`\n--- ADMIN INSTRUCTIONS ---`);
@@ -1040,11 +1037,22 @@ const App: FC = () => {
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
         const headers = { 'Content-Type': 'application/json' };
         
-        const payload = {
+        const payload: {
+            contents: { parts: { text: string; }[]; }[];
+            systemInstruction: { parts: { text: string; }[]; };
+            tools?: { google_search: {}; }[];
+            generationConfig?: {
+                responseMimeType: string;
+                responseSchema: object;
+            };
+        } = {
             contents: [{ parts: [{ text: userQuery }] }],
             systemInstruction: { parts: [{ text: systemPrompt }] },
-            tools: useSearch ? [{ "google_search": {} }] : undefined,
         };
+
+        if (useSearch) {
+            payload.tools = [{ "google_search": {} }];
+        }
 
         if (responseSchema) {
             payload.generationConfig = {
