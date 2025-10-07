@@ -821,7 +821,7 @@ const AddTrackForm: FC<AddTrackFormProps> = ({ db, userId, userName, onCancel })
                     <Input 
                         name="style" 
                         label="Genre/Style (e.g., Trapmetal, Spoken Word)" 
-                            value={formData.style}
+                        value={formData.style}
                         onChange={handleChange}
                     />
 
