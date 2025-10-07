@@ -456,290 +456,6 @@ const TrackCard: FC<TrackCardProps> = ({ track, currentPlaying, setCurrentPlayin
 };
 
 
-interface UserProfileSetupProps {
-    db: Firestore | null;
-    userId: string | null;
-    auth: Auth | null;
-    onProfileSet: (name: string, role: string) => void;
-}
-
-const UserProfileSetup: FC<UserProfileSetupProps> = ({ db, userId, auth, onProfileSet }) => {
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [isSaving, setIsSaving] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!name.trim() || !db || !userId || !email.trim() || !password.trim() || !auth || !auth.currentUser) {
-            setError('All fields are required to create a permanent account.');
-            return;
-        }
-
-        setIsSaving(true);
-        setError(null);
-        
-        try {
-            // Create a credential object with the email and password
-            const credential = EmailAuthProvider.credential(email, password);
-            
-            // Link the anonymous account to an email/password account
-            await linkWithCredential(auth.currentUser, credential);
-
-            // Save the profile data in a private user document
-            const profileDocRef = doc(db, `/artifacts/${appId}/users/${userId}/profile/user_data`);
-            
-            await setDoc(profileDocRef, { 
-                name: name.trim(), 
-                role: 'creator', 
-                created_at: serverTimestamp() 
-            }, { merge: true }); 
-            
-            onProfileSet(name.trim(), 'creator');
-        } catch (err) {
-            console.error("Error setting profile: ", err);
-            setError("Failed to save profile. Check console for details.");
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    return (
-        <div className="fixed inset-0 bg-gray-950 bg-opacity-90 flex justify-center items-center z-50 p-4">
-            <div className="bg-gray-800 p-8 rounded-xl w-full max-w-sm shadow-2xl border-4 border-cyan-500">
-                <h2 className="text-2xl font-bold mb-4 text-cyan-400 font-mono tracking-wider">SET ARTIST ID</h2>
-                <p className="text-sm text-gray-400 mb-6">
-                    Choose a **Public Display Name**. This name will be associated with your unique ID ({userId?.substring(0, 8)}...) and used for track attribution. Your default role is **CREATOR**. To save your identity permanently, enter an email and password.
-                </p>
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-4">
-                        <label htmlFor="artistName" className="block text-sm font-medium text-red-400 mb-1">
-                            Public Artist Name
-                        </label>
-                        <input
-                            type="text"
-                            id="artistName"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            className="w-full px-4 py-2 bg-gray-900 text-gray-200 border border-gray-700 rounded-lg focus:border-red-500 focus:ring-1 focus:ring-red-500 transition duration-150"
-                            required
-                            maxLength={30}
-                            placeholder="e.g., AIBRY"
-                        />
-                    </div>
-                    <div className="mb-4">
-                        <label htmlFor="email" className="block text-sm font-medium text-red-400 mb-1">
-                            Email
-                        </label>
-                        <input
-                            type="email"
-                            id="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="w-full px-4 py-2 bg-gray-900 text-gray-200 border border-gray-700 rounded-lg focus:border-red-500 focus:ring-1 focus:ring-red-500 transition duration-150"
-                            placeholder="your-email@example.com"
-                            required
-                        />
-                    </div>
-                    <div className="mb-4">
-                        <label htmlFor="password" className="block text-sm font-medium text-red-400 mb-1">
-                            Password
-                        </label>
-                        <input
-                            type="password"
-                            id="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-4 py-2 bg-gray-900 text-gray-200 border border-gray-700 rounded-lg focus:border-red-500 focus:ring-1 focus:ring-red-500 transition duration-150"
-                            required
-                        />
-                    </div>
-
-                    {error && <p className="text-red-500 mb-4">{error}</p>}
-
-                    <div className="flex justify-end mt-6">
-                        <button
-                            type="submit"
-                            className="px-6 py-2 rounded-lg bg-red-600 text-white font-bold hover:bg-red-700 transition duration-150 disabled:opacity-50 flex items-center"
-                            disabled={isSaving || !name.trim()}
-                        >
-                            {isSaving ? (
-                                <>
-                                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    SAVING...
-                                </>
-                            ) : 'CONFIRM IDENTITY'}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
-};
-
-
-interface CreativeDirectorModalProps {
-    onCancel: () => void;
-    fetchGeminiGeneration: (userQuery: string, systemPrompt: string, useSearch: boolean, responseSchema?: object | null) => Promise<{ text: string } | null>;
-}
-
-const CreativeDirectorModal: FC<CreativeDirectorModalProps> = ({ onCancel, fetchGeminiGeneration }) => {
-    const [mode, setMode] = useState('song');
-    const [theme, setTheme] = useState('');
-    const [resultText, setResultText] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
-    const handleGenerate = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!theme.trim()) return;
-
-        setIsLoading(true);
-        setResultText(null);
-        setError(null);
-
-        let systemPrompt = "";
-        let userQuery = "";
-        
-        const coreStyle = "trapmetal, industrial, aggressive, cinematic, glitches, 808s, distorted guitars. Themes: trauma, resilience, inner conflict.";
-
-        if (mode === 'song') {
-            systemPrompt = `You are a music producer and lyricist for the artist AIBRY. Your task is to generate a full, detailed song generation prompt for an AI model based on the user's core theme. The song must adhere to AIBRY's style (${coreStyle}). The output must be production-ready and include suggested instrumentation, tempo, and vocal cues (scream, rap, spoken word).`;
-            userQuery = `Generate a full, highly detailed, production-ready AI music generation prompt for a new song based on the core theme: "${theme}".`;
-        } else {
-            systemPrompt = `You are an art director for the AIBRY brand. Your task is to generate a detailed, cinematic, high-quality, text-to-image prompt suitable for an image generation model (like Imagen or Midjourney) based on the user's theme. The visual must be dark, surreal, and intense, using the AIBRY aesthetic (fragmented faces, neon lighting, ruined cityscapes). The output must be a single, long, detailed text-to-image prompt.`;
-            userQuery = `Generate one single, complex, ready-to-use text-to-image prompt for a cover art based on the core theme: "${theme}". Style must be: high-detail, cinematic lighting, photorealistic digital art, dark contrast, neon red and cyan accents, glitch effects.`;
-        }
-
-        try {
-            const result = await fetchGeminiGeneration(userQuery, systemPrompt, false);
-            if (result && result.text) {
-                setResultText(result.text.trim());
-            } else {
-                setError("Generation failed. Try a different theme or check network.");
-            }
-        } catch (err) {
-            console.error("Gemini API Error:", err);
-            setError(`Request failed: ${(err as Error).message}.`);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleCopy = () => {
-        if (resultText) {
-            const tempTextArea = document.createElement('textarea');
-            tempTextArea.value = resultText;
-            document.body.appendChild(tempTextArea);
-            tempTextArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(tempTextArea);
-            
-            console.log('Copied to clipboard!');
-        }
-    };
-
-    return (
-        <div className="fixed inset-0 bg-gray-950 bg-opacity-90 flex justify-center items-center z-50 p-4">
-            <div className="bg-gray-800 p-8 rounded-xl w-full max-w-4xl shadow-2xl border-4 border-cyan-500">
-                <h2 className="text-2xl font-bold mb-6 text-cyan-400 font-mono tracking-wider">AI CREATIVE DIRECTOR</h2>
-                
-                <div className="flex space-x-4 mb-6 border-b border-gray-700 pb-4">
-                    <button
-                        onClick={() => { setMode('song'); setResultText(null); setError(null); }}
-                        className={`px-4 py-2 font-semibold rounded-t-lg transition duration-150 ${
-                            mode === 'song' ? 'bg-red-600 text-gray-950 shadow-md shadow-red-500/50' : 'text-gray-400 hover:bg-gray-700'
-                        }`}
-                    >
-                        📝 NEW SONG PROMPT
-                    </button>
-                    <button
-                        onClick={() => { setMode('cover'); setResultText(null); setError(null); }}
-                        className={`px-4 py-2 font-semibold rounded-t-lg transition duration-150 ${
-                            mode === 'cover' ? 'bg-red-600 text-gray-950 shadow-md shadow-red-500/50' : 'text-gray-400 hover:bg-gray-700'
-                        }`}
-                    >
-                        🖼️ COVER ART PROMPT
-                    </button>
-                </div>
-
-                <form onSubmit={handleGenerate}>
-                    <div className="mb-4">
-                        <label htmlFor="themeInput" className="block text-sm font-medium text-red-400 mb-2">
-                            Core Theme/Concept Idea:
-                        </label>
-                        <input
-                            type="text"
-                            id="themeInput"
-                            value={theme}
-                            onChange={(e) => setTheme(e.target.value)}
-                            placeholder={mode === 'song' ? "e.g., The sound of digital anxiety and resilience" : "e.g., Fragmented face with neon scars in a rainy alley"}
-                            className="w-full px-4 py-2 bg-gray-900 text-gray-200 border border-gray-700 rounded-lg focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition duration-150"
-                            required
-                        />
-                    </div>
-                    
-                    <button
-                        type="submit"
-                        className="w-full py-3 rounded-lg bg-red-600 text-white font-bold hover:bg-red-700 transition duration-150 disabled:opacity-50 flex items-center justify-center"
-                        disabled={isLoading || !theme.trim()}
-                    >
-                            {isLoading ? (
-                                <span className="flex items-center">
-                                    <svg className="animate-spin h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    GENERATING {mode.toUpperCase()} PROMPT...
-                                </span>
-                            ) : (
-                                `ACTIVATE DIRECTOR (${mode === 'song' ? 'Generate Song Prompt' : 'Generate Cover Prompt'})`
-                            )}
-                    </button>
-                </form>
-
-                {/* Result Area */}
-                {error && <p className="text-red-500 mt-4 p-3 bg-gray-900 rounded">{error}</p>}
-                
-                {resultText && (
-                    <div className="mt-6 pt-4 border-t border-gray-700">
-                        <h3 className="text-lg font-semibold text-cyan-400 mb-2">
-                            {mode === 'song' ? 'NEW SONG GENERATION PROMPT' : 'TEXT-TO-IMAGE PROMPT'}
-                        </h3>
-                        <div className="relative p-4 bg-gray-900 rounded-lg border border-red-500/50">
-                            <pre className="whitespace-pre-wrap text-sm text-gray-200 font-mono pr-12">{resultText}</pre>
-                            <button 
-                                onClick={handleCopy}
-                                className="absolute top-2 right-2 p-2 bg-gray-700 rounded-lg text-xs text-white hover:bg-gray-600 transition"
-                                title="Copy to Clipboard"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v-4.5m-4.5 4.5v-4.5m-4.5 4.5v-4.5m18-6H5.25A2.25 2.25 0 003 5.25v13.5A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V5.25A2.25 2.25 0 0018.75 3zM12 18h.008v.008H12v-.008z" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                <div className="flex justify-end mt-6">
-                    <button
-                        type="button"
-                        onClick={onCancel}
-                        className="px-6 py-2 rounded-lg text-gray-300 border border-gray-700 hover:bg-gray-700 transition duration-150"
-                    >
-                        Close Director
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-
 interface AddTrackFormProps {
     db: Firestore | null;
     userId: string | null;
@@ -971,84 +687,6 @@ const AddTrackForm: FC<AddTrackFormProps> = ({ db, userId, userName, onCancel })
 };
 
 
-const AuthPage: FC = () => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [isLogin, setIsLogin] = useState(true);
-    const [error, setError] = useState('');
-    const router = useRouter();
-
-    const handleAuth = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError('');
-
-        try {
-            if (isLogin) {
-                await signInWithEmailAndPassword(auth, email, password);
-            } else {
-                await createUserWithEmailAndPassword(auth, email, password);
-            }
-            router.push('/ai-archive');
-        } catch (err: any) {
-            setError(err.message);
-        }
-    };
-
-    return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-gray-100 p-6">
-            <div className="w-full max-w-md bg-gray-800 rounded-xl p-8 shadow-2xl">
-                <h2 className="text-2xl font-bold mb-6 text-cyan-400 text-center">
-                    {isLogin ? 'Sign In' : 'Sign Up'}
-                </h2>
-                <form onSubmit={handleAuth}>
-                    <div className="mb-4">
-                        <label htmlFor="email" className="block text-sm font-medium text-red-400 mb-1">
-                            Email
-                        </label>
-                        <input
-                            type="email"
-                            id="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="w-full px-4 py-2 bg-gray-900 text-gray-200 border border-gray-700 rounded-lg"
-                            required
-                        />
-                    </div>
-                    <div className="mb-4">
-                        <label htmlFor="password" className="block text-sm font-medium text-red-400 mb-1">
-                            Password
-                        </label>
-                        <input
-                            type="password"
-                            id="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-4 py-2 bg-gray-900 text-gray-200 border border-gray-700 rounded-lg"
-                            required
-                        />
-                    </div>
-                    {error && <p className="text-red-500 mb-4">{error}</p>}
-                    <button
-                        type="submit"
-                        className="w-full py-3 rounded-lg bg-red-600 text-white font-bold hover:bg-red-700 transition"
-                    >
-                        {isLogin ? 'Sign In' : 'Sign Up'}
-                    </button>
-                </form>
-                <div className="text-center mt-6">
-                    <button
-                        onClick={() => setIsLogin(!isLogin)}
-                        className="text-cyan-400 hover:underline"
-                    >
-                        {isLogin ? 'Need an account? Sign Up' : 'Already have an account? Sign In'}
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-
 const App: FC = () => {
     const [route, setRoute] = useState('landing');
     const [userId, setUserId] = useState<string | null>(null);
@@ -1059,7 +697,6 @@ const App: FC = () => {
     const [showCreativeDirector, setShowCreativeDirector] = useState(false);
     const [currentPlaying, setCurrentPlaying] = useState<{ id: string, audioRef: React.RefObject<HTMLAudioElement> } | null>(null);
     const [isAuthReady, setIsAuthReady] = useState(false);
-    const router = useRouter();
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -1074,16 +711,13 @@ const App: FC = () => {
                     const data = profileSnap.data();
                     setUserName(data.name);
                     setUserRole(data.role || 'creator');
-                    // Automatically redirect to archive if a user is logged in
                     setRoute('archive');
                 } else {
-                    // Show a profile setup form for a new user
-                    // For now, we'll let them set a name on this page
                     setUserName(null);
                     setUserRole('creator');
+                    setRoute('setup-profile');
                 }
             } else {
-                // If no user, show the landing page or a sign-in form.
                 setUserId(null);
                 setUserName(null);
                 setRoute('landing');
@@ -1092,7 +726,7 @@ const App: FC = () => {
         });
 
         return () => unsubscribe();
-    }, [router]);
+    }, []);
     
     useEffect(() => {
         if (db && userId) {
@@ -1122,7 +756,7 @@ const App: FC = () => {
     }, [db, userId]);
 
     useEffect(() => {
-        if (!db || !isAuthReady) return;
+        if (!db || !isAuthReady || !userId) return;
 
         const tracksCollectionRef = collection(db, `/artifacts/${appId}/public/data/ai_assisted_tracks`);
         const q = query(tracksCollectionRef); 
@@ -1146,7 +780,7 @@ const App: FC = () => {
         });
 
         return () => unsubscribe();
-    }, [db, isAuthReady]); 
+    }, [db, isAuthReady, userId]); 
     
     const fetchGeminiGeneration = useCallback(async (userQuery: string, systemPrompt: string, useSearch: boolean, responseSchema: object | null = null) => {
         if (!GEMINI_API_KEY) {
@@ -1221,13 +855,10 @@ const App: FC = () => {
     const handleProfileSet = (name: string, role: string) => {
         setUserName(name);
         setUserRole(role);
+        setRoute('archive');
     };
-
+    
     const renderContent = () => {
-        if (!userId) {
-            return <AuthPage />;
-        }
-        
         if (route === 'landing') {
             return (
                 <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center">
@@ -1248,6 +879,21 @@ const App: FC = () => {
                     </button>
                 </div>
             );
+        }
+
+        if (route === 'setup-profile') {
+            return (
+                <UserProfileSetup 
+                    db={db} 
+                    userId={userId} 
+                    auth={auth}
+                    onProfileSet={handleProfileSet}
+                />
+            );
+        }
+
+        if (!userId) {
+            return <AuthPage />;
         }
 
         return (
@@ -1325,14 +971,6 @@ const App: FC = () => {
                     <CreativeDirectorModal 
                         onCancel={() => setShowCreativeDirector(false)} 
                         fetchGeminiGeneration={fetchGeminiGeneration}
-                    />
-                )}
-
-                {isAuthReady && userId && !userName && (
-                    <UserProfileSetup 
-                        db={db} 
-                        userId={userId} 
-                        onProfileSet={handleProfileSet}
                     />
                 )}
             </div>
