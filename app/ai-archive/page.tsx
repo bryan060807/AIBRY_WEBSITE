@@ -28,7 +28,7 @@ const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 // Mock Audio URL (Used as a fallback if no URL is provided)
 const MOCK_AUDIO_URL = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
 
-// --- Shared Form Components (Moved outside render functions for stability) ---
+// --- Shared Form Components ---
 
 interface InputProps {
     name: string;
