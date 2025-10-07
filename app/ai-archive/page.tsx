@@ -292,7 +292,7 @@ const TrackCard = ({ track, currentPlaying, setCurrentPlaying, db, userId, userR
                 </span>
                 {track.audio_url && !track.audio_url.startsWith('http') && (
                     <p className="text-red-400 mt-1">
-                        ⚠️ NOTE: Playback uses a mock URL. For persistent sharing, upload this file to a host and manually edit the track's URL.
+                        ⚠️ NOTE: Playback uses a mock URL. For persistent sharing, upload this file to a host and manually edit the track&apos;s URL.
                     </p>
                 )}
             </div>
@@ -1089,8 +1089,7 @@ const App = () => {
             }
         }
         return null; // Should be unreachable
-    }, [GEMINI_API_KEY]);
-
+    }, []); // Removed GEMINI_API_KEY from the dependency array
     // --- Handlers ---
 
     const handleSignOut = () => {
