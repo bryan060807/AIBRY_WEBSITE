@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef, FC } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, onAuthStateChanged, signOut, linkWithCredential, EmailAuthProvider, Auth } from 'firebase/auth'; 
+import { getAuth, signInAnonymously, onAuthStateChanged, signOut, linkWithCredential, EmailAuthProvider, Auth, User, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth'; 
 import { getFirestore, collection, query, onSnapshot, addDoc, serverTimestamp, doc, getDoc, setDoc, deleteDoc, DocumentData, Firestore } from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
 
-// --- Local Configuration Placeholders (To be replaced by environment variables locally) ---
-
+// --- Firebase Configuration ---
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
     authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -16,7 +16,13 @@ const firebaseConfig = {
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID;
+
+// Gemini API Key
 const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY; 
 
 // Mock Audio URL (Used as a fallback if no URL is provided)
@@ -466,20 +472,20 @@ const UserProfileSetup: FC<UserProfileSetupProps> = ({ db, userId, auth, onProfi
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!name.trim() || !db || !userId) return;
+        if (!name.trim() || !db || !userId || !email.trim() || !password.trim() || !auth || !auth.currentUser) {
+            setError('All fields are required to create a permanent account.');
+            return;
+        }
 
         setIsSaving(true);
         setError(null);
         
         try {
-            // Check if email and password are provided to create a permanent account
-            if (email.trim() && password.trim() && auth && auth.currentUser) {
-                // Create a credential object with the email and password
-                const credential = EmailAuthProvider.credential(email, password);
-                
-                // Link the anonymous account to an email/password account
-                await linkWithCredential(auth.currentUser, credential);
-            }
+            // Create a credential object with the email and password
+            const credential = EmailAuthProvider.credential(email, password);
+            
+            // Link the anonymous account to an email/password account
+            await linkWithCredential(auth.currentUser, credential);
 
             // Save the profile data in a private user document
             const profileDocRef = doc(db, `/artifacts/${appId}/users/${userId}/profile/user_data`);
@@ -504,7 +510,7 @@ const UserProfileSetup: FC<UserProfileSetupProps> = ({ db, userId, auth, onProfi
             <div className="bg-gray-800 p-8 rounded-xl w-full max-w-sm shadow-2xl border-4 border-cyan-500">
                 <h2 className="text-2xl font-bold mb-4 text-cyan-400 font-mono tracking-wider">SET ARTIST ID</h2>
                 <p className="text-sm text-gray-400 mb-6">
-                    Choose a **Public Display Name**. This name will be associated with your unique ID ({userId?.substring(0, 8)}...) and used for track attribution. Your default role is **CREATOR**.
+                    Choose a **Public Display Name**. This name will be associated with your unique ID ({userId?.substring(0, 8)}...) and used for track attribution. Your default role is **CREATOR**. To save your identity permanently, enter an email and password.
                 </p>
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4">
@@ -522,10 +528,6 @@ const UserProfileSetup: FC<UserProfileSetupProps> = ({ db, userId, auth, onProfi
                             placeholder="e.g., AIBRY"
                         />
                     </div>
-                    {/* Add Email and Password fields for linking the account */}
-                    <p className="text-xs text-gray-400 mt-6 mb-2">
-                        To save your identity permanently, enter an email and password.
-                    </p>
                     <div className="mb-4">
                         <label htmlFor="email" className="block text-sm font-medium text-red-400 mb-1">
                             Email
@@ -537,6 +539,7 @@ const UserProfileSetup: FC<UserProfileSetupProps> = ({ db, userId, auth, onProfi
                             onChange={(e) => setEmail(e.target.value)}
                             className="w-full px-4 py-2 bg-gray-900 text-gray-200 border border-gray-700 rounded-lg focus:border-red-500 focus:ring-1 focus:ring-red-500 transition duration-150"
                             placeholder="your-email@example.com"
+                            required
                         />
                     </div>
                     <div className="mb-4">
@@ -549,6 +552,7 @@ const UserProfileSetup: FC<UserProfileSetupProps> = ({ db, userId, auth, onProfi
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             className="w-full px-4 py-2 bg-gray-900 text-gray-200 border border-gray-700 rounded-lg focus:border-red-500 focus:ring-1 focus:ring-red-500 transition duration-150"
+                            required
                         />
                     </div>
 
@@ -967,10 +971,86 @@ const AddTrackForm: FC<AddTrackFormProps> = ({ db, userId, userName, onCancel })
 };
 
 
+const AuthPage: FC = () => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [isLogin, setIsLogin] = useState(true);
+    const [error, setError] = useState('');
+    const router = useRouter();
+
+    const handleAuth = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+
+        try {
+            if (isLogin) {
+                await signInWithEmailAndPassword(auth, email, password);
+            } else {
+                await createUserWithEmailAndPassword(auth, email, password);
+            }
+            router.push('/ai-archive');
+        } catch (err: any) {
+            setError(err.message);
+        }
+    };
+
+    return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-gray-100 p-6">
+            <div className="w-full max-w-md bg-gray-800 rounded-xl p-8 shadow-2xl">
+                <h2 className="text-2xl font-bold mb-6 text-cyan-400 text-center">
+                    {isLogin ? 'Sign In' : 'Sign Up'}
+                </h2>
+                <form onSubmit={handleAuth}>
+                    <div className="mb-4">
+                        <label htmlFor="email" className="block text-sm font-medium text-red-400 mb-1">
+                            Email
+                        </label>
+                        <input
+                            type="email"
+                            id="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full px-4 py-2 bg-gray-900 text-gray-200 border border-gray-700 rounded-lg"
+                            required
+                        />
+                    </div>
+                    <div className="mb-4">
+                        <label htmlFor="password" className="block text-sm font-medium text-red-400 mb-1">
+                            Password
+                        </label>
+                        <input
+                            type="password"
+                            id="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full px-4 py-2 bg-gray-900 text-gray-200 border border-gray-700 rounded-lg"
+                            required
+                        />
+                    </div>
+                    {error && <p className="text-red-500 mb-4">{error}</p>}
+                    <button
+                        type="submit"
+                        className="w-full py-3 rounded-lg bg-red-600 text-white font-bold hover:bg-red-700 transition"
+                    >
+                        {isLogin ? 'Sign In' : 'Sign Up'}
+                    </button>
+                </form>
+                <div className="text-center mt-6">
+                    <button
+                        onClick={() => setIsLogin(!isLogin)}
+                        className="text-cyan-400 hover:underline"
+                    >
+                        {isLogin ? 'Need an account? Sign Up' : 'Already have an account? Sign In'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
 const App: FC = () => {
     const [route, setRoute] = useState('landing');
-    const [db, setDb] = useState<Firestore | null>(null);
-    const [auth, setAuth] = useState<Auth | null>(null);
     const [userId, setUserId] = useState<string | null>(null);
     const [userName, setUserName] = useState<string | null>(null);
     const [userRole, setUserRole] = useState<string | null>(null);
@@ -979,45 +1059,41 @@ const App: FC = () => {
     const [showCreativeDirector, setShowCreativeDirector] = useState(false);
     const [currentPlaying, setCurrentPlaying] = useState<{ id: string, audioRef: React.RefObject<HTMLAudioElement> } | null>(null);
     const [isAuthReady, setIsAuthReady] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
-        try {
-            const app = initializeApp(firebaseConfig);
-            const firestore = getFirestore(app);
-            const firebaseAuth = getAuth(app);
-            setDb(firestore);
-            setAuth(firebaseAuth);
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                setUserId(user.uid);
+                console.log("User authenticated. UID:", user.uid);
 
-            const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
-                if (user) {
-                    const currentUserId = user.uid;
-                    setUserId(currentUserId);
-                    console.log("User authenticated. UID:", currentUserId);
+                const profileDocRef = doc(db, `/artifacts/${appId}/users/${user.uid}/profile/user_data`);
+                const profileSnap = await getDoc(profileDocRef);
 
-                    const profileDocRef = doc(firestore, `/artifacts/${appId}/users/${currentUserId}/profile/user_data`);
-                    const profileSnap = await getDoc(profileDocRef);
-
-                    if (profileSnap.exists()) {
-                        const data = profileSnap.data();
-                        setUserName(data.name);
-                        setUserRole(data.role || 'creator');
-                    } else {
-                        setUserName(null);
-                        setUserRole('creator');
-                    }
+                if (profileSnap.exists()) {
+                    const data = profileSnap.data();
+                    setUserName(data.name);
+                    setUserRole(data.role || 'creator');
+                    // Automatically redirect to archive if a user is logged in
+                    setRoute('archive');
                 } else {
-                    await signInAnonymously(firebaseAuth)
-                        .catch(e => console.error("Anonymous Sign-In Failed:", e));
+                    // Show a profile setup form for a new user
+                    // For now, we'll let them set a name on this page
+                    setUserName(null);
+                    setUserRole('creator');
                 }
-                setIsAuthReady(true);
-            });
+            } else {
+                // If no user, show the landing page or a sign-in form.
+                setUserId(null);
+                setUserName(null);
+                setRoute('landing');
+            }
+            setIsAuthReady(true);
+        });
 
-            return () => unsubscribe();
-        } catch (e) {
-            console.error("Firebase Initialization Failed:", e);
-        }
-    }, []);
-
+        return () => unsubscribe();
+    }, [router]);
+    
     useEffect(() => {
         if (db && userId) {
             const grantAccess = async (targetUserId: string, role: string) => {
@@ -1034,10 +1110,7 @@ const App: FC = () => {
                 }
             };
             
-            // Assign the function to the window object using a type assertion
             (window as any).aibraryGrantAccess = grantAccess;
-
-            // Then, assign the userId property.
             (window as any).aibraryGrantAccess.userId = userId;
 
             console.log(`\n--- ADMIN INSTRUCTIONS ---`);
@@ -1149,8 +1222,12 @@ const App: FC = () => {
         setUserName(name);
         setUserRole(role);
     };
-    
+
     const renderContent = () => {
+        if (!userId) {
+            return <AuthPage />;
+        }
+        
         if (route === 'landing') {
             return (
                 <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center">
@@ -1255,7 +1332,6 @@ const App: FC = () => {
                     <UserProfileSetup 
                         db={db} 
                         userId={userId} 
-                        auth={auth}
                         onProfileSet={handleProfileSet}
                     />
                 )}
