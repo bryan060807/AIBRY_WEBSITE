@@ -991,7 +991,10 @@ const App: FC = () => {
                 }
             };
             
-            window.aibraryGrantAccess = grantAccess;
+            // Assign the function to the window object using a type assertion
+            (window.aibraryGrantAccess as any) = grantAccess;
+
+            // Then, assign the userId property.
             window.aibraryGrantAccess.userId = userId;
 
             console.log(`\n--- ADMIN INSTRUCTIONS ---`);
