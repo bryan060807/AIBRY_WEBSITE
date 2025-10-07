@@ -821,7 +821,7 @@ const AddTrackForm: FC<AddTrackFormProps> = ({ db, userId, userName, onCancel })
                     <Input 
                         name="style" 
                         label="Genre/Style (e.g., Trapmetal, Spoken Word)" 
-                        value={formData.style}
+                            value={formData.style}
                         onChange={handleChange}
                     />
 
@@ -992,7 +992,7 @@ const App: FC = () => {
             };
             
             window.aibraryGrantAccess = grantAccess;
-            (window as any).aibraryGrantAccess.userId = userId;
+            window.aibraryGrantAccess.userId = userId;
 
             console.log(`\n--- ADMIN INSTRUCTIONS ---`);
             console.log(`Your current User ID is: ${userId}`);
