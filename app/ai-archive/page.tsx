@@ -102,12 +102,10 @@ const PlayButton: FC<PlayButtonProps> = ({ isPlaying, onClick }) => (
         `}
     >
         {isPlaying ? (
-            // Pause Icon (Square)
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-900" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" clipRule="evenodd" />
             </svg>
         ) : (
-            // Play Icon (Triangle)
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-900" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
             </svg>
@@ -451,6 +449,7 @@ const TrackCard: FC<TrackCardProps> = ({ track, currentPlaying, setCurrentPlayin
     );
 };
 
+
 interface UserProfileSetupProps {
     db: Firestore | null;
     userId: string | null;
@@ -693,6 +692,7 @@ const CreativeDirectorModal: FC<CreativeDirectorModalProps> = ({ onCancel, fetch
     );
 };
 
+
 interface AddTrackFormProps {
     db: Firestore | null;
     userId: string | null;
@@ -924,7 +924,7 @@ const AddTrackForm: FC<AddTrackFormProps> = ({ db, userId, userName, onCancel })
 };
 
 
-const App = () => {
+const App: FC = () => {
     const [route, setRoute] = useState('landing');
     const [db, setDb] = useState<Firestore | null>(null);
     const [auth, setAuth] = useState<any>(null);
@@ -992,7 +992,7 @@ const App = () => {
             };
             
             window.aibraryGrantAccess = grantAccess;
-            window.aibraryGrantAccess.userId = userId;
+            (window as any).aibraryGrantAccess.userId = userId;
 
             console.log(`\n--- ADMIN INSTRUCTIONS ---`);
             console.log(`Your current User ID is: ${userId}`);
@@ -1210,7 +1210,6 @@ const App = () => {
             {renderContent()}
         </div>
     );
-);
 };
 
 export default App;
