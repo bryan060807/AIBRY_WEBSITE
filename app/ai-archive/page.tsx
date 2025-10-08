@@ -5,6 +5,7 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged, signOut, linkWithCredential, EmailAuthProvider, Auth, User, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth'; 
 import { getFirestore, collection, query, onSnapshot, addDoc, serverTimestamp, doc, getDoc, setDoc, deleteDoc, DocumentData, Firestore } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@supabase/supabase-js';
 
 // --- Firebase Configuration ---
 const firebaseConfig = {
@@ -21,6 +22,12 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID;
+
+// --- Supabase Configuration ---
+const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
+);
 
 // Gemini API Key
 const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY; 
@@ -78,7 +85,7 @@ const TextArea: FC<TextAreaProps> = ({ name, label, value, onChange }) => (
         </label>
         <textarea
             id={name}
-            name={name}
+            name="generation_prompt"
             value={value}
             onChange={onChange}
             rows={4}
@@ -489,18 +496,8 @@ const AddTrackForm: FC<AddTrackFormProps> = ({ db, userId, userName, onCancel })
             
             setError(null);
             setSelectedFile(file);
-            
-            const localUrl = URL.createObjectURL(file);
-
-            setFormData(prev => ({ 
-                ...prev, 
-                audio_url: localUrl, 
-            }));
-            
-            return () => URL.revokeObjectURL(localUrl);
         } else {
             setSelectedFile(null);
-            setFormData(prev => ({ ...prev, audio_url: '' }));
         }
     };
 
@@ -520,15 +517,33 @@ const AddTrackForm: FC<AddTrackFormProps> = ({ db, userId, userName, onCancel })
         setError(null);
         
         try {
-            const tracksCollectionRef = collection(db!, `/artifacts/${appId}/public/data/ai_assisted_tracks`);
-            
             let finalAudioUrl = formData.audio_url; 
-            let audioFileName = selectedFile ? selectedFile.name : (finalAudioUrl.startsWith('http') ? finalAudioUrl : 'N/A');
 
             if (selectedFile) {
-                finalAudioUrl = audioFileName; 
+                // Supabase Upload Logic
+                const filePath = `audio_tracks/${userId}/${Date.now()}_${selectedFile.name}`;
+                
+                const { error: uploadError } = await supabase.storage
+                    .from('ai-tracks')
+                    .upload(filePath, selectedFile);
+                
+                if (uploadError) {
+                    throw uploadError;
+                }
+                
+                const { data: { publicUrl }, error: getUrlError } = supabase.storage
+                    .from('ai-tracks')
+                    .getPublicUrl(filePath);
+
+                if (getUrlError) {
+                    throw getUrlError;
+                }
+
+                finalAudioUrl = publicUrl;
             }
 
+            const tracksCollectionRef = collection(db!, `/artifacts/${appId}/public/data/ai_assisted_tracks`);
+            
             const newTrack = {
                 ...formData,
                 audio_url: finalAudioUrl,
@@ -625,7 +640,7 @@ const AddTrackForm: FC<AddTrackFormProps> = ({ db, userId, userName, onCancel })
                         )}
                          
                         <p className="text-xs text-red-400 mt-3 font-semibold">
-                            ⚠️ NOTE: File uploads only save the file name. For persistent sharing, the audio file must be hosted externally (e.g., AWS, Firebase Storage).
+                            ⚠️ NOTE: File uploads now use Supabase. A public URL will be generated.
                         </p>
                     </div>
                     
@@ -1063,3 +1078,4 @@ const App: FC = () => {
 };
 
 export default App;
+}
