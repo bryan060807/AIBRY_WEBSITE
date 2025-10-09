@@ -1,25 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo, useRef, FC } from 'react';
-import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, query, onSnapshot, addDoc, serverTimestamp, doc, getDoc, setDoc, deleteDoc, DocumentData, Firestore } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
-
-// --- Firebase Configuration ---
-const firebaseConfig = {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
-
-// Initialize Firebase for Firestore only
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID;
 
 // --- Supabase Configuration ---
 const supabase = createClient(
@@ -33,8 +16,28 @@ const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 // Mock Audio URL (Used as a fallback if no URL is provided)
 const MOCK_AUDIO_URL = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
 
-// --- Shared Form Components ---
+// --- Data Types ---
+interface Track {
+    id: string;
+    title: string;
+    artist: string;
+    style: string;
+    ai_role: string;
+    audio_url: string;
+    generation_prompt: string;
+    tags: string[];
+    uploader_id: string;
+    creator_name: string;
+    created_at: string;
+}
 
+interface Profile {
+    id: string;
+    name: string;
+    role: string;
+}
+
+// --- Shared Form Components ---
 interface InputProps {
     name: string;
     label: string;
@@ -124,33 +127,16 @@ const PlayButton: FC<PlayButtonProps> = ({ isPlaying, onClick }) => (
     </button>
 );
 
-interface Track {
-    id: string;
-    title: string;
-    artist: string;
-    style: string;
-    ai_role: string;
-    audio_url: string;
-    generation_prompt: string;
-    tags: string[];
-    uploader_id: string;
-    creator_name: string;
-    timestamp: {
-        seconds: number;
-    }
-}
-
 interface TrackCardProps {
     track: Track;
     currentPlaying: { id: string, audioRef: React.RefObject<HTMLAudioElement> } | null;
     setCurrentPlaying: (track: { id: string, audioRef: React.RefObject<HTMLAudioElement> } | null) => void;
-    db: Firestore | null;
     userId: string | null;
     userRole: string | null;
     fetchGeminiGeneration: (userQuery: string, systemPrompt: string, useSearch: boolean, responseSchema?: object | null) => Promise<{ text: string } | null>;
 }
 
-const TrackCard: FC<TrackCardProps> = ({ track, currentPlaying, setCurrentPlaying, db, userId, userRole, fetchGeminiGeneration }) => {
+const TrackCard: FC<TrackCardProps> = ({ track, currentPlaying, setCurrentPlaying, userId, userRole, fetchGeminiGeneration }) => {
     const isPlaying = currentPlaying?.id === track.id;
     const audioSource = track.audio_url && track.audio_url.startsWith('http') ? track.audio_url : MOCK_AUDIO_URL;
     const audioRef = useRef<HTMLAudioElement>(null);
@@ -249,17 +235,21 @@ const TrackCard: FC<TrackCardProps> = ({ track, currentPlaying, setCurrentPlayin
     };
 
     const handleDelete = async () => {
-        if (!canDelete || !db || !track.id) return;
+        if (!canDelete || !track.id) return;
 
         try {
             if (currentPlaying?.id === track.id) {
                  setCurrentPlaying(null);
             }
 
-            const trackPath = `/artifacts/${appId}/public/data/ai_assisted_tracks/${track.id}`;
-            const docRef = doc(db, trackPath);
+            // --- Supabase Delete Logic ---
+            const { error } = await supabase
+                .from('tracks')
+                .delete()
+                .eq('id', track.id);
+            
+            if (error) throw error;
 
-            await deleteDoc(docRef);
             console.log("Track deleted successfully:", track.id);
         } catch (error) {
             console.error("Error deleting document:", error);
@@ -462,13 +452,12 @@ const TrackCard: FC<TrackCardProps> = ({ track, currentPlaying, setCurrentPlayin
 
 
 interface AddTrackFormProps {
-    db: Firestore | null;
     userId: string | null;
     userName: string | null;
     onCancel: () => void;
 }
 
-const AddTrackForm: FC<AddTrackFormProps> = ({ db, userId, userName, onCancel }) => {
+const AddTrackForm: FC<AddTrackFormProps> = ({ userId, userName, onCancel }) => {
     const [formData, setFormData] = useState({
         title: '',
         artist: userName || 'AIBRY',
@@ -518,7 +507,6 @@ const AddTrackForm: FC<AddTrackFormProps> = ({ db, userId, userName, onCancel })
             let finalAudioUrl = formData.audio_url;
 
             if (selectedFile) {
-                // Supabase Upload Logic
                 const filePath = `audio_tracks/${userId}/${Date.now()}_${selectedFile.name}`;
 
                 const { error: uploadError } = await supabase.storage
@@ -542,18 +530,21 @@ const AddTrackForm: FC<AddTrackFormProps> = ({ db, userId, userName, onCancel })
                 finalAudioUrl = publicUrl;
             }
 
-            const tracksCollectionRef = collection(db!, `/artifacts/${appId}/public/data/ai_assisted_tracks`);
-
+            // --- Supabase Database Insert Logic ---
             const newTrack = {
                 ...formData,
                 audio_url: finalAudioUrl,
                 uploader_id: userId,
                 creator_name: userName || formData.artist,
                 tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-                timestamp: serverTimestamp()
+                // Supabase automatically handles 'created_at' with a default value
             };
 
-            await addDoc(tracksCollectionRef, newTrack);
+            const { error: insertError } = await supabase.from('tracks').insert([newTrack]);
+            if (insertError) {
+                throw insertError;
+            }
+
             onCancel();
         } catch (err) {
             console.error("Error adding document: ", err);
@@ -781,15 +772,18 @@ const AuthPage: FC = () => {
     );
 };
 
-// Placeholder for UserProfileSetup component
-const UserProfileSetup: FC<{ db: Firestore | null; userId: string | null; onProfileSet: (name: string, role: string) => void }> = ({ db, userId, onProfileSet }) => {
+interface UserProfileSetupProps {
+    userId: string | null;
+    onProfileSet: (name: string, role: string) => void;
+}
+
+const UserProfileSetup: FC<UserProfileSetupProps> = ({ userId, onProfileSet }) => {
     const [name, setName] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        // The userId is now passed as a prop, making the logic simpler
         if (!userId || !name) {
             setError("User not authenticated or name is empty.");
             return;
@@ -797,12 +791,13 @@ const UserProfileSetup: FC<{ db: Firestore | null; userId: string | null; onProf
         setIsSaving(true);
         setError(null);
         try {
-            // Update the profile table with the user's name
-            const { data, error } = await supabase
+            // --- Supabase Upsert Logic ---
+            const { error: upsertError } = await supabase
                 .from('profiles')
-                .update({ name: name })
-                .eq('id', userId); // Use the userId prop here
-            if (error) throw error;
+                .upsert({ id: userId, name: name })
+            
+            if (upsertError) throw upsertError;
+
             onProfileSet(name, 'creator');
         } catch (err) {
             console.error("Failed to set up profile:", err);
@@ -844,7 +839,6 @@ const UserProfileSetup: FC<{ db: Firestore | null; userId: string | null; onProf
     );
 };
 
-// Placeholder for CreativeDirectorModal component
 const CreativeDirectorModal: FC<{ onCancel: () => void; fetchGeminiGeneration: (userQuery: string, systemPrompt: string, useSearch: boolean, responseSchema?: object | null) => Promise<{ text: string } | null> }> = ({ onCancel, fetchGeminiGeneration }) => {
     const [userQuery, setUserQuery] = useState('');
     const [systemPrompt, setSystemPrompt] = useState('');
@@ -931,28 +925,23 @@ const App: FC = () => {
             (event, session) => {
                 if (session) {
                     setUserId(session.user.id);
-                    console.log("User authenticated. UID:", session.user.id);
-                    
-                    // You'll need to fetch the profile from Firestore or Supabase profiles table
-                    // to set the user name and role
                     const fetchProfile = async () => {
-                        const profileDocRef = doc(db, `/artifacts/${appId}/users/${session.user.id}/profile/user_data`);
-                        const profileSnap = await getDoc(profileDocRef);
+                        const { data, error } = await supabase
+                            .from('profiles')
+                            .select('*')
+                            .eq('id', session.user.id)
+                            .single();
                         
-                        if (profileSnap.exists()) {
-                            const data = profileSnap.data();
+                        if (error) {
+                            console.error("Error fetching profile:", error.message);
+                            setRoute('setup-profile');
+                        } else if (data) {
                             setUserName(data.name);
                             setUserRole(data.role || 'creator');
-                        } else {
-                            // User is new and needs a profile set up
-                            setUserName(null);
-                            setUserRole('creator');
-                            setRoute('setup-profile');
+                            setRoute('archive');
                         }
                     };
-                    
                     fetchProfile();
-                    setRoute('archive');
                 } else {
                     setUserId(null);
                     setUserName(null);
@@ -965,58 +954,39 @@ const App: FC = () => {
     }, []);
 
     useEffect(() => {
-        if (userId) {
-            const grantAccess = async (targetUserId: string, role: string) => {
-                if (!db || !targetUserId || !['admin', 'moderator', 'creator'].includes(role)) {
-                    console.error("Invalid input for aibraryGrantAccess.");
-                    return;
-                }
-                try {
-                    const profileDocRef = doc(db, `/artifacts/${appId}/users/${targetUserId}/profile/user_data`);
-                    await setDoc(profileDocRef, { role: role }, { merge: true });
-                    console.log(`Successfully granted role: ${role} to user ID: ${targetUserId}. Please SIGN OUT and re-enter ARCHIVE to refresh permissions.`);
-                } catch (error) {
-                    console.error("Failed to grant access:", error);
-                }
-            };
-
-            (window as any).aibraryGrantAccess = grantAccess;
-            (window as any).aibraryGrantAccess.userId = userId;
-
-            console.log(`\n--- ADMIN INSTRUCTIONS ---`);
-            console.log(`Your current User ID is: ${userId}`);
-            console.log(`To grant yourself ADMIN access, run the following command in this console and then refresh:`);
-            console.log(`aibraryGrantAccess(aibraryGrantAccess.userId, 'admin')`);
-            console.log(`--------------------------\n`);
-        }
-    }, [userId]);
-
-    useEffect(() => {
-        if (!isAuthReady || !userId) return;
-
-        const tracksCollectionRef = collection(db, `/artifacts/${appId}/public/data/ai_assisted_tracks`);
-        const q = query(tracksCollectionRef);
-
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            try {
-                const fetchedTracks = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                })) as Track[];
-                fetchedTracks.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-                setTracks(fetchedTracks);
-            } catch (error) {
-                console.error("Error processing tracks snapshot:", error);
+        if (!isAuthReady) return;
+        
+        const fetchTracks = async () => {
+            const { data: fetchedTracks, error } = await supabase
+                .from('tracks')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            if (error) {
+                console.error("Error fetching tracks:", error.message);
+                return;
             }
-        }, (error) => {
-            console.error("Error fetching tracks:", (error as Error).message);
-            if ((error as {code: string}).code === 'permission-denied') {
-                 console.error("Missing or insufficient permissions. Ensure Firebase Security Rules allow public read/authenticated write access to the tracks collection.");
-            }
-        });
 
-        return () => unsubscribe();
-    }, [isAuthReady, userId]);
+            setTracks(fetchedTracks as Track[]);
+        };
+
+        fetchTracks();
+        
+        // --- Supabase Realtime Subscription (Optional) ---
+        // You can enable this for real-time updates if you configure it.
+        /*
+        const subscription = supabase
+          .channel('public:tracks')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'tracks' }, payload => {
+            fetchTracks(); // Refetch data on any change
+          })
+          .subscribe();
+
+        return () => {
+          supabase.removeChannel(subscription);
+        };
+        */
+    }, [isAuthReady]);
 
     const fetchGeminiGeneration = useCallback(async (userQuery: string, systemPrompt: string, useSearch: boolean, responseSchema: object | null = null) => {
         if (!GEMINI_API_KEY) {
@@ -1118,7 +1088,6 @@ const App: FC = () => {
         if (route === 'setup-profile') {
             return (
                 <UserProfileSetup
-                    db={db}
                     userId={userId}
                     onProfileSet={handleProfileSet}
                 />
@@ -1178,7 +1147,6 @@ const App: FC = () => {
                                 track={track}
                                 currentPlaying={currentPlaying}
                                 setCurrentPlaying={setCurrentPlaying}
-                                db={db}
                                 userId={userId}
                                 userRole={userRole}
                                 fetchGeminiGeneration={fetchGeminiGeneration}
@@ -1193,7 +1161,6 @@ const App: FC = () => {
 
                 {showAddForm && (
                     <AddTrackForm
-                        db={db}
                         userId={userId}
                         userName={userName}
                         onCancel={() => setShowAddForm(false)}
