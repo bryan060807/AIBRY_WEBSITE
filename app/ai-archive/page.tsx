@@ -910,7 +910,7 @@ const App: FC = () => {
     const [userId, setUserId] = useState<string | null>(null);
     const [userName, setUserName] = useState<string | null>(null);
     const [userRole, setUserRole] = useState<string | null>(null);
-    const [tracks, setTracks] = useState<Track[]>([]);
+    const [tracks, setTracks] = useState<Track[] | null>(null); // State can be null before data loads
     const [showAddForm, setShowAddForm] = useState(false);
     const [showCreativeDirector, setShowCreativeDirector] = useState(false);
     const [currentPlaying, setCurrentPlaying] = useState<{ id: string, audioRef: React.RefObject<HTMLAudioElement> } | null>(null);
@@ -960,6 +960,7 @@ const App: FC = () => {
             
             if (error) {
                 console.error("Error fetching tracks:", error.message);
+                setTracks([]); // Set to empty array on error
                 return;
             }
 
@@ -1137,11 +1138,11 @@ const App: FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {tracks && tracks.length > 0 ? (
                         tracks.map(track => (
-                            <TrackCard 
-                                key={track.id} 
-                                track={track} 
-                                currentPlaying={currentPlaying} 
-                                setCurrentPlaying={setCurrentPlaying} 
+                            <TrackCard
+                                key={track.id}
+                                track={track}
+                                currentPlaying={currentPlaying}
+                                setCurrentPlaying={setCurrentPlaying}
                                 userId={userId}
                                 userRole={userRole}
                                 fetchGeminiGeneration={fetchGeminiGeneration}
@@ -1151,8 +1152,8 @@ const App: FC = () => {
                         <p className="col-span-full text-center text-xl text-gray-500 py-12">
                             {isAuthReady ? "No archived tracks found. Log your first AI project above!" : "Initializing Data Core..."}
                         </p>
-                     )}
-                 </div>
+                    )}
+                </div>
 
                 {showAddForm && (
                     <AddTrackForm
