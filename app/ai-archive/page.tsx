@@ -782,15 +782,15 @@ const AuthPage: FC = () => {
 };
 
 // Placeholder for UserProfileSetup component
-const UserProfileSetup: FC<{ onProfileSet: (name: string, role: string) => void }> = ({ onProfileSet }) => {
+const UserProfileSetup: FC<{ db: Firestore | null; userId: string | null; onProfileSet: (name: string, role: string) => void }> = ({ db, userId, onProfileSet }) => {
     const [name, setName] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        const user = (await supabase.auth.getUser()).data.user;
-        if (!user || !name) {
+        // The userId is now passed as a prop, making the logic simpler
+        if (!userId || !name) {
             setError("User not authenticated or name is empty.");
             return;
         }
@@ -801,7 +801,7 @@ const UserProfileSetup: FC<{ onProfileSet: (name: string, role: string) => void 
             const { data, error } = await supabase
                 .from('profiles')
                 .update({ name: name })
-                .eq('id', user.id);
+                .eq('id', userId); // Use the userId prop here
             if (error) throw error;
             onProfileSet(name, 'creator');
         } catch (err) {
@@ -812,7 +812,7 @@ const UserProfileSetup: FC<{ onProfileSet: (name: string, role: string) => void 
         }
     };
 
-     return (
+    return (
         <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center">
             <div className="bg-gray-800 p-8 rounded-xl w-full max-w-md shadow-2xl">
                 <h2 className="text-2xl font-bold mb-6 text-cyan-400">Setup Your Profile</h2>
