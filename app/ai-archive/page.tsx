@@ -910,7 +910,7 @@ const App: FC = () => {
     const [userId, setUserId] = useState<string | null>(null);
     const [userName, setUserName] = useState<string | null>(null);
     const [userRole, setUserRole] = useState<string | null>(null);
-    const [tracks, setTracks] = useState<Track[] | null>(null);
+    const [tracks, setTracks] = useState<Track[]>([]);
     const [showAddForm, setShowAddForm] = useState(false);
     const [showCreativeDirector, setShowCreativeDirector] = useState(false);
     const [currentPlaying, setCurrentPlaying] = useState<{ id: string, audioRef: React.RefObject<HTMLAudioElement> } | null>(null);
@@ -969,7 +969,6 @@ const App: FC = () => {
         fetchTracks();
         
         // --- Supabase Realtime Subscription (Optional) ---
-        // You can enable this for real-time updates if you configure it.
         /*
         const subscription = supabase
           .channel('public:tracks')
