@@ -812,12 +812,7 @@ const UserProfileSetup: FC<{ onProfileSet: (name: string, role: string) => void 
         }
     };
 
-    return (
-        // ... (rest of the component JSX remains the same)
-    );
-};
-
-    return (
+     return (
         <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center">
             <div className="bg-gray-800 p-8 rounded-xl w-full max-w-md shadow-2xl">
                 <h2 className="text-2xl font-bold mb-6 text-cyan-400">Setup Your Profile</h2>
