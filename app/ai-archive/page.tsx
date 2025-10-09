@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef, FC } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, onAuthStateChanged, signOut, linkWithCredential, EmailAuthProvider, Auth, User, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth'; 
+import { getAuth, signInAnonymously, onAuthStateChanged, signOut, linkWithCredential, EmailAuthProvider, Auth, User, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { getFirestore, collection, query, onSnapshot, addDoc, serverTimestamp, doc, getDoc, setDoc, deleteDoc, DocumentData, Firestore } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
@@ -30,7 +30,7 @@ const supabase = createClient(
 );
 
 // Gemini API Key
-const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY; 
+const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 
 // Mock Audio URL (Used as a fallback if no URL is provided)
 const MOCK_AUDIO_URL = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
@@ -62,7 +62,7 @@ const Input: FC<InputProps> = ({ name, label, type = 'text', readOnly = false, v
             readOnly={readOnly}
             placeholder={placeholder}
             className={`w-full px-4 py-2 rounded-lg border border-gray-700 transition duration-150 ${
-                readOnly 
+                readOnly
                     ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
                     : 'bg-gray-900 text-gray-200 focus:border-red-500 focus:ring-1 focus:ring-red-500'
             }`}
@@ -104,12 +104,12 @@ const PlayButton: FC<PlayButtonProps> = ({ isPlaying, onClick }) => (
     <button
         onClick={onClick}
         className={`
-            p-3 rounded-full transition-all duration-300 transform 
+            p-3 rounded-full transition-all duration-300 transform
             ${isPlaying
                 ? 'bg-red-600 hover:bg-red-700 shadow-lg shadow-red-500/50'
                 : 'bg-cyan-500 hover:bg-cyan-600 shadow-lg shadow-cyan-400/50'
             }
-            focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-offset-gray-900 
+            focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-offset-gray-900
             ${isPlaying ? 'focus:ring-red-500' : 'focus:ring-cyan-400'}
             active:scale-95
         `}
@@ -157,23 +157,23 @@ const TrackCard: FC<TrackCardProps> = ({ track, currentPlaying, setCurrentPlayin
     const audioSource = track.audio_url && track.audio_url.startsWith('http') ? track.audio_url : MOCK_AUDIO_URL;
     const audioRef = useRef<HTMLAudioElement>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [aiDescription, setAiDescription] = useState<string | null>(null); 
-    const [aiCoverConcepts, setAiCoverConcepts] = useState<string[] | null>(null); 
+    const [aiDescription, setAiDescription] = useState<string | null>(null);
+    const [aiCoverConcepts, setAiCoverConcepts] = useState<string[] | null>(null);
     const [isGeneratingPitch, setIsGeneratingPitch] = useState(false);
-    const [isGeneratingCover, setIsGeneratingCover] = useState(false); 
+    const [isGeneratingCover, setIsGeneratingCover] = useState(false);
 
     const canDelete = userId && (
-        track.uploader_id === userId || 
-        userRole === 'admin' || 
+        track.uploader_id === userId ||
+        userRole === 'admin' ||
         userRole === 'moderator'
     );
-    
+
     const handleGeneratePitch = async () => {
         if (!fetchGeminiGeneration || isGeneratingPitch) return;
 
         setIsGeneratingPitch(true);
-        setAiDescription(null); 
-        
+        setAiDescription(null);
+
         const systemPrompt = "You are a professional music pitch writer specializing in the trapmetal, industrial, and experimental genres. Create a short, compelling pitch (maximum 3 sentences) for the track based on the source prompt provided. The tone must be dark, digital, and intense. Include the genre and mood in the pitch.";
         const userQuery = `Track Title: "${track.title}". Source Prompt: "${track.generation_prompt}". Style/Tags: ${track.style}, ${track.tags.join(', ')}. Generate the pitch now.`;
 
@@ -218,7 +218,7 @@ const TrackCard: FC<TrackCardProps> = ({ track, currentPlaying, setCurrentPlayin
         const schema = {
             type: "OBJECT",
             properties: {
-                concepts: { 
+                concepts: {
                     type: "ARRAY",
                     description: "An array containing three distinct visual concepts for the cover art.",
                     items: {
@@ -255,12 +255,12 @@ const TrackCard: FC<TrackCardProps> = ({ track, currentPlaying, setCurrentPlayin
 
         try {
             if (currentPlaying?.id === track.id) {
-                 setCurrentPlaying(null); 
+                 setCurrentPlaying(null);
             }
 
             const trackPath = `/artifacts/${appId}/public/data/ai_assisted_tracks/${track.id}`;
             const docRef = doc(db, trackPath);
-            
+
             await deleteDoc(docRef);
             console.log("Track deleted successfully:", track.id);
         } catch (error) {
@@ -279,7 +279,7 @@ const TrackCard: FC<TrackCardProps> = ({ track, currentPlaying, setCurrentPlayin
                 currentPlaying.audioRef.current?.pause();
                 if (currentPlaying.audioRef.current) currentPlaying.audioRef.current.currentTime = 0;
             }
-            
+
             audioRef.current?.play().catch(e => console.error("Audio playback failed:", e));
             setCurrentPlaying({ id: track.id, audioRef });
         }
@@ -307,7 +307,7 @@ const TrackCard: FC<TrackCardProps> = ({ track, currentPlaying, setCurrentPlayin
                 <div className="flex-1">
                     <h3 className={titleClass}>{track.title || "Untitled Fragment"}</h3>
                     <p className="text-md text-gray-400 mb-2">
-                        {track.creator_name || track.artist || "Unknown Entity"} 
+                        {track.creator_name || track.artist || "Unknown Entity"}
                         {track.uploader_id && (
                              <span className="text-xs text-gray-500 ml-2" title={`Uploader ID: ${track.uploader_id}`}>
                                  (ID: {track.uploader_id.substring(0, 4)}...)
@@ -321,12 +321,12 @@ const TrackCard: FC<TrackCardProps> = ({ track, currentPlaying, setCurrentPlayin
             </div>
 
             <audio ref={audioRef} src={audioSource} preload="none" className="hidden" />
-            
+
             <div className="text-xs text-gray-500 mt-2 p-2 rounded bg-gray-900 border border-gray-700">
                 <span className="text-cyan-400 font-semibold mr-2">AUDIO SOURCE:</span>
                 <span className="text-gray-400 italic break-all">
-                    {track.audio_url && track.audio_url.startsWith('http') ? 
-                        track.audio_url 
+                    {track.audio_url && track.audio_url.startsWith('http') ?
+                        track.audio_url
                         : track.audio_url ? `Local File: ${track.audio_url} (Mock URL: ${audioSource})` : 'N/A'}
                 </span>
                 {track.audio_url && !track.audio_url.startsWith('http') && (
@@ -338,7 +338,7 @@ const TrackCard: FC<TrackCardProps> = ({ track, currentPlaying, setCurrentPlayin
 
             <div className="mt-4 pt-4 border-t border-gray-700">
                 <h4 className="text-lg font-bold text-cyan-400 mb-3 tracking-wider uppercase">AI/Source Code</h4>
-                
+
                 <div className={detailClass}>
                     <span className={labelClass}>Style/Genre:</span>
                     <span className="text-red-300 font-mono">{track.style || 'Trapmetal / Experimental'}</span>
@@ -348,7 +348,7 @@ const TrackCard: FC<TrackCardProps> = ({ track, currentPlaying, setCurrentPlayin
                     <span className={labelClass}>AI Role:</span>
                     {track.ai_role || 'Composition Support'}
                 </div>
-                
+
                 <div className="mt-3 bg-gray-900 p-3 rounded-lg border border-gray-700">
                     <span className={labelClass}>Generation Prompt:</span>
                     <p className="text-xs italic text-gray-400 leading-relaxed">
@@ -447,7 +447,7 @@ const TrackCard: FC<TrackCardProps> = ({ track, currentPlaying, setCurrentPlayin
                                 </button>
                             </div>
                         ) : (
-                            <button 
+                            <button
                                 onClick={() => setShowDeleteConfirm(true)}
                                 className={`text-xs px-2 py-1 rounded transition ${userRole === 'admin' || userRole === 'moderator' ? 'bg-red-900/50 text-red-300 hover:bg-red-900' : 'text-red-500 hover:text-red-400'}`}
                                 title={userRole === 'creator' ? 'Delete your own track' : `Delete track as ${userRole}`}
@@ -476,14 +476,14 @@ const AddTrackForm: FC<AddTrackFormProps> = ({ db, userId, userName, onCancel })
         artist: userName || 'AIBRY',
         style: 'Trapmetal/Spoken Word',
         ai_role: 'Lyrics & Melody Generation',
-        audio_url: '', 
+        audio_url: '',
         generation_prompt: '',
         tags: 'trauma, resilience, glitch',
     });
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -493,7 +493,7 @@ const AddTrackForm: FC<AddTrackFormProps> = ({ db, userId, userName, onCancel })
                 setFormData(prev => ({ ...prev, audio_url: '' }));
                 return;
             }
-            
+
             setError(null);
             setSelectedFile(file);
         } else {
@@ -515,35 +515,38 @@ const AddTrackForm: FC<AddTrackFormProps> = ({ db, userId, userName, onCancel })
 
         setIsSaving(true);
         setError(null);
-        
+
         try {
-            let finalAudioUrl = formData.audio_url; 
+            let finalAudioUrl = formData.audio_url;
 
             if (selectedFile) {
                 // Supabase Upload Logic
                 const filePath = `audio_tracks/${userId}/${Date.now()}_${selectedFile.name}`;
-                
+
                 const { error: uploadError } = await supabase.storage
                     .from('ai-tracks')
                     .upload(filePath, selectedFile);
-                
+
                 if (uploadError) {
                     throw uploadError;
                 }
-                
-                const { data: { publicUrl }, error: getUrlError } = supabase.storage
+
+                // Corrected line: removed 'error' destructuring
+                const { data } = supabase.storage
                     .from('ai-tracks')
                     .getPublicUrl(filePath);
 
-                if (getUrlError) {
-                    throw getUrlError;
+                const publicUrl = data.publicUrl;
+
+                if (!publicUrl) {
+                    throw new Error("Failed to get public URL.");
                 }
 
                 finalAudioUrl = publicUrl;
             }
 
             const tracksCollectionRef = collection(db!, `/artifacts/${appId}/public/data/ai_assisted_tracks`);
-            
+
             const newTrack = {
                 ...formData,
                 audio_url: finalAudioUrl,
@@ -554,7 +557,7 @@ const AddTrackForm: FC<AddTrackFormProps> = ({ db, userId, userName, onCancel })
             };
 
             await addDoc(tracksCollectionRef, newTrack);
-            onCancel(); 
+            onCancel();
         } catch (err) {
             console.error("Error adding document: ", err);
             setError("Failed to log track. Check console for details. Ensure you are authenticated.");
@@ -562,7 +565,7 @@ const AddTrackForm: FC<AddTrackFormProps> = ({ db, userId, userName, onCancel })
             setIsSaving(false);
         }
     };
-    
+
     useEffect(() => {
         return () => {
             if (formData.audio_url && !formData.audio_url.startsWith('http')) {
@@ -581,24 +584,24 @@ const AddTrackForm: FC<AddTrackFormProps> = ({ db, userId, userName, onCancel })
                 </p>
                 <form onSubmit={handleSubmit}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input 
-                            name="title" 
-                            label="Track Title" 
-                            value={formData.title} 
+                        <Input
+                            name="title"
+                            label="Track Title"
+                            value={formData.title}
                             onChange={handleChange}
                         />
-                        <Input 
-                            name="artist" 
-                            label="Artist Name (Human Contributor - Locked to Profile)" 
-                            readOnly={true} 
+                        <Input
+                            name="artist"
+                            label="Artist Name (Human Contributor - Locked to Profile)"
+                            readOnly={true}
                             value={formData.artist}
                             onChange={handleChange}
                         />
                     </div>
-                    
-                    <Input 
-                        name="style" 
-                        label="Genre/Style (e.g., Trapmetal, Spoken Word)" 
+
+                    <Input
+                        name="style"
+                        label="Genre/Style (e.g., Trapmetal, Spoken Word)"
                         value={formData.style}
                         onChange={handleChange}
                     />
@@ -621,16 +624,16 @@ const AddTrackForm: FC<AddTrackFormProps> = ({ db, userId, userName, onCancel })
                                                 hover:file:bg-cyan-600 cursor-pointer"
                             />
                         </div>
-                        
+
                         <p className="text-xs text-gray-500 mt-2 italic">
                             {selectedFile ? `Selected: ${selectedFile.name}` : "Or paste an external streaming link below."}
                         </p>
 
                          {!selectedFile && (
                             <div className="mt-4">
-                                <Input 
-                                    name="audio_url" 
-                                    label="External Streaming Link (e.g., SoundCloud/Bandcamp URL)" 
+                                <Input
+                                    name="audio_url"
+                                    label="External Streaming Link (e.g., SoundCloud/Bandcamp URL)"
                                     value={formData.audio_url}
                                     onChange={handleChange}
                                     required={false}
@@ -638,31 +641,31 @@ const AddTrackForm: FC<AddTrackFormProps> = ({ db, userId, userName, onCancel })
                                 />
                             </div>
                         )}
-                         
+
                         <p className="text-xs text-red-400 mt-3 font-semibold">
                             ⚠️ NOTE: File uploads now use Supabase. A public URL will be generated.
                         </p>
                     </div>
-                    
+
                     <div className="border-t border-gray-700 pt-4 mt-4">
                         <h3 className="text-xl text-cyan-400 font-semibold mb-3">AI Generation Details</h3>
-                        
-                        <TextArea 
-                            name="generation_prompt" 
-                            label="Core AI Generation Prompt (The Input Text Used to Create the Song)" 
+
+                        <TextArea
+                            name="generation_prompt"
+                            label="Core AI Generation Prompt (The Input Text Used to Create the Song)"
                             value={formData.generation_prompt}
                             onChange={handleChange}
                         />
-                        <Input 
-                            name="ai_role" 
-                            label="AI's Role in Production (e.g., Lyrics, Melody, Mastering)" 
+                        <Input
+                            name="ai_role"
+                            label="AI's Role in Production (e.g., Lyrics, Melody, Mastering)"
                             value={formData.ai_role}
                             onChange={handleChange}
                         />
-                        
-                        <Input 
-                            name="tags" 
-                            label="Tags (Comma separated: trauma, resilience, glitch)" 
+
+                        <Input
+                            name="tags"
+                            label="Tags (Comma separated: trauma, resilience, glitch)"
                             value={formData.tags}
                             onChange={handleChange}
                         />
@@ -861,18 +864,18 @@ const CreativeDirectorModal: FC<{ onCancel: () => void; fetchGeminiGeneration: (
                 <h2 className="text-2xl font-bold mb-6 text-cyan-500">AI CREATIVE DIRECTOR</h2>
                 <div className="mb-4">
                     <label className="block text-sm font-medium text-cyan-400 mb-1">User Query</label>
-                    <textarea 
-                        value={userQuery} 
-                        onChange={(e) => setUserQuery(e.target.value)} 
+                    <textarea
+                        value={userQuery}
+                        onChange={(e) => setUserQuery(e.target.value)}
                         rows={4}
                         className="w-full px-4 py-2 bg-gray-900 text-gray-200 border border-gray-700 rounded-lg resize-none"
                     />
                 </div>
                 <div className="mb-4">
                     <label className="block text-sm font-medium text-cyan-400 mb-1">System Prompt (Optional)</label>
-                    <textarea 
-                        value={systemPrompt} 
-                        onChange={(e) => setSystemPrompt(e.target.value)} 
+                    <textarea
+                        value={systemPrompt}
+                        onChange={(e) => setSystemPrompt(e.target.value)}
                         rows={2}
                         placeholder="e.g., You are a music marketing specialist."
                         className="w-full px-4 py-2 bg-gray-900 text-gray-200 border border-gray-700 rounded-lg resize-none"
@@ -945,7 +948,7 @@ const App: FC = () => {
 
         return () => unsubscribe();
     }, []);
-    
+
     useEffect(() => {
         if (userId) {
             const grantAccess = async (targetUserId: string, role: string) => {
@@ -961,7 +964,7 @@ const App: FC = () => {
                     console.error("Failed to grant access:", error);
                 }
             };
-            
+
             (window as any).aibraryGrantAccess = grantAccess;
             (window as any).aibraryGrantAccess.userId = userId;
 
@@ -977,7 +980,7 @@ const App: FC = () => {
         if (!isAuthReady || !userId) return;
 
         const tracksCollectionRef = collection(db, `/artifacts/${appId}/public/data/ai_assisted_tracks`);
-        const q = query(tracksCollectionRef); 
+        const q = query(tracksCollectionRef);
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             try {
@@ -998,8 +1001,8 @@ const App: FC = () => {
         });
 
         return () => unsubscribe();
-    }, [isAuthReady, userId]); 
-    
+    }, [isAuthReady, userId]);
+
     const fetchGeminiGeneration = useCallback(async (userQuery: string, systemPrompt: string, useSearch: boolean, responseSchema: object | null = null) => {
         if (!GEMINI_API_KEY) {
             throw new Error("Gemini API Key is missing. Please set the GEMINI_API_KEY environment variable.");
@@ -1007,7 +1010,7 @@ const App: FC = () => {
 
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
         const headers = { 'Content-Type': 'application/json' };
-        
+
         const payload: {
             contents: { parts: { text: string; }[]; }[];
             systemInstruction: { parts: { text: string; }[]; };
@@ -1047,10 +1050,10 @@ const App: FC = () => {
                     }
                     throw new Error(`API request failed with status ${response.status}`);
                 }
-                
+
                 const result = await response.json();
                 const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
-                
+
                 if (text) {
                     return { text };
                 }
@@ -1061,8 +1064,8 @@ const App: FC = () => {
                 await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
             }
         }
-        return null; 
-    }, []); 
+        return null;
+    }, []);
 
     const handleSignOut = () => {
         if (auth) {
@@ -1075,7 +1078,7 @@ const App: FC = () => {
         setUserRole(role);
         setRoute('archive');
     };
-    
+
     const renderContent = () => {
         if (route === 'landing') {
             return (
@@ -1101,9 +1104,9 @@ const App: FC = () => {
 
         if (route === 'setup-profile') {
             return (
-                <UserProfileSetup 
-                    db={db} 
-                    userId={userId} 
+                <UserProfileSetup
+                    db={db}
+                    userId={userId}
                     auth={auth}
                     onProfileSet={handleProfileSet}
                 />
@@ -1124,7 +1127,7 @@ const App: FC = () => {
                         {isAuthReady && userId && (
                             <>
                                 <div className="text-sm text-gray-400 hidden sm:block">
-                                    USER: <span className="text-red-400 font-semibold">{userName || 'GUEST'}</span> 
+                                    USER: <span className="text-red-400 font-semibold">{userName || 'GUEST'}</span>
                                     {userRole && <span className="text-xs text-cyan-400 ml-2">[{userRole.toUpperCase()}]</span>}
                                 </div>
                                 <button
@@ -1158,11 +1161,11 @@ const App: FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {tracks.length > 0 ? (
                         tracks.map(track => (
-                            <TrackCard 
-                                key={track.id} 
-                                track={track} 
-                                currentPlaying={currentPlaying} 
-                                setCurrentPlaying={setCurrentPlaying} 
+                            <TrackCard
+                                key={track.id}
+                                track={track}
+                                currentPlaying={currentPlaying}
+                                setCurrentPlaying={setCurrentPlaying}
                                 db={db}
                                 userId={userId}
                                 userRole={userRole}
@@ -1177,17 +1180,17 @@ const App: FC = () => {
                 </div>
 
                 {showAddForm && (
-                    <AddTrackForm 
-                        db={db} 
-                        userId={userId} 
-                        userName={userName} 
-                        onCancel={() => setShowAddForm(false)} 
+                    <AddTrackForm
+                        db={db}
+                        userId={userId}
+                        userName={userName}
+                        onCancel={() => setShowAddForm(false)}
                     />
                 )}
-                
+
                 {showCreativeDirector && (
-                    <CreativeDirectorModal 
-                        onCancel={() => setShowCreativeDirector(false)} 
+                    <CreativeDirectorModal
+                        onCancel={() => setShowCreativeDirector(false)}
                         fetchGeminiGeneration={fetchGeminiGeneration}
                     />
                 )}
