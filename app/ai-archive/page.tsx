@@ -1,4 +1,4 @@
-="use client";
+"use client";
 
 import React, { useState, useEffect, useCallback, useMemo, useRef, FC } from 'react';
 import { initializeApp } from 'firebase/app';
