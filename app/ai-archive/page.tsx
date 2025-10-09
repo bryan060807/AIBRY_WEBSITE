@@ -782,28 +782,27 @@ const AuthPage: FC = () => {
 };
 
 // Placeholder for UserProfileSetup component
-const UserProfileSetup: FC<{ db: Firestore | null; userId: string | null; onProfileSet: (name: string, role: string) => void }> = ({ db, userId, onProfileSet }) => {
+const UserProfileSetup: FC<{ onProfileSet: (name: string, role: string) => void }> = ({ onProfileSet }) => {
     const [name, setName] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!db || !userId || !name) return;
+        const user = (await supabase.auth.getUser()).data.user;
+        if (!user || !name) {
+            setError("User not authenticated or name is empty.");
+            return;
+        }
         setIsSaving(true);
         setError(null);
         try {
-            // Check if the Firestore document already exists
-            const profileDocRef = doc(db, `/artifacts/${appId}/users/${userId}/profile/user_data`);
-            const profileSnap = await getDoc(profileDocRef);
-            
-            if (profileSnap.exists()) {
-                // If it exists, update it
-                await setDoc(profileDocRef, { name, role: 'creator' }, { merge: true });
-            } else {
-                // Otherwise, create a new document
-                await setDoc(profileDocRef, { name, role: 'creator' });
-            }
+            // Update the profile table with the user's name
+            const { data, error } = await supabase
+                .from('profiles')
+                .update({ name: name })
+                .eq('id', user.id);
+            if (error) throw error;
             onProfileSet(name, 'creator');
         } catch (err) {
             console.error("Failed to set up profile:", err);
@@ -812,6 +811,11 @@ const UserProfileSetup: FC<{ db: Firestore | null; userId: string | null; onProf
             setIsSaving(false);
         }
     };
+
+    return (
+        // ... (rest of the component JSX remains the same)
+    );
+};
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center">
