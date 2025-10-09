@@ -242,12 +242,11 @@ const TrackCard: FC<TrackCardProps> = ({ track, currentPlaying, setCurrentPlayin
                  setCurrentPlaying(null);
             }
 
-            // --- Supabase Delete Logic ---
             const { error } = await supabase
                 .from('tracks')
                 .delete()
                 .eq('id', track.id);
-            
+
             if (error) throw error;
 
             console.log("Track deleted successfully:", track.id);
@@ -530,14 +529,13 @@ const AddTrackForm: FC<AddTrackFormProps> = ({ userId, userName, onCancel }) => 
                 finalAudioUrl = publicUrl;
             }
 
-            // --- Supabase Database Insert Logic ---
             const newTrack = {
                 ...formData,
                 audio_url: finalAudioUrl,
                 uploader_id: userId,
                 creator_name: userName || formData.artist,
                 tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-                // Supabase automatically handles 'created_at' with a default value
+                created_at: new Date().toISOString()
             };
 
             const { error: insertError } = await supabase.from('tracks').insert([newTrack]);
@@ -712,7 +710,6 @@ const AuthPage: FC = () => {
                 const { error } = await supabase.auth.signUp({ email, password });
                 if (error) throw error;
             }
-            // No explicit router push needed, onAuthStateChange will handle it
         } catch (err: any) {
             setError(err.message);
         }
@@ -791,7 +788,6 @@ const UserProfileSetup: FC<UserProfileSetupProps> = ({ userId, onProfileSet }) =
         setIsSaving(true);
         setError(null);
         try {
-            // --- Supabase Upsert Logic ---
             const { error: upsertError } = await supabase
                 .from('profiles')
                 .upsert({ id: userId, name: name })
@@ -914,7 +910,7 @@ const App: FC = () => {
     const [userId, setUserId] = useState<string | null>(null);
     const [userName, setUserName] = useState<string | null>(null);
     const [userRole, setUserRole] = useState<string | null>(null);
-    const [tracks, setTracks] = useState<Track[]>([]);
+    const [tracks, setTracks] = useState<Track[] | null>(null);
     const [showAddForm, setShowAddForm] = useState(false);
     const [showCreativeDirector, setShowCreativeDirector] = useState(false);
     const [currentPlaying, setCurrentPlaying] = useState<{ id: string, audioRef: React.RefObject<HTMLAudioElement> } | null>(null);
@@ -1140,7 +1136,7 @@ const App: FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {tracks.length > 0 ? (
+                    {tracks && tracks.length > 0 ? (
                         tracks.map(track => (
                             <TrackCard
                                 key={track.id}
