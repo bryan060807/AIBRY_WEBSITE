@@ -524,7 +524,7 @@ const AddTrackForm: FC<AddTrackFormProps> = ({ db, userId, userName, onCancel })
                 const filePath = `audio_tracks/${userId}/${Date.now()}_${selectedFile.name}`;
 
                 const { error: uploadError } = await supabase.storage
-                    .from('ai-tracks')
+                    .from('aibry-archive')
                     .upload(filePath, selectedFile);
 
                 if (uploadError) {
@@ -533,7 +533,7 @@ const AddTrackForm: FC<AddTrackFormProps> = ({ db, userId, userName, onCancel })
 
                 // Corrected line: removed 'error' destructuring
                 const { data } = supabase.storage
-                    .from('ai-tracks')
+                    .from('aibry-archive')
                     .getPublicUrl(filePath);
 
                 const publicUrl = data.publicUrl;
