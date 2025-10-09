@@ -949,11 +949,11 @@ const App: FC = () => {
         return () => subscription.unsubscribe();
     }, []);
 
-    useEffect(() => {
+     useEffect(() => {
         if (!isAuthReady) return;
         
         const fetchTracks = async () => {
-            const { data: fetchedTracks, error } = await supabase
+            const { data, error } = await supabase
                 .from('tracks')
                 .select('*')
                 .order('created_at', { ascending: false });
@@ -964,7 +964,12 @@ const App: FC = () => {
                 return;
             }
 
-            setTracks(fetchedTracks as Track[]);
+            // Explicitly check if data is a non-null array before setting the state.
+            if (Array.isArray(data)) {
+                setTracks(data as Track[]);
+            } else {
+                setTracks([]); // Default to an empty array if data is not an array.
+            }
         };
 
         fetchTracks();
