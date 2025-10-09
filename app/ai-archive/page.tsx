@@ -1,4 +1,4 @@
-"use client";
+="use client";
 
 import React, { useState, useEffect, useCallback, useMemo, useRef, FC } from 'react';
 import { initializeApp } from 'firebase/app';
@@ -779,6 +779,131 @@ const AuthPage: FC = () => {
     );
 };
 
+// Placeholder for UserProfileSetup component
+const UserProfileSetup: FC<{ db: Firestore | null; userId: string | null; auth: Auth; onProfileSet: (name: string, role: string) => void }> = ({ db, userId, auth, onProfileSet }) => {
+    const [name, setName] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const handleSave = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!db || !userId || !name) return;
+        setIsSaving(true);
+        setError(null);
+        try {
+            const profileDocRef = doc(db, `/artifacts/${appId}/users/${userId}/profile/user_data`);
+            await setDoc(profileDocRef, { name, role: 'creator' });
+            onProfileSet(name, 'creator');
+        } catch (err) {
+            console.error("Failed to set up profile:", err);
+            setError("Failed to save profile. Please try again.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    return (
+        <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center">
+            <div className="bg-gray-800 p-8 rounded-xl w-full max-w-md shadow-2xl">
+                <h2 className="text-2xl font-bold mb-6 text-cyan-400">Setup Your Profile</h2>
+                <form onSubmit={handleSave}>
+                    <div className="mb-4">
+                        <label htmlFor="name" className="block text-sm font-medium text-red-400 mb-1">
+                            Display Name
+                        </label>
+                        <input
+                            type="text"
+                            id="name"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="w-full px-4 py-2 bg-gray-900 text-gray-200 border border-gray-700 rounded-lg"
+                            required
+                        />
+                    </div>
+                    {error && <p className="text-red-500 mb-4">{error}</p>}
+                    <button
+                        type="submit"
+                        disabled={isSaving}
+                        className="w-full py-3 rounded-lg bg-red-600 text-white font-bold hover:bg-red-700 transition disabled:opacity-50"
+                    >
+                        {isSaving ? 'Saving...' : 'Save Profile'}
+                    </button>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+// Placeholder for CreativeDirectorModal component
+const CreativeDirectorModal: FC<{ onCancel: () => void; fetchGeminiGeneration: (userQuery: string, systemPrompt: string, useSearch: boolean, responseSchema?: object | null) => Promise<{ text: string } | null> }> = ({ onCancel, fetchGeminiGeneration }) => {
+    const [userQuery, setUserQuery] = useState('');
+    const [systemPrompt, setSystemPrompt] = useState('');
+    const [response, setResponse] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleGenerate = async () => {
+        if (!userQuery) return;
+        setIsLoading(true);
+        setResponse(null);
+        try {
+            const result = await fetchGeminiGeneration(userQuery, systemPrompt || 'You are a helpful assistant.', true);
+            setResponse(result?.text || 'No response from AI.');
+        } catch (e) {
+            setResponse(`Error: ${(e as Error).message}`);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-gray-950 bg-opacity-90 flex justify-center items-center z-50 p-4">
+            <div className="bg-gray-800 p-8 rounded-xl w-full max-w-2xl shadow-2xl border-4 border-cyan-500">
+                <h2 className="text-2xl font-bold mb-6 text-cyan-500">AI CREATIVE DIRECTOR</h2>
+                <div className="mb-4">
+                    <label className="block text-sm font-medium text-cyan-400 mb-1">User Query</label>
+                    <textarea 
+                        value={userQuery} 
+                        onChange={(e) => setUserQuery(e.target.value)} 
+                        rows={4}
+                        className="w-full px-4 py-2 bg-gray-900 text-gray-200 border border-gray-700 rounded-lg resize-none"
+                    />
+                </div>
+                <div className="mb-4">
+                    <label className="block text-sm font-medium text-cyan-400 mb-1">System Prompt (Optional)</label>
+                    <textarea 
+                        value={systemPrompt} 
+                        onChange={(e) => setSystemPrompt(e.target.value)} 
+                        rows={2}
+                        placeholder="e.g., You are a music marketing specialist."
+                        className="w-full px-4 py-2 bg-gray-900 text-gray-200 border border-gray-700 rounded-lg resize-none"
+                    />
+                </div>
+                <div className="flex justify-end space-x-4">
+                    <button
+                        onClick={onCancel}
+                        className="px-6 py-2 rounded-lg text-gray-300 border border-gray-700 hover:bg-gray-700 transition"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleGenerate}
+                        disabled={isLoading}
+                        className="px-6 py-2 rounded-lg bg-cyan-600 text-gray-900 font-bold hover:bg-cyan-700 transition disabled:opacity-50"
+                    >
+                        {isLoading ? 'Generating...' : 'Generate Response'}
+                    </button>
+                </div>
+                {response && (
+                    <div className="mt-6 p-4 bg-gray-700 rounded-lg">
+                        <h3 className="text-sm font-semibold text-cyan-300 mb-2">AI Response:</h3>
+                        <p className="text-gray-100 whitespace-pre-wrap">{response}</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
 
 const App: FC = () => {
     const [route, setRoute] = useState('landing');
@@ -822,7 +947,7 @@ const App: FC = () => {
     }, []);
     
     useEffect(() => {
-        if (db && userId) {
+        if (userId) {
             const grantAccess = async (targetUserId: string, role: string) => {
                 if (!db || !targetUserId || !['admin', 'moderator', 'creator'].includes(role)) {
                     console.error("Invalid input for aibraryGrantAccess.");
@@ -846,10 +971,10 @@ const App: FC = () => {
             console.log(`aibraryGrantAccess(aibraryGrantAccess.userId, 'admin')`);
             console.log(`--------------------------\n`);
         }
-    }, [db, userId]);
+    }, [userId]);
 
     useEffect(() => {
-        if (!db || !isAuthReady || !userId) return;
+        if (!isAuthReady || !userId) return;
 
         const tracksCollectionRef = collection(db, `/artifacts/${appId}/public/data/ai_assisted_tracks`);
         const q = query(tracksCollectionRef); 
@@ -873,7 +998,7 @@ const App: FC = () => {
         });
 
         return () => unsubscribe();
-    }, [db, isAuthReady, userId]); 
+    }, [isAuthReady, userId]); 
     
     const fetchGeminiGeneration = useCallback(async (userQuery: string, systemPrompt: string, useSearch: boolean, responseSchema: object | null = null) => {
         if (!GEMINI_API_KEY) {
