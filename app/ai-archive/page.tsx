@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef, FC } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, onAuthStateChanged, signOut, linkWithCredential, EmailAuthProvider, Auth, User, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { getFirestore, collection, query, onSnapshot, addDoc, serverTimestamp, doc, getDoc, setDoc, deleteDoc, DocumentData, Firestore } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
@@ -17,9 +16,8 @@ const firebaseConfig = {
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
+// Initialize Firebase for Firestore only
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 const db = getFirestore(app);
 const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID;
 
@@ -531,7 +529,6 @@ const AddTrackForm: FC<AddTrackFormProps> = ({ db, userId, userName, onCancel })
                     throw uploadError;
                 }
 
-                // Corrected line: removed 'error' destructuring
                 const { data } = supabase.storage
                     .from('aibry-archive')
                     .getPublicUrl(filePath);
@@ -718,11 +715,13 @@ const AuthPage: FC = () => {
 
         try {
             if (isLogin) {
-                await signInWithEmailAndPassword(auth, email, password);
+                const { error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) throw error;
             } else {
-                await createUserWithEmailAndPassword(auth, email, password);
+                const { error } = await supabase.auth.signUp({ email, password });
+                if (error) throw error;
             }
-            router.push('/ai-archive');
+            // No explicit router push needed, onAuthStateChange will handle it
         } catch (err: any) {
             setError(err.message);
         }
@@ -783,7 +782,7 @@ const AuthPage: FC = () => {
 };
 
 // Placeholder for UserProfileSetup component
-const UserProfileSetup: FC<{ db: Firestore | null; userId: string | null; auth: Auth; onProfileSet: (name: string, role: string) => void }> = ({ db, userId, auth, onProfileSet }) => {
+const UserProfileSetup: FC<{ db: Firestore | null; userId: string | null; onProfileSet: (name: string, role: string) => void }> = ({ db, userId, onProfileSet }) => {
     const [name, setName] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -794,8 +793,17 @@ const UserProfileSetup: FC<{ db: Firestore | null; userId: string | null; auth: 
         setIsSaving(true);
         setError(null);
         try {
+            // Check if the Firestore document already exists
             const profileDocRef = doc(db, `/artifacts/${appId}/users/${userId}/profile/user_data`);
-            await setDoc(profileDocRef, { name, role: 'creator' });
+            const profileSnap = await getDoc(profileDocRef);
+            
+            if (profileSnap.exists()) {
+                // If it exists, update it
+                await setDoc(profileDocRef, { name, role: 'creator' }, { merge: true });
+            } else {
+                // Otherwise, create a new document
+                await setDoc(profileDocRef, { name, role: 'creator' });
+            }
             onProfileSet(name, 'creator');
         } catch (err) {
             console.error("Failed to set up profile:", err);
@@ -920,33 +928,41 @@ const App: FC = () => {
     const [isAuthReady, setIsAuthReady] = useState(false);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                setUserId(user.uid);
-                console.log("User authenticated. UID:", user.uid);
-
-                const profileDocRef = doc(db, `/artifacts/${appId}/users/${user.uid}/profile/user_data`);
-                const profileSnap = await getDoc(profileDocRef);
-
-                if (profileSnap.exists()) {
-                    const data = profileSnap.data();
-                    setUserName(data.name);
-                    setUserRole(data.role || 'creator');
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            (event, session) => {
+                if (session) {
+                    setUserId(session.user.id);
+                    console.log("User authenticated. UID:", session.user.id);
+                    
+                    // You'll need to fetch the profile from Firestore or Supabase profiles table
+                    // to set the user name and role
+                    const fetchProfile = async () => {
+                        const profileDocRef = doc(db, `/artifacts/${appId}/users/${session.user.id}/profile/user_data`);
+                        const profileSnap = await getDoc(profileDocRef);
+                        
+                        if (profileSnap.exists()) {
+                            const data = profileSnap.data();
+                            setUserName(data.name);
+                            setUserRole(data.role || 'creator');
+                        } else {
+                            // User is new and needs a profile set up
+                            setUserName(null);
+                            setUserRole('creator');
+                            setRoute('setup-profile');
+                        }
+                    };
+                    
+                    fetchProfile();
                     setRoute('archive');
                 } else {
+                    setUserId(null);
                     setUserName(null);
-                    setUserRole('creator');
-                    setRoute('setup-profile');
+                    setRoute('landing');
                 }
-            } else {
-                setUserId(null);
-                setUserName(null);
-                setRoute('landing');
+                setIsAuthReady(true);
             }
-            setIsAuthReady(true);
-        });
-
-        return () => unsubscribe();
+        );
+        return () => subscription.unsubscribe();
     }, []);
 
     useEffect(() => {
@@ -1067,10 +1083,8 @@ const App: FC = () => {
         return null;
     }, []);
 
-    const handleSignOut = () => {
-        if (auth) {
-            signOut(auth).catch(e => console.error("Sign Out Failed:", e));
-        }
+    const handleSignOut = async () => {
+        await supabase.auth.signOut().catch(e => console.error("Supabase Sign Out Failed:", e));
     };
 
     const handleProfileSet = (name: string, role: string) => {
@@ -1107,7 +1121,6 @@ const App: FC = () => {
                 <UserProfileSetup
                     db={db}
                     userId={userId}
-                    auth={auth}
                     onProfileSet={handleProfileSet}
                 />
             );
