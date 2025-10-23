@@ -1,0 +1,77 @@
+/* app/todo/app.css */
+
+/* Custom Scrollbar for Task List */
+.custom-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.custom-scroll::-webkit-scrollbar-track {
+  background: #0a0a1a; /* Matches the input background */
+  border-radius: 10px;
+}
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: #e03b8b; /* Pink/Magenta Accent */
+  border-radius: 10px;
+}
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+  background: #ff66a3;
+}
+
+/* Modal Overlay & Content */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+.modal-content {
+  background-color: #131320; /* Matches app background */
+  padding: 24px;
+  border-radius: 12px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 10px 25px rgba(224, 59, 139, 0.4);
+  border: 1px solid #e03b8b;
+  transform: translateY(-20px);
+  animation: modal-open 0.3s ease-out forwards;
+}
+
+@keyframes modal-open {
+  from {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Completed Task Styling */
+.task-list-item.completed {
+  background-color: #0a0a1a;
+  color: #555;
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+/* Keyframe Animation for Focus Mode */
+@keyframes pulse-slow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(255, 71, 87, 0.4), 0 0 0 4px rgba(255, 71, 87, 0.0);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(255, 71, 87, 0.8), 0 0 0 4px rgba(255, 71, 87, 0.3);
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s infinite ease-in-out;
+}

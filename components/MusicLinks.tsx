@@ -44,7 +44,14 @@ export default function MusicLinks() {
           rel="noopener noreferrer"
           className={`flex items-center gap-2 px-4 py-2 rounded-md text-white font-medium ${link.bg} transition`}
         >
-          <Image src={link.icon} alt={link.name} width={20} height={20} />
+          <Image 
+            src={link.icon} 
+            alt={link.name} 
+            width={20} 
+            height={20} 
+            // FIX: Explicitly set style to prevent external CSS from breaking aspect ratio
+            style={{ height: 'auto' }} 
+          />
           <span>{link.name}</span>
         </a>
       ))}

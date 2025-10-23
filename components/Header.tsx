@@ -1,71 +1,82 @@
-"use client";
+// components/Header.tsx
 
-import Link from "next/link";
-import { useState } from "react";
-import { HiMenuAlt3, HiX } from "react-icons/hi";
-import { FaEnvelope } from "react-icons/fa";
-import NewsletterModal from "@/components/NewsletterModal";
+import Link from 'next/link';
+import Image from 'next/image';
+import { createServerSideClient } from '../utils/supabase/server';
+import { signOut } from '@/actions/auth-actions';
 
-export default function Header() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isNewsletterOpen, setNewsletterOpen] = useState(false);
+export default async function Header() {
+  const supabase = await createServerSideClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  return (
-    <header className="fixed left-0 right-0 top-0 z-50 border-b border-black bg-[#0f0f0f] py-4 text-white shadow">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4">
-        <Link href="/" className="text-lg font-bold">
-          AIBRY
-        </Link>
+  return (
+    <header className="sticky top-0 z-50 bg-black bg-opacity-80 backdrop-blur-md">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between p-4">
+        {/* Logo and Home Link */}
+        <Link href="/" className="flex items-center">
+          <Image
+            src="/images/logo.png"
+            alt="AIBRY Logo"
+            width={50}
+            height={50}
+            priority
+          />
+        </Link>
 
-        {/* Desktop Nav */}
-        <nav className="hidden space-x-6 md:flex">
-          <Link href="/" className="hover:text-[#629aa9]">Home</Link>
-          <Link href="/discography" className="hover:text-[#629aa9]">Discography</Link>
-          <Link href="/store" className="hover:text-[#629aa9]">Store</Link>
-          <Link href="/merch" className="hover:text-[#629aa9]">Merch</Link>
-          <Link href="/ai-archive" className="hover:text-[#629aa9]">AI Archive</Link>
-          <Link href="/about" className="hover:text-[#629aa9]">About</Link>
-          <Link href="/gallery" className="hover:text-[#629aa9]">Gallery</Link>
-          <button
-            onClick={() => setNewsletterOpen(true)}
-            className="flex items-center gap-1 hover:text-[#629aa9]"
-          >
-            <FaEnvelope />
-            Newsletter
-          </button>
-        </nav>
+        {/* Navigation Links */}
+        <div className="flex items-center space-x-6">
+          <Link
+            href="/"
+            className="text-white hover:text-[#629aa9] transition"
+          >
+            Home
+          </Link>
 
-        {/* Mobile Menu Button */}
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="md:hidden"
-          aria-label="Toggle menu"
-        >
-          {isOpen ? <HiX size={24} /> : <HiMenuAlt3 size={24} />}
-        </button>
-      </div>
+          {/* NEW: To-Do App Link - Styled with a clear identifier */}
+          <Link
+            href="/todo"
+            className="font-bold text-[#e03b8b] hover:text-white transition tracking-wider" // Uses the pink accent color from the To-Do app
+          >
+            /ROUTINE
+          </Link>
 
-      {/* Mobile Nav */}
-      {isOpen && (
-        <nav className="mt-4 space-y-2 px-4 pb-4 text-sm md:hidden">
-          <Link href="/" className="block hover:text-[#629aa9]">Home</Link>
-          <Link href="/discography" className="block hover:text-[#629aa9]">Discography</Link>
-          <Link href="/store" className="block hover:text-[#629aa9]">Store</Link>
-          <Link href="/merch" className="block hover:text-[#629aa9]">Merch</Link>
-          <Link href="/about" className="block hover:text-[#629aa9]">About</Link>
-          <Link href="/gallery" className="block hover:text-[#629aa9]">Gallery</Link>
-          <button
-            onClick={() => setNewsletterOpen(true)}
-            className="flex items-center gap-1 hover:text-[#629aa9]"
-          >
-            <FaEnvelope />
-            Newsletter
-          </button>
-        </nav>
-      )}
+          <Link
+            href="/forum"
+            className="text-white hover:text-[#629aa9] transition"
+          >
+            Community Forum
+          </Link>
 
-      {/* Modal */}
-      <NewsletterModal isOpen={isNewsletterOpen} onClose={() => setNewsletterOpen(false)} />
-    </header>
-  );
+          <a
+            href="https://aibry.bandcamp.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-white hover:text-[#629aa9] transition"
+          >
+            Music
+          </a>
+
+          {user ? (
+            // Display Sign Out button if user is logged in
+            <form action={signOut}>
+              <button
+                type="submit"
+                className="rounded bg-red-600 px-4 py-2 font-semibold text-white transition hover:bg-red-700"
+              >
+                Sign Out
+              </button>
+            </form>
+          ) : (
+            // Display Login button if user is not logged in
+            <Link
+              href="/login"
+              className="rounded bg-[#629aa9] px-4 py-2 font-semibold text-white transition hover:bg-[#4f7f86]"
+            >
+              Log In
+            </Link>
+          )}
+        </div>
+      </nav>
+    </header>
+  );
 }

@@ -26,28 +26,15 @@ export default function HomePage() {
         Welcome to my website — the official hub for my music and merch.
       </p>
 
-      {/* Music Link Buttons */}
-      <MusicLinks />
-
-      {/* Merch Preview */}
-      <section className="mt-20 rounded-lg border border-gray-800 bg-gray-900 p-8 shadow-lg">
-        <h2 className="mb-4 text-2xl font-semibold text-white">Official Merch</h2>
-        <p className="mb-6 text-gray-400">
-          New shirts, hoodies, and more available now. Rep AIBRY everywhere you go.
-        </p>
-        <a
-          href="/merch"
-          className="inline-block rounded bg-[#629aa9] px-6 py-3 font-semibold text-white transition hover:bg-[#4f7f86]"
-        >
-          Visit Merch Store
-        </a>
-      </section>
-
       {/* Testimonials */}
       <TestimonialsCarousel />
 
       {/* Testimonial Submission Form */}
       <TestimonialForm />
+
+      {/* Music Link Buttons */}
+      <MusicLinks />
+
     </main>
   );
 }
