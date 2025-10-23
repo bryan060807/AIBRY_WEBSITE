@@ -79,7 +79,8 @@ export default async function HopePage() {
               
               <p className="mt-1 text-sm text-gray-400">
                 {/* FIX 2: Safely access the display_name from the first element of the array */}
-                Started by **{post.user_id?.[0]?.display_name || 'Anonymous'}**
+                ```tsx
+                Started by **{post.user_id?.[0]?.display_name || 'Anonymous'}**
               </p>
             </Link>
           ))
