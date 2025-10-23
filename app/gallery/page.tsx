@@ -1,6 +1,7 @@
+// app/gallery/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react"; // <-- useCallback imported here
 import Image from "next/image";
 import { useSwipeable } from "react-swipeable";
 
@@ -36,11 +37,17 @@ export default function GalleryPage() {
   const [current, setCurrent] = useState(0);
   const total = imageFilenames.length;
 
-  // --- Navigation Handlers ---
-  const nextImage = () => setCurrent((prev) => (prev + 1) % total);
-  const prevImage = () => setCurrent((prev) => (prev - 1 + total) % total);
+  // --- Navigation Handlers (Stabilized with useCallback) ---
+  // The logic inside nextImage/prevImage relies on 'current' and 'total'.
+  // We use the functional update form (prev => ...) which eliminates the need to list 'current'
+  // as a dependency, only 'total' is required.
+  const nextImage = useCallback(() => setCurrent((prev) => (prev + 1) % total), [total]);
+  
+  const prevImage = useCallback(() => setCurrent((prev) => (prev - 1 + total) % total), [total]);
 
   // --- Auto Slideshow ---
+  // Now useEffect only runs when the nextImage function itself changes (which is never, due to useCallback), 
+  // satisfying the dependency rule.
   useEffect(() => {
     const interval = setInterval(nextImage, 5000); // 5 seconds
     return () => clearInterval(interval); // Cleanup
