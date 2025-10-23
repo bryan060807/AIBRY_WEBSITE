@@ -1,18 +1,18 @@
 // app/todo/ToDoApp.tsx (Supabase Version)
 
+'use client'; // <-- THIS IS THE CRITICAL FIX for the "useEffect" error
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
 // --- PROPS INTERFACE ---
 interface ToDoAppProps {
-    // These will now hold the Supabase URL and Anon Key
     supabaseUrl: string;
     supabaseAnonKey: string;
 }
 
 // --- GLOBAL STATE & UTILITIES ---
-// Helper functions remain the same as they are client-side only
 const getPriorityValue = (priority: string) => {
     switch (priority) {
         case 'High': return 1;
@@ -44,7 +44,6 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
     const [modal, setModal] = useState({ visible: false, title: '', text: '', confirmLabel: '', onConfirm: () => {} });
     const [realtimeChannel, setRealtimeChannel] = useState<RealtimeChannel | null>(null);
 
-    // Hardcoded table name for routine tasks
     const TASKS_TABLE = 'routine_tasks';
 
     // 1. SUPABASE INITIALIZATION & REAL-TIME LISTENER SETUP
@@ -57,13 +56,12 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
         try {
             // 1a. Initialize Supabase Client
             const client = createClient(supabaseUrl, supabaseAnonKey, {
-                auth: { persistSession: false }, // Using local-only tasks, no need for session persistence
+                auth: { persistSession: false }, 
             });
             setSupabase(client);
             setMessage('Supabase client initialized. Establishing real-time connection...');
 
             // 1b. Setup Real-time Listener (on insert, update, delete)
-            // Supabase Realtime uses Channels for listening to specific tables
             const channel = client
                 .channel('aibry_tasks_channel')
                 .on('postgres_changes', { event: '*', schema: 'public', table: TASKS_TABLE }, (payload) => {
@@ -94,7 +92,7 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
             setMessage("Error during Supabase initialization.");
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [supabaseUrl, supabaseAnonKey]); // Only runs on component mount/config change
+    }, [supabaseUrl, supabaseAnonKey]); 
 
 
     // 2. DATA FETCHING LOGIC (called on mount and real-time updates)
@@ -111,7 +109,6 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
 
         const fetchedTasks = data.map((task: any) => ({
             ...task,
-            // Supabase uses standard timestamps, no need for toMillis()
             timestampMs: new Date(task.created_at).getTime(),
             priority: task.priority || 'Low',
             targetTime: task.targetTime || ''
@@ -139,7 +136,6 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
                     return 1;
                 }
             }
-            // Fallback: Sort by creation timestamp
             return a.timestampMs - b.timestampMs;
         });
 
@@ -150,7 +146,7 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
     }, [isFocusMode]);
 
 
-    // 3. COUNTDOWN TIMER LOGIC (Unchanged from original Firebase version)
+    // 3. COUNTDOWN TIMER LOGIC
     useEffect(() => {
         let interval: NodeJS.Timeout | null = null;
         const targetTask = isFocusMode ? tasks.find(t => !t.completed) : null;
@@ -216,7 +212,6 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
                         completed: false,
                         priority: newPriority,
                         targetTime: newTargetTime,
-                        // created_at is handled by the Postgres DB
                     }
                 ]);
 
@@ -296,7 +291,7 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
         }
     };
 
-    // --- MODAL HANDLERS (Unchanged) ---
+    // --- MODAL HANDLERS ---
     const showModal = (title: string, text: string, confirmLabel: string, onConfirm: () => void) => {
         setModal({ visible: true, title, text, confirmLabel, onConfirm });
     };
@@ -310,7 +305,7 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
         hideModal();
     };
 
-    // --- FEATURE HANDLERS (Unchanged) ---
+    // --- FEATURE HANDLERS ---
     const handleToggleFocusMode = () => {
         const newMode = !isFocusMode;
         setIsFocusMode(newMode);
@@ -352,7 +347,7 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
         );
     }
     
-    // --- TASK LIST RENDERING (Unchanged) ---
+    // --- TASK LIST RENDERING ---
     const tasksToRender = useMemo(() => {
         return isFocusMode ? tasks.filter(t => !t.completed) : tasks;
     }, [tasks, isFocusMode]);
@@ -416,7 +411,7 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
 
 
     return (
-        <div className="flex items-start justify-center" style={{ backgroundColor: '#0a0a1a', minHeight: 'calc(100vh - 120px)' /* Adjusted to account for Header/Footer */}}>
+        <div className="flex items-start justify-center" style={{ backgroundColor: '#0a0a1a', minHeight: 'calc(100vh - 120px)'}}>
             {/* Main Application Container */}
             <div id="app-container" className="w-full max-w-md bg-[#131320] p-6 rounded-xl shadow-2xl text-white">
 
