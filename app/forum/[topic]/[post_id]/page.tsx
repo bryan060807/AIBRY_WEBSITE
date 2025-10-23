@@ -5,6 +5,7 @@ import React from 'react';
 import { createServerSideClient } from '@/utils/supabase/server';
 import { notFound } from 'next/navigation';
 
+
 interface PostPageProps {
   params: {
     topic: string;
@@ -23,7 +24,9 @@ interface PostType {
 
 
 export default async function PostPage({ params }: PostPageProps) {
-  const supabase = createServerSideClient();
+  // FIX: MUST await the creation of the server-side Supabase client.
+  // The client function returns a Promise, and we must resolve it before calling .from()
+  const supabase = await createServerSideClient();
 
   const { data: post, error } = await supabase
     .from('forum_posts')
@@ -37,6 +40,7 @@ export default async function PostPage({ params }: PostPageProps) {
   }
 
   // Determine the display name: safely access the display_name from the first element of the user_id array
+  // This was the fix for the previous build error.
   const authorName = post.user_id?.[0]?.display_name || 'Anonymous';
 
 
@@ -54,7 +58,6 @@ export default async function PostPage({ params }: PostPageProps) {
         
         {/* Post Content */}
         <div className="prose prose-invert max-w-none text-gray-300">
-          {/* In a real app, you might render markdown or sanitize this content */}
           <p>{post.content}</p>
         </div>
 
