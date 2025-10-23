@@ -1,6 +1,6 @@
 // app/todo/ToDoApp.tsx (Supabase Version)
 
-'use client'; // <-- THIS IS THE CRITICAL FIX for the "useEffect" error
+'use client'; // <-- MUST HAVE for Hooks (useEffect, useState)
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createClient } from '@supabase/supabase-js';
@@ -10,6 +10,17 @@ import { RealtimeChannel } from '@supabase/supabase-js';
 interface ToDoAppProps {
     supabaseUrl: string;
     supabaseAnonKey: string;
+}
+
+// --- NEW INTERFACE FOR TASK OBJECTS ---
+interface TodoTask {
+    id: number;
+    text: string;
+    completed: boolean;
+    priority: string;
+    targetTime: string;
+    timestampMs: number;
+    created_at: string; // Used internally for conversion to timestampMs
 }
 
 // --- GLOBAL STATE & UTILITIES ---
@@ -34,7 +45,8 @@ const getPriorityClasses = (priority: string) => {
 // --- CORE APPLICATION COMPONENT ---
 const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
     const [supabase, setSupabase] = useState<any>(null);
-    const [tasks, setTasks] = useState<any[]>([]);
+    // Applied the TodoTask[] type to the main tasks state array
+    const [tasks, setTasks] = useState<TodoTask[]>([]);
     const [newTaskText, setNewTaskText] = useState('');
     const [newPriority, setNewPriority] = useState('Medium');
     const [newTargetTime, setNewTargetTime] = useState('');
@@ -54,19 +66,16 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
         }
 
         try {
-            // 1a. Initialize Supabase Client
             const client = createClient(supabaseUrl, supabaseAnonKey, {
                 auth: { persistSession: false }, 
             });
             setSupabase(client);
             setMessage('Supabase client initialized. Establishing real-time connection...');
 
-            // 1b. Setup Real-time Listener (on insert, update, delete)
             const channel = client
                 .channel('aibry_tasks_channel')
                 .on('postgres_changes', { event: '*', schema: 'public', table: TASKS_TABLE }, (payload) => {
                     console.log('Realtime change received:', payload.eventType);
-                    // Trigger a re-fetch to ensure the sorting logic is applied correctly client-side
                     fetchTasks(client); 
                 })
                 .subscribe((status) => {
@@ -80,7 +89,6 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
 
             setRealtimeChannel(channel);
 
-            // Cleanup function for useEffect
             return () => {
                 if (channel) {
                     channel.unsubscribe();
@@ -107,14 +115,15 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
             return;
         }
 
-        const fetchedTasks = data.map((task: any) => ({
+        // FIX 2: Explicitly type the fetched tasks array using the new interface
+        const fetchedTasks: TodoTask[] = data.map((task: any) => ({
             ...task,
             timestampMs: new Date(task.created_at).getTime(),
             priority: task.priority || 'Low',
             targetTime: task.targetTime || ''
         }));
 
-        // Apply complex client-side sorting logic (same as before)
+        // FIX 3: TypeScript is now happy because 'a' and 'b' are implicitly TodoTask objects
         fetchedTasks.sort((a, b) => {
             if (a.completed !== b.completed) {
                 return a.completed ? 1 : -1;
@@ -146,10 +155,11 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
     }, [isFocusMode]);
 
 
-    // 3. COUNTDOWN TIMER LOGIC
+    // 3. COUNTDOWN TIMER LOGIC 
     useEffect(() => {
         let interval: NodeJS.Timeout | null = null;
-        const targetTask = isFocusMode ? tasks.find(t => !t.completed) : null;
+        // The task being focused on is now a TodoTask type
+        const targetTask = isFocusMode ? tasks.find(t => !t.completed) : null; 
 
         const updateTimer = () => {
             if (!targetTask || targetTask.completed || !targetTask.targetTime) {
@@ -325,7 +335,7 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
         );
     };
 
-    const handleTaskClick = (task: any) => {
+    const handleTaskClick = (task: TodoTask) => { // Type applied here
         if (task.completed) {
             toggleTask(task.id, task.completed);
         } else {
@@ -338,7 +348,7 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
         }
     };
 
-    const handleDeleteClick = (task: any) => {
+    const handleDeleteClick = (task: TodoTask) => { // Type applied here
         showModal(
             "DELETE RECORD WARNING",
             `Are you sure you want to delete "${task.text.substring(0, 30)}..." permanently? This action cannot be undone.`,
@@ -352,7 +362,7 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
         return isFocusMode ? tasks.filter(t => !t.completed) : tasks;
     }, [tasks, isFocusMode]);
 
-    const TaskItem: React.FC<{ task: any, index: number }> = ({ task, index }) => {
+    const TaskItem: React.FC<{ task: TodoTask, index: number }> = ({ task, index }) => { // Type applied here
         const isFocusedTask = isFocusMode && index === 0 && !task.completed;
 
         const DeleteIcon = () => (
