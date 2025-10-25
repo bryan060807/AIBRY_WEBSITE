@@ -40,6 +40,14 @@ export default async function Header() {
             /ROUTINE
           </Link>
 
+          {/* NEW MONDAY 2.0 LINK */}
+          <Link
+            href="/monday-gpt"
+            className="text-white hover:text-[#629aa9] transition"
+          >
+            Monday 2.0
+          </Link>
+
           <Link
             href="/forum"
             className="text-white hover:text-[#629aa9] transition"

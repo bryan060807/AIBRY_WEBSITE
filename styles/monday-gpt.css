@@ -1,0 +1,48 @@
+/* styles/monday-gpt.css */
+
+/* From index.css */
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; visibility: hidden; }
+}
+
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(15px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.fadeInUp {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+@keyframes typing {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes blink {
+  from, to { border-color: transparent; }
+  50% { border-color: #00ffcc; }
+}
+
+.typing {
+  overflow: hidden;
+  border-right: 2px solid #00ffcc;
+  white-space: nowrap;
+  animation: typing 2.2s steps(22, end), blink 0.8s step-end infinite;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* From App.css */
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

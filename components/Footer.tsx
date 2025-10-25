@@ -1,3 +1,5 @@
+// components/Footer.tsx
+
 "use client";
 
 import Link from "next/link";
@@ -19,6 +21,10 @@ export default function Footer() {
           <Link href="/about" className="hover:text-cassette-red">About</Link>
           <Link href="/gallery" className="hover:text-cassette-red">Gallery</Link>
           <Link href="/merch" className="hover:text-cassette-red">Merch</Link>
+          
+          {/* NEW MONDAY 2.0 LINK */}
+          <Link href="/monday-gpt" className="hover:text-cassette-red">Monday 2.0</Link>
+
           <button
             onClick={() => setNewsletterOpen(true)}
             className="flex items-center gap-1 hover:text-cassette-red"
