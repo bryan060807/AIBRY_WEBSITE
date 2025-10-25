@@ -6,8 +6,8 @@ import { createServerSideClient } from '../utils/supabase/server';
 import { signOut } from '@/actions/auth-actions';
 
 export default async function Header() {
-  const supabase = await createServerSideClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const supabase = await createServerSideClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
   let displayName: string | null = null;
 
@@ -23,38 +23,36 @@ export default async function Header() {
     displayName = profile?.display_name || user.email || "User";
   }
 
-  return (
-    <header className="sticky top-0 z-50 bg-black bg-opacity-80 backdrop-blur-md">
-      <nav className="mx-auto flex max-w-7xl items-center justify-between p-4">
-        {/* Logo and Home Link */}
-        <Link href="/" className="flex items-center">
-          <Image
-            src="/images/logo.png"
-            alt="AIBRY Logo"
-            width={50}
-            height={50}
-            priority
-          />
-        </Link>
+  return (
+    <header className="sticky top-0 z-50 bg-black bg-opacity-80 backdrop-blur-md">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between p-4">
+        {/* Logo and Home Link */}
+        <Link href="/" className="flex items-center">
+          <Image
+            src="/images/logo.png"
+            alt="AIBRY Logo"
+            width={50}
+            height={50}
+            priority
+          />
+        </Link>
 
-        {/* Navigation Links */}
-        <div className="flex items-center space-x-6">
-          <Link
-            href="/"
-            className="text-white hover:text-[#629aa9] transition"
-          >
-            Home
-          </Link>
+        {/* Navigation Links */}
+        <div className="flex items-center space-x-6">
+          <Link
+            href="/"
+            className="text-white hover:text-[#629aa9] transition"
+          >
+            Home
+          </Link>
 
-          {/* This link was updated in a previous step */}
-          <Link
-            href="/todo"
-            className="text-white hover:text-[#629aa9] transition"
-          >
-            Daily ToDo
-          </Link>
+          <Link
+            href="/todo"
+            className="text-white hover:text-[#629aa9] transition"
+          >
+            Daily ToDo
+          </Link>
 
-          {/* This link was updated in a previous step */}
           <Link
             href="/monday-gpt"
             className="text-white hover:text-[#629aa9] transition"
@@ -62,24 +60,24 @@ export default async function Header() {
             Monday 2.0
           </Link>
 
-          <Link
-            href="/forum"
-            className="text-white hover:text-[#629aa9] transition"
-          >
-            Community Forum
-          </Link>
+          <Link
+            href="/forum"
+            className="text-white hover:text-[#629aa9] transition"
+          >
+            Community Forum
+          </Link>
 
-          <a
-            href="https://aibry.bandcamp.com"
-            target="_blank"
-            rel="noopener noreferrer"
-          	className="text-white hover:text-[#629aa9] transition"
-          >
-            Music
-          </a>
+          <a
+            href="https://aibry.bandcamp.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-white hover:text-[#629aa9] transition"
+          >
+            Music
+          </a>
 
-          {user ? (
-          	// --- NEW: User Logged-In Section ---
+          {user ? (
+            // --- NEW: User Logged-In Section ---
             <div className="flex items-center space-x-4">
               {/* 1. Display User's Name */}
               <span className="text-sm font-medium text-gray-300">
@@ -95,68 +93,26 @@ export default async function Header() {
               </Link>
 
               {/* 3. Sign Out Button */}
-              <form action={signOut} className="flex">
-                <button
-                  type="submit"
-                  className="rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
-                >
-          _blank"
-            rel="noopener noreferrer"
-C           className="text-white hover:text-[#629aa9] transition"
-          >
-            Music
-          </a>
-
-          {user ? (
-            // --- UPDATED: User Logged-In Section ---
-s           <div className="flex items-center space-x-4">
-              {/* 1. Display User's Name */}
-// ...
-                <button
-                  type="submit"
-                  className="rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
-content="A                 >
-                  Sign Out
-                </button>
-              </form>
+              <form action={signOut} className="flex">
+                <button
+                  type="submit"
+                  className="rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
+                >
+                  Sign Out
+                </button>
+              </form>
             </div>
-          ) : (
-            // Display Login button if user is not logged in
-Setting               href="/login"
-    Then           className="rounded bg-[#629aa9] px-4 py-2 font-semibold text-white transition hover:bg-[#4f7f86]"
-            >
-              Log In
-          _blank"
-            rel="noopener noreferrer"
-            className="text-white hover:text-[#629aa9] transition"
-          >
-            Music
-    Note:     </a>
-
-          {user ? (
-            // --- UPDATED: User Logged-In Section ---
-s           <div className="flex items-center space-x-4">
-              {/* 1. Display User's Name */}
-// ...
-                <button
-                  type="submit"
-                  className="rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
-content="A                 >
-                  Sign Out
-                </button>
-              </form>
-            </div>
-Backing         ) : (
-            // Display Login button if user is not logged in
-            <Link
-              href="/login"
-              className="rounded bg-[#629aa9] px-4 py-2 font-semibold text-white transition hover:bg-[#4f7f86]"
-A           >
-              Log In
-            </Link>
-          )}
-        </div>
-      </nav>
-    </header>
-  );
+          ) : (
+            // --- Original Login Button ---
+            <Link
+              href="/login"
+              className="rounded bg-[#629aa9] px-4 py-2 font-semibold text-white transition hover:bg-[#4f7f86]"
+            >
+              Log In
+            </Link>
+          )}
+        </div>
+      </nav>
+    </header>
+  );
 }
