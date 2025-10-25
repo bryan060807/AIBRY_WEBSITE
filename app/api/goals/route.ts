@@ -1,14 +1,23 @@
 // app/api/goals/route.ts
-// Handles GET /goals and POST /goals
 
 import { supabase } from "@/lib/supabaseClient";
 import { NextResponse } from "next/server";
+import { createServerSideClient } from '@/utils/supabase/server'; // Import server client
 
 export async function GET() {
-  // Get all goals
+  // Get the logged-in user
+  const supabaseServer = await createServerSideClient();
+  const { data: { user } } = await supabaseServer.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Get all goals *for that user*
   const { data, error } = await supabase
     .from("goals")
     .select("*")
+    .eq('user_id', user.id) // <-- Only get goals for this user
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -19,12 +28,20 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  // Get the logged-in user
+  const supabaseServer = await createServerSideClient();
+  const { data: { user } } = await supabaseServer.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   // Add a new goal
   const { item, cost } = await request.json();
 
   const { data, error } = await supabase
     .from("goals")
-    .insert([{ item, cost, earned: 0 }]) // Set default earned
+    .insert([{ item, cost, earned: 0, user_id: user.id }]) // <-- Stamp with user's ID
     .select();
 
   if (error) {

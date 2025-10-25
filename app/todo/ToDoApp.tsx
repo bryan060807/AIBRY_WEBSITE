@@ -1,18 +1,13 @@
-// app/todo/ToDoApp.tsx (Supabase Version)
+// app/todo/ToDoApp.tsx (Supabase Version - SECURED)
 
-'use client'; // <-- MUST HAVE for Hooks (useEffect, useState)
+'use client'; 
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { createClient } from '@supabase/supabase-js';
+// REMOVED: createClient from '@supabase/supabase-js'
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { createClientSideClient } from '@/utils/supabase/client'; // <-- IMPORT our new client
 
-// --- PROPS INTERFACE ---
-interface ToDoAppProps {
-    supabaseUrl: string;
-    supabaseAnonKey: string;
-}
-
-// --- NEW INTERFACE FOR TASK OBJECTS ---
+// --- INTERFACE FOR TASK OBJECTS ---
 interface TodoTask {
     id: number;
     text: string;
@@ -20,7 +15,8 @@ interface TodoTask {
     priority: string;
     targetTime: string;
     timestampMs: number;
-    created_at: string; // Used internally for conversion to timestampMs
+    created_at: string; 
+    user_id: string; // <-- ADDED
 }
 
 // --- GLOBAL STATE & UTILITIES ---
@@ -35,17 +31,20 @@ const getPriorityValue = (priority: string) => {
 
 const getPriorityClasses = (priority: string) => {
     switch (priority) {
-        case 'High': return 'bg-[#ff4757] text-white'; // Aggressive Red
-        case 'Medium': return 'bg-[#ffb400] text-gray-900'; // Dark Gold/Amber
-        case 'Low': return 'bg-[#54a0ff] text-white'; // Shadow Blue
+        case 'High': return 'bg-[#ff4757] text-white'; 
+        case 'Medium': return 'bg-[#ffb400] text-gray-900'; 
+        case 'Low': return 'bg-[#54a0ff] text-white'; 
         default: return 'bg-gray-500 text-white';
     }
 };
 
+
 // --- CORE APPLICATION COMPONENT ---
-const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
-    const [supabase, setSupabase] = useState<any>(null);
-    // Applied the TodoTask[] type to the main tasks state array
+// REMOVED: Props from component definition
+const ToDoApp: React.FC = () => {
+    // UPDATED: Create the supabase client using our new helper
+    const [supabase] = useState(() => createClientSideClient());
+    
     const [tasks, setTasks] = useState<TodoTask[]>([]);
     const [newTaskText, setNewTaskText] = useState('');
     const [newPriority, setNewPriority] = useState('Medium');
@@ -60,28 +59,21 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
 
     // 1. SUPABASE INITIALIZATION & REAL-TIME LISTENER SETUP
     useEffect(() => {
-        if (!supabaseUrl || !supabaseAnonKey) {
-            setMessage("Error: Supabase config missing. Set SUPABASE_URL and SUPABASE_ANON_KEY environment variables.");
-            return;
-        }
-
         try {
-            const client = createClient(supabaseUrl, supabaseAnonKey, {
-                auth: { persistSession: false }, 
-            });
-            setSupabase(client);
             setMessage('Supabase client initialized. Establishing real-time connection...');
 
-            const channel = client
+            const channel = supabase
                 .channel('aibry_tasks_channel')
                 .on('postgres_changes', { event: '*', schema: 'public', table: TASKS_TABLE }, (payload) => {
                     console.log('Realtime change received:', payload.eventType);
-                    fetchTasks(client); 
+                    // Use the existing supabase instance
+                    fetchTasks(supabase); 
                 })
                 .subscribe((status) => {
                     if (status === 'SUBSCRIBED') {
                         setMessage("Real-time Protocol Engaged. Fetching initial tasks...");
-                        fetchTasks(client);
+                        // Use the existing supabase instance
+                        fetchTasks(supabase);
                     } else if (status === 'CHANNEL_ERROR') {
                         setMessage("Error: Real-time connection failed. Tasks will not update automatically.");
                     }
@@ -100,11 +92,15 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
             setMessage("Error during Supabase initialization.");
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [supabaseUrl, supabaseAnonKey]); 
+    }, [supabase]); // Depend on the supabase instance
 
 
-    // 2. DATA FETCHING LOGIC (called on mount and real-time updates)
+    // 2. DATA FETCHING LOGIC 
     const fetchTasks = useCallback(async (clientInstance: any) => {
+        // RLS POLICY NOTE:
+        // Because our RLS policies are set, .select('*') is safe.
+        // Supabase will *automatically* filter this to only return
+        // rows where 'user_id' matches the logged-in user.
         const { data, error } = await clientInstance
             .from(TASKS_TABLE)
             .select('*');
@@ -115,7 +111,6 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
             return;
         }
 
-        // FIX 2: Explicitly type the fetched tasks array using the new interface
         const fetchedTasks: TodoTask[] = data.map((task: any) => ({
             ...task,
             timestampMs: new Date(task.created_at).getTime(),
@@ -123,7 +118,6 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
             targetTime: task.targetTime || ''
         }));
 
-        // FIX 3: TypeScript is now happy because 'a' and 'b' are implicitly TodoTask objects
         fetchedTasks.sort((a, b) => {
             if (a.completed !== b.completed) {
                 return a.completed ? 1 : -1;
@@ -155,10 +149,9 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
     }, [isFocusMode]);
 
 
-    // 3. COUNTDOWN TIMER LOGIC 
+    // 3. COUNTDOWN TIMER LOGIC (No changes needed)
     useEffect(() => {
         let interval: NodeJS.Timeout | null = null;
-        // The task being focused on is now a TodoTask type
         const targetTask = isFocusMode ? tasks.find(t => !t.completed) : null; 
 
         const updateTimer = () => {
@@ -211,9 +204,18 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
     const handleAddTask = async (e: React.FormEvent) => {
         e.preventDefault();
         const text = newTaskText.trim();
-        if (!text || !supabase) return;
+        if (!text) return;
 
         try {
+            // --- THE CRITICAL FIX ---
+            // 1. Get the currently logged-in user's data
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                setMessage("Error: Not authenticated. Please log in.");
+                return;
+            }
+            
+            // 2. Insert the new task WITH the user's ID
             const { error } = await supabase
                 .from(TASKS_TABLE)
                 .insert([
@@ -222,8 +224,10 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
                         completed: false,
                         priority: newPriority,
                         targetTime: newTargetTime,
+                        user_id: user.id // <-- STAMP THE TASK WITH THE USER'S ID
                     }
                 ]);
+            // -------------------------
 
             if (error) throw error;
             
@@ -237,9 +241,13 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
         }
     };
 
-    const toggleTask = useCallback(async (taskId: number, completed: boolean) => {
-        if (!supabase) return;
+    // RLS POLICY NOTE:
+    // No changes are needed for toggle, delete, or purge.
+    // The RLS policy we set up will *automatically* prevent
+    // a user from affecting rows where the 'user_id' doesn't
+    // match their own. The queries can remain simple.
 
+    const toggleTask = useCallback(async (taskId: number, completed: boolean) => {
         try {
             const { error } = await supabase
                 .from(TASKS_TABLE)
@@ -255,8 +263,6 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
     }, [supabase]);
 
     const handleDeleteTask = useCallback(async (taskId: number) => {
-        if (!supabase) return;
-
         try {
             const { error } = await supabase
                 .from(TASKS_TABLE)
@@ -272,9 +278,8 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
     }, [supabase]);
 
     const initiatePurge = async () => {
-        if (!supabase) return;
-
         try {
+            // This will only select tasks for the logged-in user (due to RLS)
             const { count, error: countError } = await supabase
                 .from(TASKS_TABLE)
                 .select('id', { count: 'exact', head: true })
@@ -283,6 +288,7 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
             if (countError) throw countError;
 
             if (count && count > 0) {
+                // This will only delete tasks for the logged-in user (due to RLS)
                 const { error: deleteError } = await supabase
                     .from(TASKS_TABLE)
                     .delete()
@@ -301,15 +307,14 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
         }
     };
 
+    // --- (Rest of the file is identical) ---
     // --- MODAL HANDLERS ---
     const showModal = (title: string, text: string, confirmLabel: string, onConfirm: () => void) => {
         setModal({ visible: true, title, text, confirmLabel, onConfirm });
     };
-
     const hideModal = () => {
         setModal({ visible: false, title: '', text: '', confirmLabel: '', onConfirm: () => {} });
     };
-
     const handleModalConfirm = () => {
         modal.onConfirm();
         hideModal();
@@ -325,7 +330,6 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
             setMessage("Focus Protocol Disengaged. All tasks visible.");
         }
     };
-
     const handlePurgeClick = () => {
         showModal(
             "SYSTEM PURGE INITIATION",
@@ -334,8 +338,7 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
             initiatePurge
         );
     };
-
-    const handleTaskClick = (task: TodoTask) => { // Type applied here
+    const handleTaskClick = (task: TodoTask) => { 
         if (task.completed) {
             toggleTask(task.id, task.completed);
         } else {
@@ -347,8 +350,7 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
             );
         }
     };
-
-    const handleDeleteClick = (task: TodoTask) => { // Type applied here
+    const handleDeleteClick = (task: TodoTask) => { 
         showModal(
             "DELETE RECORD WARNING",
             `Are you sure you want to delete "${task.text.substring(0, 30)}..." permanently? This action cannot be undone.`,
@@ -362,9 +364,8 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
         return isFocusMode ? tasks.filter(t => !t.completed) : tasks;
     }, [tasks, isFocusMode]);
 
-    const TaskItem: React.FC<{ task: TodoTask, index: number }> = ({ task, index }) => { // Type applied here
+    const TaskItem: React.FC<{ task: TodoTask, index: number }> = ({ task, index }) => { 
         const isFocusedTask = isFocusMode && index === 0 && !task.completed;
-
         const DeleteIcon = () => (
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 10-2 0v6a1 1 0 102 0V8z" clipRule="evenodd" />
@@ -419,19 +420,16 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
         );
     };
 
-
+    // --- RENDER ---
     return (
         <div className="flex items-start justify-center" style={{ backgroundColor: '#0a0a1a', minHeight: 'calc(100vh - 120px)'}}>
-            {/* Main Application Container */}
             <div id="app-container" className="w-full max-w-md bg-[#131320] p-6 rounded-xl shadow-2xl text-white">
-
                 <h1 className="text-3xl font-extrabold mb-6 text-center text-[#e03b8b] uppercase tracking-wider">
                     THE PLAN FOR TODAY
                 </h1>
 
                 {/* Task Input Form */}
                 <form id="task-form" onSubmit={handleAddTask} className="flex flex-col gap-2 mb-6">
-                    {/* Task Text Input */}
                     <input
                         type="text"
                         id="task-input"
@@ -441,10 +439,7 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
                         onChange={(e) => setNewTaskText(e.target.value)}
                         className="flex-grow p-3 rounded-lg border-2 border-[#e03b8b] bg-[#0a0a1a] text-white focus:outline-none focus:border-white transition"
                     />
-
-                    {/* Priority and Time Group */}
                     <div id="priority-time-group" className="flex gap-2">
-                        {/* Priority Selector */}
                         <select 
                             id="priority-input" 
                             value={newPriority} 
@@ -455,8 +450,6 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
                             <option value="Medium">Priority: Medium</option>
                             <option value="High">Priority: High</option>
                         </select>
-
-                        {/* Target Time Input */}
                         <input
                             type="time"
                             id="time-input"
@@ -466,8 +459,6 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
                             title="Target Time"
                         />
                     </div>
-                    
-                    {/* Add Button */}
                     <button
                         type="submit"
                         className="bg-[#e03b8b] text-gray-900 font-bold p-3 rounded-lg hover:bg-white transition-colors duration-200 shadow-md transform hover:scale-[1.02] active:scale-[0.98]"
@@ -476,10 +467,8 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
                     </button>
                 </form>
 
-                {/* Loading/Message Indicator */}
                 <div id="message" className="text-center text-[#e03b8b] font-semibold mb-4">{message}</div>
 
-                {/* Task List Container */}
                 <div id="task-list" className="space-y-3 max-h-96 custom-scroll overflow-y-auto">
                     {tasksToRender.map((task, index) => (
                         <TaskItem key={task.id} task={task} index={index} />
@@ -491,10 +480,7 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
                     )}
                 </div>
 
-                {/* Footer / User ID Display and Purge Button */}
                 <div className="mt-6 pt-4 border-t border-gray-700 text-xs text-gray-500 text-center flex flex-col items-center">
-                    
-                    {/* Focus Protocol Button */}
                     <button 
                         id="focus-button"
                         onClick={handleToggleFocusMode}
@@ -507,8 +493,6 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
                     >
                         {isFocusMode ? "EXIT FOCUS PROTOCOL" : "ACTIVATE FOCUS PROTOCOL"}
                     </button>
-
-                    {/* Daily Cycle Reset Button */}
                     <button 
                         id="purge-button"
                         onClick={handlePurgeClick}
@@ -517,7 +501,6 @@ const ToDoApp: React.FC<ToDoAppProps> = ({ supabaseUrl, supabaseAnonKey }) => {
                     >
                         INITIATE PURGE
                     </button>
-                    
                     <p className="text-gray-500 mt-2">Persistence Protocol Activated: Supabase/Postgres</p>
                 </div>
             </div>

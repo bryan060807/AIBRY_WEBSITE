@@ -1,3 +1,5 @@
+// middleware.ts
+
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
@@ -25,25 +27,28 @@ export async function middleware(request: NextRequest) {
     // 2. Refresh the session to ensure the user's cookies are up-to-date
     const { data: { user } } = await supabase.auth.getUser();
 
+    // 3. Define all routes that require a user to be logged in
     const protectedPaths = [
       '/forum', 
       '/forum/story', 
       '/forum/hope', 
       '/forum/support',
+      '/todo', // Protected
+      '/monday-gpt' // Protected
     ];
 
     const isProtectedPath = protectedPaths.some(path => 
       request.nextUrl.pathname.startsWith(path)
     );
 
-    // 3. If accessing a protected path and NOT authenticated, redirect to login
+    // 4. If accessing a protected path and NOT authenticated, redirect to login
     if (isProtectedPath && !user) {
       const url = request.nextUrl.clone();
       url.pathname = '/login';
       return NextResponse.redirect(url);
     }
     
-    // Continue to the requested path if authenticated or if path is not protected
+    // 5. Continue to the requested path if authenticated or if path is not protected
     return NextResponse.next();
 
   } catch (e) {

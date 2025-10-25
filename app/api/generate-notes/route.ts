@@ -1,8 +1,18 @@
 // app/api/generate-notes/route.ts
 import { NextResponse } from 'next/server';
 import { generateProductionNotes } from '../../../lib/aiService';
+import { createServerSideClient } from '@/utils/supabase/server'; // <-- ADDED
 
 export async function POST(request: Request) {
+  // --- NEW SECURITY CHECK ---
+  const supabaseServer = await createServerSideClient();
+  const { data: { user } } = await supabaseServer.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  // --- END SECURITY CHECK ---
+
   try {
     const { lyrics, genre, style } = await request.json();
 
