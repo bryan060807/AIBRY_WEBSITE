@@ -32,16 +32,55 @@ export default async function Header() {
             src="/images/logo.png"
             alt="AIBRY Logo"
             width={50}
-    _blank"
-            rel="noopener noreferrer"
+            height={50}
+            priority
+          />
+        </Link>
+
+        {/* Navigation Links */}
+        <div className="flex items-center space-x-6">
+          <Link
+            href="/"
             className="text-white hover:text-[#629aa9] transition"
+          >
+            Home
+          </Link>
+
+          {/* This link was updated in a previous step */}
+          <Link
+            href="/todo"
+            className="text-white hover:text-[#629aa9] transition"
+          >
+            Daily ToDo
+          </Link>
+
+          {/* This link was updated in a previous step */}
+          <Link
+            href="/monday-gpt"
+            className="text-white hover:text-[#629aa9] transition"
+          >
+            Monday 2.0
+          </Link>
+
+          <Link
+            href="/forum"
+            className="text-white hover:text-[#629aa9] transition"
+          >
+            Community Forum
+          </Link>
+
+          <a
+            href="https://aibry.bandcamp.com"
+            target="_blank"
+            rel="noopener noreferrer"
+          	className="text-white hover:text-[#629aa9] transition"
           >
             Music
           </a>
 
           {user ? (
-            // --- UPDATED: User Logged-In Section ---
-s           <div className="flex items-center space-x-4">
+          	// --- NEW: User Logged-In Section ---
+            <div className="flex items-center space-x-4">
               {/* 1. Display User's Name */}
               <span className="text-sm font-medium text-gray-300">
                 {displayName}
@@ -60,17 +99,59 @@ s           <div className="flex items-center space-x-4">
                 <button
                   type="submit"
                   className="rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
-content="                >
+                >
+          _blank"
+            rel="noopener noreferrer"
+C           className="text-white hover:text-[#629aa9] transition"
+          >
+            Music
+          </a>
+
+          {user ? (
+            // --- UPDATED: User Logged-In Section ---
+s           <div className="flex items-center space-x-4">
+              {/* 1. Display User's Name */}
+// ...
+                <button
+                  type="submit"
+                  className="rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
+content="A                 >
                   Sign Out
                 </button>
               </form>
             </div>
           ) : (
             // Display Login button if user is not logged in
+Setting               href="/login"
+    Then           className="rounded bg-[#629aa9] px-4 py-2 font-semibold text-white transition hover:bg-[#4f7f86]"
+            >
+              Log In
+          _blank"
+            rel="noopener noreferrer"
+            className="text-white hover:text-[#629aa9] transition"
+          >
+            Music
+    Note:     </a>
+
+          {user ? (
+            // --- UPDATED: User Logged-In Section ---
+s           <div className="flex items-center space-x-4">
+              {/* 1. Display User's Name */}
+// ...
+                <button
+                  type="submit"
+                  className="rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
+content="A                 >
+                  Sign Out
+                </button>
+              </form>
+            </div>
+Backing         ) : (
+            // Display Login button if user is not logged in
             <Link
               href="/login"
               className="rounded bg-[#629aa9] px-4 py-2 font-semibold text-white transition hover:bg-[#4f7f86]"
-            >
+A           >
               Log In
             </Link>
           )}
