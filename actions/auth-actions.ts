@@ -1,3 +1,5 @@
+// actions/auth-actions.ts
+
 'use server';
 
 import { createServerSideClient } from '@/utils/supabase/server';
@@ -63,8 +65,8 @@ export async function signIn(formData: FormData) {
     return redirect(`/login?error=${encodeURIComponent('Invalid credentials')}`);
   }
 
-  // Successful sign-in redirects to the auth/callback, which handles the final redirect to /forum
-  return redirect('/forum');
+  // UPDATED: Successful sign-in now redirects to the dashboard
+  return redirect('/dashboard');
 }
 
 export async function signOut() {

@@ -5,36 +5,18 @@ import { createServerClient } from '@supabase/ssr';
 
 export async function middleware(request: NextRequest) {
   try {
-    // 1. Create a Supabase client configured to handle Server Component cookies
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          // New, recommended cookie methods
-          getAll() {
-            return request.cookies.getAll();
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              request.cookies.set({ name, value, ...options })
-            );
-          },
-        },
-      }
-    );
-
-    // 2. Refresh the session to ensure the user's cookies are up-to-date
+    // ... (supabase client setup)
     const { data: { user } } = await supabase.auth.getUser();
 
     // 3. Define all routes that require a user to be logged in
     const protectedPaths = [
+      '/dashboard', // <-- ADD THIS
       '/forum', 
       '/forum/story', 
       '/forum/hope', 
       '/forum/support',
-      '/todo', // Protected
-      '/monday-gpt' // Protected
+      '/todo', 
+      '/monday-gpt'
     ];
 
     const isProtectedPath = protectedPaths.some(path => 
