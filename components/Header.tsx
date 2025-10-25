@@ -9,6 +9,20 @@ export default async function Header() {
   const supabase = await createServerSideClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  let displayName: string | null = null;
+
+  // If the user is logged in, fetch their profile name
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", user.id)
+      .single();
+    
+    // Use their display name, or fall back to their email if no profile
+    displayName = profile?.display_name || user.email || "User";
+  }
+
   return (
     <header className="sticky top-0 z-50 bg-black bg-opacity-80 backdrop-blur-md">
       <nav className="mx-auto flex max-w-7xl items-center justify-between p-4">
@@ -18,48 +32,7 @@ export default async function Header() {
             src="/images/logo.png"
             alt="AIBRY Logo"
             width={50}
-            height={50}
-            priority
-          />
-        </Link>
-
-        {/* Navigation Links */}
-        <div className="flex items-center space-x-6">
-          <Link
-            href="/"
-            className="text-white hover:text-[#629aa9] transition"
-          >
-            Home
-          </Link>
-
-          {/* UPDATED: To-Do App Link */}
-          <Link
-            href="/todo"
-            // CHANGED: Standardized the style to match other links
-            className="text-white hover:text-[#629aa9] transition"
-          >
-            {/* CHANGED: Updated text */}
-            Daily ToDo
-          </Link>
-
-          {/* NEW MONDAY 2.0 LINK */}
-          <Link
-            href="/monday-gpt"
-            className="text-white hover:text-[#629aa9] transition"
-          >
-            Monday 2.0
-          </Link>
-
-          <Link
-            href="/forum"
-            className="text-white hover:text-[#629aa9] transition"
-          >
-            Community Forum
-          </Link>
-
-          <a
-            href="https://aibry.bandcamp.com"
-            target="_blank"
+    _blank"
             rel="noopener noreferrer"
             className="text-white hover:text-[#629aa9] transition"
           >
@@ -67,15 +40,31 @@ export default async function Header() {
           </a>
 
           {user ? (
-            // Display Sign Out button if user is logged in
-            <form action={signOut}>
-              <button
-                type="submit"
-                className="rounded bg-red-600 px-4 py-2 font-semibold text-white transition hover:bg-red-700"
-              >
-                Sign Out
-              </button>
-            </form>
+            // --- UPDATED: User Logged-In Section ---
+s           <div className="flex items-center space-x-4">
+              {/* 1. Display User's Name */}
+              <span className="text-sm font-medium text-gray-300">
+                {displayName}
+              </span>
+
+              {/* 2. Link to Dashboard */}
+              <Link
+                href="/dashboard"
+                className="rounded bg-[#629aa9] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#4f7f86]"
+              >
+                Dashboard
+              </Link>
+
+              {/* 3. Sign Out Button */}
+              <form action={signOut} className="flex">
+                <button
+                  type="submit"
+                  className="rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
+content="                >
+                  Sign Out
+                </button>
+              </form>
+            </div>
           ) : (
             // Display Login button if user is not logged in
             <Link
