@@ -32,12 +32,14 @@ export default async function Header() {
             Home
           </Link>
 
-          {/* NEW: To-Do App Link - Styled with a clear identifier */}
+          {/* UPDATED: To-Do App Link */}
           <Link
             href="/todo"
-            className="font-bold text-[#e03b8b] hover:text-white transition tracking-wider" // Uses the pink accent color from the To-Do app
+            // CHANGED: Standardized the style to match other links
+            className="text-white hover:text-[#629aa9] transition"
           >
-            /ROUTINE
+            {/* CHANGED: Updated text */}
+            Daily ToDo
           </Link>
 
           {/* NEW MONDAY 2.0 LINK */}

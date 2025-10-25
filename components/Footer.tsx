@@ -15,15 +15,20 @@ export default function Footer() {
       <div className="mx-auto max-w-7xl flex flex-col items-center justify-between gap-6 sm:flex-row">
         <p className="text-center sm:text-left">&copy; {new Date().getFullYear()} AIBRY. All rights reserved.</p>
 
+        {/* UPDATED: Links now match the header */}
         <nav className="flex flex-wrap justify-center gap-6 text-sm">
-          <Link href="/discography" className="hover:text-cassette-red">Discography</Link>
-          <Link href="/store" className="hover:text-cassette-red">Store</Link>
-          <Link href="/about" className="hover:text-cassette-red">About</Link>
-          <Link href="/gallery" className="hover:text-cassette-red">Gallery</Link>
-          <Link href="/merch" className="hover:text-cassette-red">Merch</Link>
-          
-          {/* NEW MONDAY 2.0 LINK */}
+          <Link href="/" className="hover:text-cassette-red">Home</Link>
+          <Link href="/todo" className="hover:text-cassette-red">Daily ToDo</Link>
           <Link href="/monday-gpt" className="hover:text-cassette-red">Monday 2.0</Link>
+          <Link href="/forum" className="hover:text-cassette-red">Community Forum</Link>
+          <a 
+            href="https://aibry.bandcamp.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-cassette-red"
+          >
+            Music
+          </a>
 
           <button
             onClick={() => setNewsletterOpen(true)}
