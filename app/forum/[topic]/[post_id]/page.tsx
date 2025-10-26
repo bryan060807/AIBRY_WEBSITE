@@ -144,7 +144,7 @@ export default async function PostPage({ params }: PostPageProps) {
                     <p className="font-semibold text-white">{commentAuthor}</p>
                     <p className="text-xs text-gray-500">
                       {new Date(comment.created_at).toLocaleString()}
-                    </D>
+                    </p>
                   </div>
                   <p className="text-gray-300 mb-4" style={{ whiteSpace: 'pre-wrap' }}>
                     {comment.content}
