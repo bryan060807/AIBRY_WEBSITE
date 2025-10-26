@@ -102,16 +102,9 @@ export default function LoginPage() {
               required
             />
           </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-300">Phone (Optional)</label>
-            <input
-              type="tel"
-              name="phone"
-              placeholder="+12223334444"
-              className="w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white placeholder-gray-500"
-            />
-          </div>
           
+          {/* REMOVED PHONE FIELD */}
+
           {signupState?.message && (
             <p className={`text-sm ${signupState.message.includes('Check your email') ? 'text-green-500' : 'text-red-500'}`}>
               {signupState.message}

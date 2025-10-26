@@ -76,15 +76,9 @@ export default function DashboardForms({ userData }: { userData: any }) {
             className="w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white"
           />
         </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-300">Phone</label>
-          <input
-            type="tel"
-            name="phone"
-            defaultValue={userData.phone || ''}
-            className="w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white"
-          />
-        </div>
+        
+        {/* REMOVED PHONE FIELD */}
+        
         <div className="flex items-center justify-between">
           <Message state={authMessage} />
           <button type="submit" className="rounded bg-[#629aa9] px-5 py-2.5 font-semibold text-white transition hover:bg-[#4f7f86]">

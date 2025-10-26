@@ -24,8 +24,7 @@ interface PostType {
   user_id: { display_name: string } | null;
 }
 
-// --- FIX ---
-// Updated CommentType to more accurately reflect the query result
+// Type for a single comment
 interface CommentType {
   id: number;
   content: string;
@@ -37,13 +36,23 @@ interface CommentType {
 export default async function PostPage({ params }: PostPageProps) {
   const supabase = await createServerSideClient();
 
+  // --- FIX: Convert post_id param to a number ---
+  const postIdAsNumber = Number(params.post_id);
+
+  // If param is not a valid number, 404
+  if (isNaN(postIdAsNumber)) {
+    console.error("Invalid post ID param:", params.post_id);
+    return notFound();
+  }
+  // --- END FIX ---
+
   const { data: { user } } = await supabase.auth.getUser();
 
   // --- 1. Fetch the Main Post ---
   const { data: post, error: postError } = await supabase
     .from('posts')
     .select('id, title, content, created_at, topic, user_id:profiles!inner(display_name)')
-    .eq('id', params.post_id)
+    .eq('id', postIdAsNumber) // Use the number
     .eq('topic', params.topic)
     .single<PostType>();
 
@@ -56,17 +65,14 @@ export default async function PostPage({ params }: PostPageProps) {
   const { data: commentsData, error: commentsError } = await supabase
     .from('comments')
     .select('id, content, created_at, user_id:profiles!inner(display_name), likes!left(count)') 
-    .eq('post_id', params.post_id)
+    .eq('post_id', postIdAsNumber) // Use the number
     .order('created_at', { ascending: true });
 
   if (commentsError) {
     console.error('Error fetching comments:', commentsError);
-    // Don't kill the whole page, just show an error
+    // Log the error but don't kill the page
   }
 
-  // --- FIX ---
-  // Force the type cast via 'unknown' as TypeScript inference is incorrect.
-  // We are confident the query returns data matching CommentType[].
   const comments: CommentType[] = (commentsData as unknown as CommentType[]) || [];
 
   // --- 3. Fetch the current user's likes for these comments ---
@@ -128,7 +134,6 @@ export default async function PostPage({ params }: PostPageProps) {
         <div className="space-y-6">
           {comments.length > 0 ? (
             comments.map((comment) => {
-              // Accessing 'count' from the first element of the 'likes' array
               const likeCount = comment.likes[0]?.count || 0;
               const isLiked = userLikes.includes(comment.id);
               const commentAuthor = comment.user_id.display_name || 'Anonymous'; 
@@ -139,7 +144,7 @@ export default async function PostPage({ params }: PostPageProps) {
                     <p className="font-semibold text-white">{commentAuthor}</p>
                     <p className="text-xs text-gray-500">
                       {new Date(comment.created_at).toLocaleString()}
-                    </p>
+                    </D>
                   </div>
                   <p className="text-gray-300 mb-4" style={{ whiteSpace: 'pre-wrap' }}>
                     {comment.content}
