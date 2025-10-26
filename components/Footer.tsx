@@ -14,11 +14,29 @@ export default function Footer() {
             <Link href="/" className="transition hover:text-white">
               Home
             </Link>
+            <Link href="/about" className="transition hover:text-white">
+              About
+            </Link>
+            <Link href="/discography" className="transition hover:text-white">
+              Discography
+            </Link>
+            <Link href="/gallery" className="transition hover:text-white">
+              Gallery
+            </Link>
             <Link href="/merch" className="transition hover:text-white">
               Merch
             </Link>
+            <Link href="/archive" className="transition hover:text-white">
+              Archive
+            </Link>
             <Link href="/forum" className="transition hover:text-white">
               Forum
+            </Link>
+            <Link href="/todo" className="transition hover:text-white">
+              ToDO List
+            </Link>
+            <Link href="/monday" className="transition hover:text-white">
+              Monday2.0
             </Link>
           </div>
           

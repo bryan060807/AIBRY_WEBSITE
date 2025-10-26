@@ -17,12 +17,29 @@ export default async function Header() {
             AIBRY
           </Link>
           <div className="hidden items-center gap-4 md:flex">
-            {/* MERCH LINK ADDED BACK */}
+            <Link href="/about" className="text-gray-300 transition hover:text-white">
+              About
+            </Link>
+            <Link href="/discography" className="text-gray-300 transition hover:text-white">
+              Discography
+            </Link>
+            <Link href="/gallery" className="text-gray-300 transition hover:text-white">
+              Gallery
+            </Link>
             <Link href="/merch" className="text-gray-300 transition hover:text-white">
               Merch
             </Link>
+            <Link href="/archive" className="text-gray-300 transition hover:text-white">
+              Archive
+            </Link>
             <Link href="/forum" className="text-gray-300 transition hover:text-white">
               Forum
+            </Link>
+            <Link href="/todo" className="text-gray-300 transition hover:text-white">
+              ToDO List
+            </Link>
+            <Link href="/monday" className="text-gray-300 transition hover:text-white">
+              Monday2.0
             </Link>
           </div>
         </div>
