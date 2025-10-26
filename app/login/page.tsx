@@ -1,78 +1,130 @@
-import { createServerSideClient } from '@/utils/supabase/server';
-import { signUp, signIn } from '@/actions/auth-actions';
-import { cookies } from 'next/headers';
-import AuthMessages from '@/components/AuthMessages'; // Import the new component
+// app/login/page.tsx
+'use client';
 
-export default async function LoginPage() {
-  const supabase = await createServerSideClient();
-  const { data: { user } } = await supabase.auth.getUser();
+import { useFormState } from 'react-dom';
+import { login, signup } from '@/app/auth/actions';
+import { useState } from 'react';
 
-  // Read URL parameters for error or success messages
-  const cookieStore = cookies();
-  const searchParams = new URLSearchParams(cookieStore.get('NEXT_URL')?.value.split('?')[1] || '');
+const loginInitialState = { message: '' };
+const signupInitialState = { message: '' };
+
+export default function LoginPage() {
+  const [loginState, loginAction] = useFormState(login, loginInitialState);
+  const [signupState, signupAction] = useFormState(signup, signupInitialState);
   
-  // We decode them here and pass them to the client component
-  const errorMessage = searchParams.get('error') ? decodeURIComponent(searchParams.get('error')!) : null;
-  const successMessage = searchParams.get('message') ? decodeURIComponent(searchParams.get('message')!) : null;
-
+  const [isLoginView, setIsLoginView] = useState(true);
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-20 text-center">
-      {/* This component will now handle displaying the messages as toasts */}
-      <AuthMessages error={errorMessage} message={successMessage} />
+    <main className="mx-auto max-w-md px-4 py-16">
+      <div className="mb-6 flex border-b border-gray-700">
+        <button
+          onClick={() => setIsLoginView(true)}
+          className={`w-1/2 py-3 font-semibold ${
+            isLoginView ? 'border-b-2 border-[#629aa9] text-white' : 'text-gray-500'
+          }`}
+        >
+          Sign In
+        </button>
+        <button
+          onClick={() => setIsLoginView(false)}
+          className={`w-1/2 py-3 font-semibold ${
+            !isLoginView ? 'border-b-2 border-[#629aa9] text-white' : 'text-gray-500'
+          }`}
+        >
+          Sign Up
+        </button>
+      </div>
 
-      {user ? (
-        <div className="rounded-lg border border-gray-800 bg-gray-900 p-8 shadow-lg">
-          <h1 className="mb-4 text-2xl font-semibold text-white">Welcome!</h1>
-          <p className="text-gray-400">You are already logged in and can access the community forum.</p>
-        </div>
-      ) : (
-        <div className="rounded-lg border border-gray-800 bg-gray-900 p-8 shadow-lg">
-          <h1 className="mb-4 text-2xl font-semibold text-white">Log in or Sign up</h1>
-          <p className="mb-6 text-gray-400">Join the community to share your story and connect with others.</p>
-          
-          {/* The old <p> tags for messages have been removed from here 
-            and replaced by the <AuthMessages /> component above.
-          */}
-
-          <form className="space-y-4">
-            {/* NEW: Display Name Field for Sign Up */}
-            <input
-              type="text"
-              name="display_name"
-              placeholder="Display Name (for the Forum)"
-              // This is NOT required for Sign In, but will be used by Sign Up
-              className="w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white placeholder-gray-500 focus:border-[#629aa9] focus:ring-1 focus:ring-[#629aa9]"
-            />
+      {isLoginView ? (
+        // --- LOGIN FORM ---
+        <form action={loginAction} className="space-y-4">
+          <h1 className="text-2xl font-bold text-white">Sign In</h1>
+          <p className="text-gray-400">Welcome back. Sign in to post on the forum.</p>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-300">Email</label>
             <input
               type="email"
               name="email"
-              placeholder="Email"
+              className="w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white placeholder-gray-500"
               required
-              className="w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white placeholder-gray-500 focus:border-[#629aa9] focus:ring-1 focus:ring-[#629aa9]"
             />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-300">Password</label>
             <input
               type="password"
               name="password"
-              placeholder="Password"
+              className="w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white placeholder-gray-500"
               required
-              className="w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white placeholder-gray-500 focus:border-[#629aa9] focus:ring-1 focus:ring-[#629aa9]"
             />
-            <button
-              formAction={signIn}
-              className="w-full rounded bg-[#629aa9] px-6 py-3 font-semibold text-white transition hover:bg-[#4f7f86]"
-            >
-              Sign In
-            </button>
-            <button
-              formAction={signUp}
-              className="w-full rounded bg-transparent border-2 border-[#629aa9] px-6 py-3 font-semibold text-[#629aa9] transition hover:bg-[#629aa9] hover:text-white"
-            >
-              Sign Up
-            </button>
-          </form>
-        </div>
+          </div>
+          {loginState?.message && <p className="text-sm text-red-500">{loginState.message}</p>}
+          <button
+            type="submit"
+            className="w-full rounded bg-[#629aa9] px-6 py-3 font-semibold text-white transition hover:bg-[#4f7f86]"
+          >
+            Sign In
+          </button>
+        </form>
+      ) : (
+        // --- SIGN UP FORM ---
+        <form action={signupAction} className="space-y-4">
+          <h1 className="text-2xl font-bold text-white">Create Account</h1>
+          <p className="text-gray-400">Join the community to share your story.</p>
+          
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-300">Display Name (Username)</label>
+            <input
+              type="text"
+              name="display_name"
+              placeholder="This will be your public name"
+              className="w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white placeholder-gray-500"
+              required
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-300">Email</label>
+            <input
+              type="email"
+              name="email"
+              className="w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white placeholder-gray-500"
+              required
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-300">Password</label>
+            <input
+              type="password"
+              name="password"
+              minLength={6}
+              placeholder="Must be at least 6 characters"
+              className="w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white placeholder-gray-500"
+              required
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-300">Phone (Optional)</label>
+            <input
+              type="tel"
+              name="phone"
+              placeholder="+12223334444"
+              className="w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white placeholder-gray-500"
+            />
+          </div>
+          
+          {signupState?.message && (
+            <p className={`text-sm ${signupState.message.includes('Check your email') ? 'text-green-500' : 'text-red-500'}`}>
+              {signupState.message}
+            </p>
+          )}
+          <button
+            type="submit"
+            className="w-full rounded bg-[#629aa9] px-6 py-3 font-semibold text-white transition hover:bg-[#4f7f86]"
+          >
+            Sign Up
+          </button>
+        </form>
       )}
-    </div>
+    </main>
   );
 }

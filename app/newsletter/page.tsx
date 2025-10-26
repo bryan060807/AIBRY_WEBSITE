@@ -1,3 +1,4 @@
+// app/newsletter/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -5,17 +6,17 @@ import { useState } from "react";
 export default function NewsletterPage() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const subscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus("sending");
+    setErrorMessage("");
 
-    const res = await fetch("https://buttondown.email/api/subscribers", {
+    // Use the local API route, just like the modal
+    const res = await fetch("/api/newsletter", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Token 853ddb1d-8e29-4ad0-aec5-91d60ad28733", // Replace this
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
     });
 
@@ -23,6 +24,8 @@ export default function NewsletterPage() {
       setStatus("success");
       setEmail("");
     } else {
+      const result = await res.json();
+      setErrorMessage(result.error || "Something went wrong. Try again.");
       setStatus("error");
     }
   };
@@ -42,12 +45,14 @@ export default function NewsletterPage() {
           onChange={(e) => setEmail(e.target.value)}
           required
           className="w-full rounded px-4 py-2 text-black"
+          disabled={status === "sending"}
         />
         <button
           type="submit"
-          className="rounded bg-cassette-red px-4 py-2 text-white hover:bg-red-700"
+          className="rounded bg-cassette-red px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
+          disabled={status === "sending"}
         >
-          Subscribe
+          {status === "sending" ? "Submitting..." : "Subscribe"}
         </button>
       </form>
 
@@ -55,7 +60,7 @@ export default function NewsletterPage() {
         <p className="mt-4 text-green-400">You&apos;re subscribed! 🔥</p>
       )}
       {status === "error" && (
-        <p className="mt-4 text-red-400">Something went wrong. Try again.</p>
+        <p className="mt-4 text-red-400">{errorMessage}</p>
       )}
     </main>
   );

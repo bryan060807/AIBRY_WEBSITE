@@ -16,7 +16,11 @@ dist/
 
 # --- OS Files ---
 .DS_Store
-Thumbs.db
+[cite_start]Thumbs.db [cite: 1]
+
+# [cite_start]--- Windows Specific --- [cite: 2]
+[cite_start]ehthumbs.db [cite: 2]
+[cite_start]Desktop.ini [cite: 2]
 
 # --- VSCode / Editors ---
 .vscode/
@@ -46,12 +50,8 @@ pnpm-lock.yaml
 # --- Mac Specific ---
 .AppleDouble
 .LSOverride
-Icon?
+[cite_start]Icon? [cite: 1]
 
-# --- Windows Specific ---
-ehthumbs.db
-Desktop.ini
-
-# --- Misc ---
-*.bak
-*.tmp
+# [cite_start]--- Misc --- [cite: 2]
+[cite_start]*.bak [cite: 2]
+[cite_start]*.tmp [cite: 2]
