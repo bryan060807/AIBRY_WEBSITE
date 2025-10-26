@@ -29,9 +29,9 @@ export default async function Header() {
             <Link href="/merch" className="text-gray-300 transition hover:text-white">
               Merch
             </Link>
-            {/* CORRECTED LINK */}
-            <Link href="/ai-archive" className="text-gray-300 transition hover:text-white">
-              Archive
+            {/* ADDED MUSIC STORE LINK */}
+            <Link href="/store" className="text-gray-300 transition hover:text-white">
+              Music Store
             </Link>
             <Link href="/forum" className="text-gray-300 transition hover:text-white">
               Forum
@@ -39,7 +39,6 @@ export default async function Header() {
             <Link href="/todo" className="text-gray-300 transition hover:text-white">
               ToDO List
             </Link>
-            {/* CORRECTED LINK */}
             <Link href="/monday-gpt" className="text-gray-300 transition hover:text-white">
               Monday2.0
             </Link>
