@@ -4,8 +4,8 @@ import React from 'react';
 import { createServerSideClient } from '@/utils/supabase/server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import LikeButton from '@/components/LikeButton'; // Import LikeButton
-import NewCommentForm from '@/components/NewCommentForm'; // Import NewCommentForm
+import LikeButton from '@/components/LikeButton';
+import NewCommentForm from '@/components/NewCommentForm';
 
 interface PostPageProps {
   params: {
@@ -21,22 +21,23 @@ interface PostType {
   content: string;
   created_at: string;
   topic: string;
-  user_id: { display_name: string } | null;
+  user_id: { display_name: string } | null; // This one is fine
 }
 
-// Type for a single comment
+// --- FIX ---
+// Updated CommentType: user_id is no longer nullable because
+// we will use an !inner join to guarantee it exists.
 interface CommentType {
   id: number;
   content: string;
   created_at: string;
-  user_id: { display_name: string } | null;
-  likes: [{ count: number }]; // Supabase returns count in an array
+  user_id: { display_name: string }; // Changed from object|null to just object
+  likes: [{ count: number }];
 }
 
 export default async function PostPage({ params }: PostPageProps) {
   const supabase = await createServerSideClient();
 
-  // Get the current logged-in user (if any)
   const { data: { user } } = await supabase.auth.getUser();
 
   // --- 1. Fetch the Main Post ---
@@ -55,12 +56,20 @@ export default async function PostPage({ params }: PostPageProps) {
   // --- 2. Fetch Comments (with author and like count) ---
   const { data: commentsData, error: commentsError } = await supabase
     .from('comments')
-    // CRITICAL FIX: Use 'likes!left(count)' to get the aggregate count
-    .select('id, content, created_at, user_id:profiles(display_name), likes!left(count)') 
+    // --- FIX ---
+    // Changed 'user_id:profiles(display_name)' to 'user_id:profiles!inner(display_name)'
+    // This forces an inner join and returns a single object, not an array.
+    .select('id, content, created_at, user_id:profiles!inner(display_name), likes!left(count)') 
     .eq('post_id', params.post_id)
     .order('created_at', { ascending: true });
 
-  const comments: CommentType[] = commentsData || [];
+  if (commentsError) {
+    console.error('Error fetching comments:', commentsError);
+    // Don't kill the whole page, just show an error
+  }
+
+  // This cast will now work
+  const comments: CommentType[] = (commentsData as CommentType[]) || [];
 
   // --- 3. Fetch the current user's likes for these comments ---
   let userLikes: number[] = [];
@@ -121,10 +130,11 @@ export default async function PostPage({ params }: PostPageProps) {
         <div className="space-y-6">
           {comments.length > 0 ? (
             comments.map((comment) => {
-              // Correctly access the count from the nested array
               const likeCount = comment.likes[0]?.count || 0;
               const isLiked = userLikes.includes(comment.id);
-              const commentAuthor = comment.user_id?.display_name || 'Anonymous';
+              // --- FIX ---
+              // No optional chaining needed on comment.user_id as it's guaranteed
+              const commentAuthor = comment.user_id.display_name || 'Anonymous'; 
               
               return (
                 <div key={comment.id} className="p-5 rounded-lg bg-[#18181b] border border-gray-800">
@@ -148,11 +158,9 @@ export default async function PostPage({ params }: PostPageProps) {
               );
             })
           ) : (
-            !user && (
-              <p className="text-center text-gray-500 pt-4">
-                No replies yet.
-              </p>
-            )
+            <p className="text-center text-gray-500 pt-4">
+              {commentsError ? 'Failed to load comments.' : 'No replies yet.'}
+            </p>
           )}
         </div>
       </div>
