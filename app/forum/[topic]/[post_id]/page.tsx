@@ -24,13 +24,12 @@ interface PostType {
   user_id: { display_name: string } | null;
 }
 
-// --- FIX ---
-// The user_id (profile) can now be null because we are using a !left join
+// Type for a single comment
 interface CommentType {
   id: number;
   content: string;
   created_at: string;
-  user_id: { display_name: string } | null; // Changed from required to optional
+  user_id: { display_name: string } | null;
   likes: { count: number }[]; 
 }
 
@@ -62,15 +61,12 @@ export default async function PostPage({ params }: PostPageProps) {
   // --- 2. Fetch Comments (with author and like count) ---
   const { data: commentsData, error: commentsError } = await supabase
     .from('comments')
-    // --- FIX: Changed !inner to !left to prevent query failure on null profiles ---
     .select('id, content, created_at, user_id:profiles!left(display_name), likes!left(count)') 
     .eq('post_id', postIdAsNumber)
     .order('created_at', { ascending: true });
 
   if (commentsError) {
     console.error('Error fetching comments:', commentsError);
-    // This is why "Failed to load comments" is showing.
-    // Check your Vercel logs for the specific error from Supabase.
   }
 
   const comments: CommentType[] = (commentsData as unknown as CommentType[]) || [];
@@ -102,7 +98,8 @@ export default async function PostPage({ params }: PostPageProps) {
       {/* --- Main Post --- */}
       <div className="bg-[#18181b] p-6 sm:p-8 rounded-xl shadow-lg border border-gray-800">
         <h1 className="text-3xl font-bold text-white mb-4">{post.title}</h1>
-        <p className="mb-6 text-sm text-gray-500">
+        {/* --- FIX: Added suppressHydrationWarning --- */}
+        <p className="mb-6 text-sm text-gray-500" suppressHydrationWarning>
           Posted by **{authorName}** on {new Date(post.created_at).toLocaleDateString()}
         </p>
         <hr className="border-gray-700 mb-6" />
@@ -136,14 +133,14 @@ export default async function PostPage({ params }: PostPageProps) {
             comments.map((comment) => {
               const likeCount = comment.likes[0]?.count || 0;
               const isLiked = userLikes.includes(comment.id);
-              // --- FIX: Add optional chaining to handle null user_id ---
               const commentAuthor = comment.user_id?.display_name || 'Anonymous'; 
               
               return (
                 <div key={comment.id} className="p-5 rounded-lg bg-[#18181b] border border-gray-800">
                   <div className="flex justify-between items-center mb-3">
                     <p className="font-semibold text-white">{commentAuthor}</p>
-                    <p className="text-xs text-gray-500">
+                    {/* --- FIX: Added suppressHydrationWarning --- */}
+                    <p className="text-xs text-gray-500" suppressHydrationWarning>
                       {new Date(comment.created_at).toLocaleString()}
                     </p>
                   </div>
