@@ -4,7 +4,7 @@ import React from 'react';
 import { createServerSideClient } from '@/utils/supabase/server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-// import LikeButton from '@/components/LikeButton'; // DEBUG: Temporarily removed
+import LikeButton from '@/components/LikeButton';
 import NewCommentForm from '@/components/NewCommentForm';
 
 interface PostPageProps {
@@ -24,19 +24,22 @@ interface PostType {
   user_id: { display_name: string } | null;
 }
 
-// --- DEBUG: CommentType with profile, but NO likes ---
+// Type for a single comment
 interface CommentType {
   id: number;
   content: string;
   created_at: string;
   user_id: { display_name: string } | null; // from !left join
+  likes: { count: number }[]; // from !left(count) join
 }
 
 export default async function PostPage({ params }: PostPageProps) {
   const supabase = await createServerSideClient();
 
+  // Convert post_id param to a number
   const postIdAsNumber = Number(params.post_id);
 
+  // If param is not a valid number, 404
   if (isNaN(postIdAsNumber)) {
     console.error("Invalid post ID param:", params.post_id);
     return notFound();
@@ -44,7 +47,7 @@ export default async function PostPage({ params }: PostPageProps) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  // --- 1. Fetch the Main Post (This query is working) ---
+  // --- 1. Fetch the Main Post ---
   const { data: post, error: postError } = await supabase
     .from('posts')
     .select('id, title, content, created_at, topic, user_id:profiles!inner(display_name)')
@@ -57,20 +60,34 @@ export default async function PostPage({ params }: PostPageProps) {
     return notFound();
   }
 
-  // --- 2. Fetch Comments (QUERY WITH PROFILES, NO LIKES) ---
+  // --- 2. Fetch Comments (with author and like count) ---
   const { data: commentsData, error: commentsError } = await supabase
     .from('comments')
-    // --- DEBUG: Joining profiles, but NOT likes ---
-    .select('id, content, created_at, user_id:profiles!left(display_name)') 
+    // Use !left joins for safety
+    .select('id, content, created_at, user_id:profiles!left(display_name), likes!left(count)') 
     .eq('post_id', postIdAsNumber)
     .order('created_at', { ascending: true });
 
   if (commentsError) {
     console.error('Error fetching comments:', commentsError);
-    // This is why "Failed to load comments" is showing.
+    // This logs the error to Vercel, but we still try to render
   }
 
+  // Force type cast via 'unknown' to fix TypeScript errors
   const comments: CommentType[] = (commentsData as unknown as CommentType[]) || [];
+
+  // --- 3. Fetch the current user's likes for these comments ---
+  let userLikes: number[] = [];
+  if (user && comments.length > 0) {
+    const { data: userLikesData } = await supabase
+      .from('likes')
+      .select('comment_id')
+      .eq('user_id', user.id)
+      .in('comment_id', comments.map(c => c.id));
+    
+    userLikes = userLikesData?.map(l => l.comment_id) || [];
+  }
+
   const authorName = post.user_id?.display_name || 'Anonymous';
 
   return (
@@ -86,6 +103,7 @@ export default async function PostPage({ params }: PostPageProps) {
       {/* --- Main Post --- */}
       <div className="bg-[#18181b] p-6 sm:p-8 rounded-xl shadow-lg border border-gray-800">
         <h1 className="text-3xl font-bold text-white mb-4">{post.title}</h1>
+        {/* FIX: Add suppressHydrationWarning for the date */}
         <p className="mb-6 text-sm text-gray-500" suppressHydrationWarning>
           Posted by **{authorName}** on {new Date(post.created_at).toLocaleDateString()}
         </p>
@@ -118,26 +136,35 @@ export default async function PostPage({ params }: PostPageProps) {
         <div className="space-y-6">
           {comments.length > 0 ? (
             comments.map((comment) => {
+              const likeCount = comment.likes[0]?.count || 0;
+              const isLiked = userLikes.includes(comment.id);
               const commentAuthor = comment.user_id?.display_name || 'Anonymous'; 
               
               return (
                 <div key={comment.id} className="p-5 rounded-lg bg-[#18181b] border border-gray-800">
                   <div className="flex justify-between items-center mb-3">
                     <p className="font-semibold text-white">{commentAuthor}</p>
-                    <p className="text-xs text-gray-500" suppressHydrationWarning>
+                    {/* FIX: Add suppressHydrationWarning for the date */}
+                    <p className="text-xs text-gray-500" suppressHydtationWarning>
                       {new Date(comment.created_at).toLocaleString()}
                     </p>
                   </div>
                   <p className="text-gray-300 mb-4" style={{ whiteSpace: 'pre-wrap' }}>
                     {comment.content}
                   </p>
-                  {/* --- DEBUG: Temporarily removed LikeButton --- */}
-                  <p className="text-sm text-gray-600">(Likes disabled for testing)</p>
+                  <LikeButton
+                    commentId={comment.id.toString()}
+                    postId={post.id.toString()}
+                    topic={post.topic}
+                    isLiked={isLiked}
+                    count={likeCount}
+                  />
                 </div>
               );
             })
           ) : (
             <p className="text-center text-gray-500 pt-4">
+              {/* This message will show if the query fails OR if there are no comments */}
               {commentsError ? 'Failed to load comments.' : 'No replies yet.'}
             </p>
           )}
