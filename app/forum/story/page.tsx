@@ -11,14 +11,12 @@ export const metadata = {
 
 const CURRENT_TOPIC = "story";
 
-// CORRECTED TYPE: The Supabase join returns an object, not an array.
 interface PostType {
     id: number;
     content: string;
     created_at: string;
     topic: string;
     title: string;
-    // This is the correct type for a one-to-one join
     user_id: { display_name: string } | null; 
 }
 
@@ -36,8 +34,9 @@ export default async function StoryPage() {
     return <div>Error loading posts. Please check RLS policies and database configuration.</div>;
   }
 
-  // Apply type casting
-  const posts: PostType[] = postsData as PostType[] || [];
+  // --- FIX ---
+  // Force the type cast via 'unknown' as TypeScript inference is incorrect.
+  const posts: PostType[] = (postsData as unknown as PostType[]) || [];
 
 
   return (
@@ -71,7 +70,6 @@ export default async function StoryPage() {
               </div>
               
               <p className="mt-1 text-sm text-gray-400">
-                {/* CORRECTED ACCESS: Access the 'display_name' property directly from the object */}
                 Started by **{post.user_id?.display_name || 'Anonymous'}**
               </p>
             </Link>

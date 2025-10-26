@@ -11,14 +11,12 @@ export const metadata = {
 
 const CURRENT_TOPIC = "support";
 
-// CORRECTED TYPE: The Supabase join returns an object, not an array.
 interface PostType {
     id: number;
     content: string;
     created_at: string;
     topic: string;
     title: string;
-    // This is the correct type for a one-to-one join
     user_id: { display_name: string } | null; 
 }
 
@@ -28,7 +26,6 @@ export default async function SupportPage() {
   
   const { data: postsData, error } = await supabase
     .from('posts')
-    // This query aliases the 'profiles' table data to the 'user_id' key
     .select('id, content, created_at, topic, title, user_id:profiles!inner(display_name)')
     .eq('topic', CURRENT_TOPIC)
     .order('created_at', { ascending: false });
@@ -38,8 +35,9 @@ export default async function SupportPage() {
     return <div>Error loading posts. Please check RLS policies and database configuration.</div>;
   }
 
-  // Apply type casting
-  const posts: PostType[] = postsData as PostType[] || [];
+  // --- FIX ---
+  // Force the type cast via 'unknown' as TypeScript inference is incorrect.
+  const posts: PostType[] = (postsData as unknown as PostType[]) || [];
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-16">
@@ -66,13 +64,12 @@ export default async function SupportPage() {
                   <h3 className="text-xl font-semibold text-white truncate pr-4">
                       {post.title}
                   </h3>
-                  <p className="text-xs text-gray-500 whitespace-nowrap pt-1">
+                  <p className="text-xs text-gray-50m00 whitespace-nowrap pt-1">
                       {new Date(post.created_at).toLocaleDateString()}
                   </p>
               </div>
               
               <p className="mt-1 text-sm text-gray-400">
-                {/* CORRECTED ACCESS: Access the 'display_name' property directly from the object */}
                 Started by **{post.user_id?.display_name || 'Anonymous'}**
               </p>
             </Link>

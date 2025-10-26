@@ -11,14 +11,12 @@ export const metadata = {
 
 const CURRENT_TOPIC = "hope";
 
-// CORRECTED TYPE: The Supabase join returns an object, not an array of objects.
 interface PostType {
   id: number;
   content: string;
   created_at: string;
   topic: string;
   title: string;
-  // This is the correct type for a one-to-one join
   user_id: { display_name: string } | null; 
 }
 
@@ -27,7 +25,6 @@ export default async function HopePage() {
   
   const { data: postsData, error } = await supabase
     .from('posts')
-    // This query aliases the 'profiles' table data to the 'user_id' key
     .select('id, content, created_at, topic, title, user_id:profiles!inner(display_name)') 
     .eq('topic', CURRENT_TOPIC)
     .order('created_at', { ascending: false });
@@ -37,8 +34,9 @@ export default async function HopePage() {
     return <div>Error loading posts. Please check RLS policies and database configuration.</div>;
   }
 
-  // Cast the data to our corrected PostType
-  const posts: PostType[] = postsData as PostType[] || [];
+  // --- FIX ---
+  // Force the type cast via 'unknown' as TypeScript inference is incorrect.
+  const posts: PostType[] = (postsData as unknown as PostType[]) || [];
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-16">
@@ -71,7 +69,6 @@ export default async function HopePage() {
               </div>
               
               <p className="mt-1 text-sm text-gray-400">
-                {/* CORRECTED ACCESS: Access the 'display_name' property directly from the object */}
                 Started by **{post.user_id?.display_name || 'Anonymous'}**
               </p>
             </Link>
