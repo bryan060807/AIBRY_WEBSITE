@@ -4,7 +4,7 @@ import React from 'react';
 import { createServerSideClient } from '@/utils/supabase/server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import LikeButton from '@/components/LikeButton';
+// import LikeButton from '@/components/LikeButton'; // DEBUG: Temporarily removed
 import NewCommentForm from '@/components/NewCommentForm';
 
 interface PostPageProps {
@@ -24,13 +24,12 @@ interface PostType {
   user_id: { display_name: string } | null;
 }
 
-// Type for a single comment
+// --- DEBUG: CommentType with profile, but NO likes ---
 interface CommentType {
   id: number;
   content: string;
   created_at: string;
   user_id: { display_name: string } | null; // from !left join
-  likes: { count: number }[]; // from !left(count) join
 }
 
 export default async function PostPage({ params }: PostPageProps) {
@@ -45,7 +44,7 @@ export default async function PostPage({ params }: PostPageProps) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  // --- 1. Fetch the Main Post ---
+  // --- 1. Fetch the Main Post (This query is working) ---
   const { data: post, error: postError } = await supabase
     .from('posts')
     .select('id, title, content, created_at, topic, user_id:profiles!inner(display_name)')
@@ -58,32 +57,20 @@ export default async function PostPage({ params }: PostPageProps) {
     return notFound();
   }
 
-  // --- 2. Fetch Comments (with author and like count) ---
+  // --- 2. Fetch Comments (QUERY WITH PROFILES, NO LIKES) ---
   const { data: commentsData, error: commentsError } = await supabase
     .from('comments')
-    // This is the full, original query
-    .select('id, content, created_at, user_id:profiles!left(display_name), likes!left(count)') 
+    // --- DEBUG: Joining profiles, but NOT likes ---
+    .select('id, content, created_at, user_id:profiles!left(display_name)') 
     .eq('post_id', postIdAsNumber)
     .order('created_at', { ascending: true });
 
   if (commentsError) {
     console.error('Error fetching comments:', commentsError);
+    // This is why "Failed to load comments" is showing.
   }
 
   const comments: CommentType[] = (commentsData as unknown as CommentType[]) || [];
-
-  // --- 3. Fetch the current user's likes for these comments ---
-  let userLikes: number[] = [];
-  if (user) {
-    const { data: userLikesData } = await supabase
-      .from('likes')
-      .select('comment_id')
-      .eq('user_id', user.id)
-      .in('comment_id', comments.map(c => c.id));
-    
-    userLikes = userLikesData?.map(l => l.comment_id) || [];
-  }
-
   const authorName = post.user_id?.display_name || 'Anonymous';
 
   return (
@@ -131,8 +118,6 @@ export default async function PostPage({ params }: PostPageProps) {
         <div className="space-y-6">
           {comments.length > 0 ? (
             comments.map((comment) => {
-              const likeCount = comment.likes[0]?.count || 0;
-              const isLiked = userLikes.includes(comment.id);
               const commentAuthor = comment.user_id?.display_name || 'Anonymous'; 
               
               return (
@@ -146,13 +131,8 @@ export default async function PostPage({ params }: PostPageProps) {
                   <p className="text-gray-300 mb-4" style={{ whiteSpace: 'pre-wrap' }}>
                     {comment.content}
                   </p>
-                  <LikeButton
-                    commentId={comment.id.toString()}
-                    postId={post.id.toString()}
-                    topic={post.topic}
-                    isLiked={isLiked}
-                    count={likeCount}
-                  />
+                  {/* --- DEBUG: Temporarily removed LikeButton --- */}
+                  <p className="text-sm text-gray-600">(Likes disabled for testing)</p>
                 </div>
               );
             })
