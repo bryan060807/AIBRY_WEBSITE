@@ -1,83 +1,85 @@
-// app/forum/[topic]/[post_id]/page.tsx
+// app/forum/story/page.tsx
 
-import React from 'react';
+import NewPostForm from '@/components/NewPostForm';
+import Link from 'next/link';
 import { createServerSideClient } from '@/utils/supabase/server';
-import { notFound } from 'next/navigation';
-import Link from 'next/link'; // Import Link
 
-interface PostPageProps {
-  params: {
-    topic: string;
-    post_id: string;
-  };
-}
+export const metadata = {
+  title: "Share Your Story | AIBRY",
+  description: "A safe space for the AIBRY community to share their personal stories about mental health and recovery.",
+};
 
-// CORRECTED TYPE: Match the other pages (one-to-one join returns an object)
+const CURRENT_TOPIC = "story";
+
+// CORRECTED TYPE: The Supabase join returns an object, not an array.
 interface PostType {
     id: number;
-    title: string;
     content: string;
     created_at: string;
     topic: string;
-    // This is the correct type for our join
-    user_id: { display_name: string } | null;
+    title: string;
+    // This is the correct type for a one-to-one join
+    user_id: { display_name: string } | null; 
 }
 
-
-export default async function PostPage({ params }: PostPageProps) {
-  // We MUST await the server-side client
+export default async function StoryPage() {
   const supabase = await createServerSideClient();
+  
+  const { data: postsData, error } = await supabase
+    .from('posts')
+    .select('id, content, created_at, topic, title, user_id:profiles!inner(display_name)')
+    .eq('topic', CURRENT_TOPIC)
+    .order('created_at', { ascending: false });
 
-  // CORRECTED QUERY: Fetch from 'posts' table (not 'forum_posts')
-  // and use the same inner join syntax as the list pages.
-  const { data: post, error } = await supabase
-    .from('posts') 
-    .select('id, title, content, created_at, topic, user_id:profiles!inner(display_name)') 
-    .eq('id', params.post_id)
-    .eq('topic', params.topic) // Good practice to ensure topic matches URL
-    .single<PostType>(); // Cast the result to the expected type
-
-  if (error || !post) {
-    console.error('Error fetching post:', error);
-    return notFound();
+  if (error) {
+    console.error('Error fetching posts:', error);
+    return <div>Error loading posts. Please check RLS policies and database configuration.</div>;
   }
 
-  // CORRECTED ACCESS: Access the display_name directly from the object
-  const authorName = post.user_id?.display_name || 'Anonymous';
+  // Apply type casting
+  const posts: PostType[] = postsData as PostType[] || [];
 
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-10">
-      {/* Back link */}
-      <Link 
-        href={`/forum/${post.topic}`} 
-        className="mb-8 inline-block text-gray-400 hover:text-white transition"
-      >
-        &larr; Back to {post.topic.charAt(0).toUpperCase() + post.topic.slice(1)}
+    <main className="mx-auto max-w-3xl px-4 py-16">
+      <Link href="/forum" className="mb-8 inline-block text-gray-400 hover:text-white transition">
+        &larr; Back to Forum Home
       </Link>
+      
+      <h1 className="mb-2 text-4xl font-bold text-white">Share Your Story</h1>
+      <p className="mb-10 text-lg text-gray-400">
+        A place to connect and share personal journeys. Click a title to read more.
+      </p>
 
-      <div className="bg-[#18181b] p-6 sm:p-8 rounded-xl shadow-lg border border-gray-800">
-        
-        {/* Post Title and Metadata */}
-        <h1 className="text-3xl font-bold text-white mb-4">{post.title}</h1>
-        <p className="mb-6 text-sm text-gray-500">
-          Posted by **{authorName}** on {new Date(post.created_at).toLocaleDateString()}
-        </p>
-        
-        <hr className="border-gray-700 mb-6" />
-        
-        {/* Post Content - Use whitespace-pre-wrap to respect newlines */}
-        <div className="prose prose-invert max-w-none text-gray-300">
-          <p style={{ whiteSpace: "pre-wrap" }}>{post.content}</p>
-        </div>
+      <NewPostForm topic={CURRENT_TOPIC} />
 
-        {/* Placeholder for Comments Section */}
-        <div className="mt-12 pt-6 border-t border-gray-700">
-            <h2 className="text-xl font-semibold text-white mb-4">Comments</h2>
-            <p className="text-gray-500">Replies and comments coming soon...</p>
-        </div>
-        
-      </div>
+      <section className="mt-8 space-y-3">
+        {posts.length > 0 ? (
+          posts.map((post) => (
+            <Link 
+              key={post.id} 
+              href={`/forum/${post.topic}/${post.id}`} 
+              className="block rounded-lg bg-[#18181b] p-4 text-left shadow-md transition border-l-4 border-l-transparent hover:border-l-[#629aa9] hover:bg-gray-800"
+            >
+              <div className="flex justify-between items-start">
+                  <h3 className="text-xl font-semibold text-white truncate pr-4">
+                      {post.title}
+                  </h3>
+                  <p className="text-xs text-gray-500 whitespace-nowrap pt-1">
+                      {new Date(post.created_at).toLocaleDateString()}
+                  </p>
+              </div>
+              
+              <p className="mt-1 text-sm text-gray-400">
+                {/* CORRECTED ACCESS: Access the 'display_name' property directly from the object */}
+                Started by **{post.user_id?.display_name || 'Anonymous'}**
+              </p>
+            </Link>
+          ))
+        ) : (
+          <p className="pt-8 text-center text-gray-500">No stories have been posted yet. Start the first thread!</p>
+        )}
+      </section>
     </main>
   );
 }
