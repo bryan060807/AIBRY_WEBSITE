@@ -26,7 +26,8 @@ export default function Footer() {
             <Link href="/merch" className="transition hover:text-white">
               Merch
             </Link>
-            <Link href="/archive" className="transition hover:text-white">
+            {/* CORRECTED LINK */}
+            <Link href="/ai-archive" className="transition hover:text-white">
               Archive
             </Link>
             <Link href="/forum" className="transition hover:text-white">
@@ -35,7 +36,8 @@ export default function Footer() {
             <Link href="/todo" className="transition hover:text-white">
               ToDO List
             </Link>
-            <Link href="/monday" className="transition hover:text-white">
+            {/* CORRECTED LINK */}
+            <Link href="/monday-gpt" className="transition hover:text-white">
               Monday2.0
             </Link>
           </div>

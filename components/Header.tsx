@@ -29,7 +29,8 @@ export default async function Header() {
             <Link href="/merch" className="text-gray-300 transition hover:text-white">
               Merch
             </Link>
-            <Link href="/archive" className="text-gray-300 transition hover:text-white">
+            {/* CORRECTED LINK */}
+            <Link href="/ai-archive" className="text-gray-300 transition hover:text-white">
               Archive
             </Link>
             <Link href="/forum" className="text-gray-300 transition hover:text-white">
@@ -38,7 +39,8 @@ export default async function Header() {
             <Link href="/todo" className="text-gray-300 transition hover:text-white">
               ToDO List
             </Link>
-            <Link href="/monday" className="text-gray-300 transition hover:text-white">
+            {/* CORRECTED LINK */}
+            <Link href="/monday-gpt" className="text-gray-300 transition hover:text-white">
               Monday2.0
             </Link>
           </div>
