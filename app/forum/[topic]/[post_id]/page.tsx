@@ -24,27 +24,25 @@ interface PostType {
   user_id: { display_name: string } | null;
 }
 
-// Type for a single comment
+// --- FIX ---
+// The user_id (profile) can now be null because we are using a !left join
 interface CommentType {
   id: number;
   content: string;
   created_at: string;
-  user_id: { display_name: string }; // from !inner join
-  likes: { count: number }[]; // from !left(count) join
+  user_id: { display_name: string } | null; // Changed from required to optional
+  likes: { count: number }[]; 
 }
 
 export default async function PostPage({ params }: PostPageProps) {
   const supabase = await createServerSideClient();
 
-  // --- FIX: Convert post_id param to a number ---
   const postIdAsNumber = Number(params.post_id);
 
-  // If param is not a valid number, 404
   if (isNaN(postIdAsNumber)) {
     console.error("Invalid post ID param:", params.post_id);
     return notFound();
   }
-  // --- END FIX ---
 
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -52,7 +50,7 @@ export default async function PostPage({ params }: PostPageProps) {
   const { data: post, error: postError } = await supabase
     .from('posts')
     .select('id, title, content, created_at, topic, user_id:profiles!inner(display_name)')
-    .eq('id', postIdAsNumber) // Use the number
+    .eq('id', postIdAsNumber)
     .eq('topic', params.topic)
     .single<PostType>();
 
@@ -64,13 +62,15 @@ export default async function PostPage({ params }: PostPageProps) {
   // --- 2. Fetch Comments (with author and like count) ---
   const { data: commentsData, error: commentsError } = await supabase
     .from('comments')
-    .select('id, content, created_at, user_id:profiles!inner(display_name), likes!left(count)') 
-    .eq('post_id', postIdAsNumber) // Use the number
+    // --- FIX: Changed !inner to !left to prevent query failure on null profiles ---
+    .select('id, content, created_at, user_id:profiles!left(display_name), likes!left(count)') 
+    .eq('post_id', postIdAsNumber)
     .order('created_at', { ascending: true });
 
   if (commentsError) {
     console.error('Error fetching comments:', commentsError);
-    // Log the error but don't kill the page
+    // This is why "Failed to load comments" is showing.
+    // Check your Vercel logs for the specific error from Supabase.
   }
 
   const comments: CommentType[] = (commentsData as unknown as CommentType[]) || [];
@@ -136,7 +136,8 @@ export default async function PostPage({ params }: PostPageProps) {
             comments.map((comment) => {
               const likeCount = comment.likes[0]?.count || 0;
               const isLiked = userLikes.includes(comment.id);
-              const commentAuthor = comment.user_id.display_name || 'Anonymous'; 
+              // --- FIX: Add optional chaining to handle null user_id ---
+              const commentAuthor = comment.user_id?.display_name || 'Anonymous'; 
               
               return (
                 <div key={comment.id} className="p-5 rounded-lg bg-[#18181b] border border-gray-800">
