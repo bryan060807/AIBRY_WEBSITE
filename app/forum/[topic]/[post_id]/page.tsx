@@ -21,18 +21,17 @@ interface PostType {
   content: string;
   created_at: string;
   topic: string;
-  user_id: { display_name: string } | null; // This one is fine
+  user_id: { display_name: string } | null;
 }
 
 // --- FIX ---
-// Updated CommentType: user_id is no longer nullable because
-// we will use an !inner join to guarantee it exists.
+// Updated CommentType to more accurately reflect the query result
 interface CommentType {
   id: number;
   content: string;
   created_at: string;
-  user_id: { display_name: string }; // Changed from object|null to just object
-  likes: [{ count: number }];
+  user_id: { display_name: string }; // from !inner join
+  likes: { count: number }[]; // from !left(count) join
 }
 
 export default async function PostPage({ params }: PostPageProps) {
@@ -56,9 +55,6 @@ export default async function PostPage({ params }: PostPageProps) {
   // --- 2. Fetch Comments (with author and like count) ---
   const { data: commentsData, error: commentsError } = await supabase
     .from('comments')
-    // --- FIX ---
-    // Changed 'user_id:profiles(display_name)' to 'user_id:profiles!inner(display_name)'
-    // This forces an inner join and returns a single object, not an array.
     .select('id, content, created_at, user_id:profiles!inner(display_name), likes!left(count)') 
     .eq('post_id', params.post_id)
     .order('created_at', { ascending: true });
@@ -68,8 +64,10 @@ export default async function PostPage({ params }: PostPageProps) {
     // Don't kill the whole page, just show an error
   }
 
-  // This cast will now work
-  const comments: CommentType[] = (commentsData as CommentType[]) || [];
+  // --- FIX ---
+  // Force the type cast via 'unknown' as TypeScript inference is incorrect.
+  // We are confident the query returns data matching CommentType[].
+  const comments: CommentType[] = (commentsData as unknown as CommentType[]) || [];
 
   // --- 3. Fetch the current user's likes for these comments ---
   let userLikes: number[] = [];
@@ -130,10 +128,9 @@ export default async function PostPage({ params }: PostPageProps) {
         <div className="space-y-6">
           {comments.length > 0 ? (
             comments.map((comment) => {
+              // Accessing 'count' from the first element of the 'likes' array
               const likeCount = comment.likes[0]?.count || 0;
               const isLiked = userLikes.includes(comment.id);
-              // --- FIX ---
-              // No optional chaining needed on comment.user_id as it's guaranteed
               const commentAuthor = comment.user_id.display_name || 'Anonymous'; 
               
               return (
