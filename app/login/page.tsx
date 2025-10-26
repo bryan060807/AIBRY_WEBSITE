@@ -1,6 +1,7 @@
 import { createServerSideClient } from '@/utils/supabase/server';
 import { signUp, signIn } from '@/actions/auth-actions';
-import { cookies } from 'next/headers'; // Added for reading messages
+import { cookies } from 'next/headers';
+import AuthMessages from '@/components/AuthMessages'; // Import the new component
 
 export default async function LoginPage() {
   const supabase = await createServerSideClient();
@@ -9,12 +10,17 @@ export default async function LoginPage() {
   // Read URL parameters for error or success messages
   const cookieStore = cookies();
   const searchParams = new URLSearchParams(cookieStore.get('NEXT_URL')?.value.split('?')[1] || '');
-  const errorMessage = searchParams.get('error');
-  const successMessage = searchParams.get('message');
+  
+  // We decode them here and pass them to the client component
+  const errorMessage = searchParams.get('error') ? decodeURIComponent(searchParams.get('error')!) : null;
+  const successMessage = searchParams.get('message') ? decodeURIComponent(searchParams.get('message')!) : null;
 
 
   return (
     <div className="mx-auto max-w-lg px-4 py-20 text-center">
+      {/* This component will now handle displaying the messages as toasts */}
+      <AuthMessages error={errorMessage} message={successMessage} />
+
       {user ? (
         <div className="rounded-lg border border-gray-800 bg-gray-900 p-8 shadow-lg">
           <h1 className="mb-4 text-2xl font-semibold text-white">Welcome!</h1>
@@ -25,13 +31,9 @@ export default async function LoginPage() {
           <h1 className="mb-4 text-2xl font-semibold text-white">Log in or Sign up</h1>
           <p className="mb-6 text-gray-400">Join the community to share your story and connect with others.</p>
           
-          {/* Display Messages */}
-          {errorMessage && (
-            <p className="mb-4 text-red-500">{decodeURIComponent(errorMessage)}</p>
-          )}
-          {successMessage && (
-            <p className="mb-4 text-green-500">{decodeURIComponent(successMessage)}</p>
-          )}
+          {/* The old <p> tags for messages have been removed from here 
+            and replaced by the <AuthMessages /> component above.
+          */}
 
           <form className="space-y-4">
             {/* NEW: Display Name Field for Sign Up */}

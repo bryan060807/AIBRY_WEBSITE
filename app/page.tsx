@@ -11,6 +11,19 @@ export const metadata = {
 export default function HomePage() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-20 text-center">
+      {/* Bandcamp Embed */}
+      <div className="mb-12 flex justify-center">
+        <iframe
+          style={{ border: 0, width: "350px", height: "786px" }}
+          src="https://bandcamp.com/EmbeddedPlayer/album=247455740/size=large/bgcol=333333/linkcol=0f91ff/transparent=true/"
+          seamless
+        >
+          <a href="https://aibry.bandcamp.com/album/fault-line-bloom">
+            Fault Line Bloom by AIBRY
+          </a>
+        </iframe>
+      </div>
+
       {/* Logo Hero */}
       <div className="mb-10 flex justify-center">
         <Image
@@ -34,7 +47,6 @@ export default function HomePage() {
 
       {/* Music Link Buttons */}
       <MusicLinks />
-
     </main>
   );
 }

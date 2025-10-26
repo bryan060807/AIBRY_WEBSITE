@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import ToasterProvider from "@/components/ToasterProvider"; // Import the provider
 
 export const metadata: Metadata = {
   title: {
@@ -45,6 +46,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="bg-black text-gray-100">
       <body className="flex min-h-screen flex-col">
+        {/* This will render the toast pop-ups anywhere in your app */}
+        <ToasterProvider />
+        
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />
