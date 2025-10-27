@@ -12,7 +12,7 @@ export default function StorePage() {
         Support my music by purchasing albums and tracks directly from Bandcamp.
       </p>
 
-      {/* Note: Grid layout is kept, but the tall embeds may cause uneven rows. */}
+      {/* Grid layout for Bandcamp embeds */}
       <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3">
         
         {/* Album: Fault Line Bloom (Tall) */}
@@ -44,7 +44,9 @@ export default function StorePage() {
           </a>
         </iframe>
 
-        {/* Single: Forty Years in the Fire (Short) */}
+        {/* --- GROUPED SINGLES (442px height) --- */}
+        
+        {/* Single: Forty Years in the Fire */}
         <iframe
           style={{ border: 0, width: "100%", height: "442px" }}
           src="https://bandcamp.com/EmbeddedPlayer/track=998306284/size=large/bgcol=000000/linkcol=ffffff/tracklist=false/transparent=true/"
@@ -55,7 +57,7 @@ export default function StorePage() {
           </a>
         </iframe>
         
-        {/* NEW SINGLE: Bullet in the Halo (Short) */}
+        {/* Single: Bullet in the Halo */}
         <iframe
           style={{ border: 0, width: "100%", height: "442px" }}
           src="https://bandcamp.com/EmbeddedPlayer/track=2675874009/size=large/bgcol=333333/linkcol=0f91ff/tracklist=false/transparent=true/"
@@ -65,6 +67,40 @@ export default function StorePage() {
             Bullet in the Halo by AIBRY
           </a>
         </iframe>
+
+        {/* NEW Single: Fractured Circuits */}
+        <iframe 
+          style={{ border: 0, width: "100%", height: "442px" }} 
+          src="https://bandcamp.com/EmbeddedPlayer/track=2535016510/size=large/bgcol=333333/linkcol=e32c14/tracklist=false/transparent=true/" 
+          seamless>
+          <a href="https://aibry.bandcamp.com/track/fractured-circuits">Fractured Circuits by AIBRY</a>
+        </iframe>
+        
+        {/* NEW Single: Glass Eyes */}
+        <iframe 
+          style={{ border: 0, width: "100%", height: "442px" }} 
+          src="https://bandcamp.com/EmbeddedPlayer/track=3292875180/size=large/bgcol=333333/linkcol=e32c14/tracklist=false/transparent=true/" 
+          seamless>
+          <a href="https://aibry.bandcamp.com/track/glass-eyes">Glass Eyes by AIBRY</a>
+        </iframe>
+
+        {/* NEW Single: Ghost in the Glass */}
+        <iframe 
+          style={{ border: 0, width: "100%", height: "442px" }} 
+          src="https://bandcamp.com/EmbeddedPlayer/track=3893703159/size=large/bgcol=333333/linkcol=0f91ff/tracklist=false/transparent=true/" 
+          seamless>
+          <a href="https://aibry.bandcamp.com/track/ghost-in-the-glass">Ghost in the Glass by AIBRY</a>
+        </iframe>
+
+        {/* NEW Single: The Scar That Sings */}
+        <iframe 
+          style={{ border: 0, width: "100%", height: "442px" }} 
+          src="https://bandcamp.com/EmbeddedPlayer/track=1206278272/size=large/bgcol=333333/linkcol=e32c14/tracklist=false/transparent=true/" 
+          seamless>
+          <a href="https://aibry.bandcamp.com/track/the-scar-that-sings">The Scar That Sings by AIBRY</a>
+        </iframe>
+
+        {/* --- ALBUMS (mixed heights) --- */}
 
         {/* Album: Whispers Beneath the Ash (Tall) */}
         <iframe
@@ -98,7 +134,7 @@ export default function StorePage() {
             The Cassette Tapes by AIBRY
           </a>
         </iframe>
-
+        
         {/* Track: I Stayed, I Wish You Had Too (Short) */}
         <iframe
           style={{ border: 0, width: "100%", height: "442px" }}
