@@ -144,7 +144,7 @@ export default async function PostPage({ params }: PostPageProps) {
                 <div key={comment.id} className="p-5 rounded-lg bg-[#18181b] border border-gray-800">
                   <div className="flex justify-between items-center mb-3">
                     <p className="font-semibold text-white">{commentAuthor}</p>
-                    {/* *** TYPO FIX HERE *** */}
+                    {/* Final Corrected Timestamp */}
                     <p className="text-xs text-gray-500" suppressHydrationWarning>
                       {new Date(comment.created_at).toLocaleString()}
                     </p>
@@ -166,7 +166,7 @@ export default async function PostPage({ params }: PostPageProps) {
             <p className="text-center text-gray-500 pt-4">
               {/* This message will show if the query fails OR if there are no comments */}
               {commentsError ? 'Failed to load comments.' : 'No replies yet.'}
-            </D>
+            </p>
           )}
         </div>
       </div>
