@@ -55,3 +55,4 @@ pnpm-lock.yaml
 # [cite_start]--- Misc --- [cite: 2]
 [cite_start]*.bak [cite: 2]
 [cite_start]*.tmp [cite: 2]
+.vercel

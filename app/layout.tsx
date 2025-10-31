@@ -1,42 +1,14 @@
-import type { Metadata } from "next";
 import "./globals.css";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import ToasterProvider from "@/components/ToasterProvider"; // Import the provider
+import type { Metadata } from "next";
 
+// Optional: site-wide metadata for SEO
 export const metadata: Metadata = {
-  title: {
-    default: "AIBRY",
-    template: "%s | AIBRY",
-  },
-  description: "Official site for AIBRY music and merch.",
-  icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
-    apple: "/favicon.ico",
-  },
-  openGraph: {
-    title: "AIBRY",
-    description: "Official site for AIBRY music and merch.",
-    url: "https://aibry.com", // update if you deploy to Vercel with custom domain
-    siteName: "AIBRY",
-    images: [
-      {
-        url: "/images/logo.png", // fallback for social previews
-        width: 800,
-        height: 600,
-      },
-    ],
-    locale: "en_US",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "AIBRY",
-    description: "Official site for AIBRY music and merch.",
-    images: ["/images/logo.png"],
-  },
+  title: "AIBRY",
+  description: "AI-powered creativity platform",
 };
+
+// ✅ This layout runs entirely on the server — no hooks, no state, no Supabase calls.
+// ✅ Keeps client logic in pages/components where 'use client' is declared.
 
 export default function RootLayout({
   children,
@@ -44,14 +16,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="bg-black text-gray-100">
-      <body className="flex min-h-screen flex-col">
-        {/* This will render the toast pop-ups anywhere in your app */}
-        <ToasterProvider />
-        
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
+    <html lang="en">
+      <body className="bg-gray-900 text-gray-100 min-h-screen antialiased">
+        {/* global container */}
+        <main className="relative flex flex-col items-center justify-start w-full min-h-screen">
+          {children}
+        </main>
       </body>
     </html>
   );
