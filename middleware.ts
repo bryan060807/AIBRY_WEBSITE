@@ -1,28 +1,36 @@
+import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+export async function middleware(req: NextRequest) {
+  const res = NextResponse.next();
 
-  // ✅ Allow static assets and API routes through
+  // Create a Supabase client to read the session
+  const supabase = createMiddlewareClient({ req, res });
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const { pathname } = req.nextUrl;
+
+  // Allow static files and public routes
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||
     pathname.startsWith("/images") ||
-    pathname.startsWith("/favicon")
-  ) {
-    return NextResponse.next();
-  }
-
-  // ✅ Allow login and public pages through
-  if (
+    pathname.startsWith("/favicon") ||
     pathname.startsWith("/login") ||
-    pathname === "/" ||
-    pathname.startsWith("/auth")
+    pathname === "/"
   ) {
-    return NextResponse.next();
+    return res;
   }
 
-  // 🔒 All others redirect to login
-  return NextResponse.redirect(new URL("/login", request.url));
+  // Redirect unauthenticated users to login
+  if (!session) {
+    const loginUrl = new URL("/login", req.url);
+    loginUrl.searchParams.set("redirectedFrom", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  return res;
 }
