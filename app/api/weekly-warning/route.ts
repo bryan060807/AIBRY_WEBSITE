@@ -1,52 +1,70 @@
-// app/api/weekly-warning/route.ts
-
-import { supabase } from "@/lib/supabaseClient";
-import openai from "@/lib/openaiClient";
 import { NextResponse } from "next/server";
-import { createServerSideClient } from '@/utils/supabase/server'; // Import server client
+import { createClient } from "@supabase/supabase-js";
 
+// ✅ Explicitly typed environment variables
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Define what an expense entry looks like
+type Expense = {
+  id: string;
+  guilt: number;
+  created_at: string;
+  [key: string]: any;
+};
+
+// GET /api/weekly-warning
 export async function GET() {
-  // Get the logged-in user
-  const supabaseServer = await createServerSideClient();
-  const { data: { user } } = await supabaseServer.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
-    // 1. Calculate total guilt from the last 7 days *for this user*
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    
+    // 🕓 One week ago
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+    // 📊 Fetch all expenses from last 7 days
     const { data, error } = await supabase
       .from("expenses")
-      .select("guilt")
-      .eq('user_id', user.id) // <-- Only get expenses for this user
-      .gte("created_at", sevenDaysAgo);
+      .select("id, guilt, created_at")
+      .gte("created_at", oneWeekAgo.toISOString());
 
-    if (error) throw new Error(`Supabase error: ${error.message}`);
-
-    const weeklyGuilt = data.reduce((sum, e) => sum + e.guilt, 0);
-    const guiltThreshold = 20; // From your App.js
-
-    let warning: string | null = null;
-
-    // 2. If guilt is high, get an AI warning
-    if (weeklyGuilt >= guiltThreshold) {
-      const prompt = `A user has a weekly guilt total of ${weeklyGuilt}, which is over their threshold of ${guiltThreshold}. Write a short, sarcastic, but concerned warning message for them.`;
-      
-      const out = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: 60,
-      });
-      warning = out.choices[0].message.content?.trim() || "You should probably calm down.";
+    if (error) {
+      console.error("Supabase error:", error.message);
+      return NextResponse.json(
+        { error: `Supabase error: ${error.message}` },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json({ weeklyGuilt, warning });
+    // ✅ Type-safe reduce
+    const weeklyGuilt = (data ?? []).reduce(
+      (sum: number, e: Expense) => sum + (e.guilt || 0),
+      0
+    );
 
-  } catch (e) {
-    const error = e as Error;
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    // ⚙️ Threshold for triggering the warning
+    const guiltThreshold = 20;
+
+    let warning: string | null = null;
+    if (weeklyGuilt >= guiltThreshold) {
+      warning = `🚨 Guilt threshold exceeded! Weekly guilt score is ${weeklyGuilt}.`;
+    }
+
+    return NextResponse.json(
+      {
+        weeklyGuilt,
+        guiltThreshold,
+        warning,
+        message: warning
+          ? "You might want to ease up this week!"
+          : "You're doing fine — no guilt detected.",
+      },
+      { status: 200 }
+    );
+  } catch (err: any) {
+    console.error("Unexpected error:", err);
+    return NextResponse.json(
+      { error: err.message || "Unexpected error." },
+      { status: 500 }
+    );
   }
 }
