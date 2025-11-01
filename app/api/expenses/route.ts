@@ -1,52 +1,86 @@
-// app/api/expenses/route.ts
+import { NextResponse } from 'next/server';
+import { createServerSideClient } from '@/utils/supabase/server';
+import type { Database } from '@/types/supabase';
 
-import { supabase } from "@/lib/supabaseClient";
-import { NextResponse } from "next/server";
-import { createServerSideClient } from '@/utils/supabase/server'; // Import server client
+type Expense = Database['public']['Tables']['expenses']['Row'];
 
 export async function GET() {
-  // Get the logged-in user
-  const supabaseServer = await createServerSideClient();
-  const { data: { user } } = await supabaseServer.auth.getUser();
+  const supabase = createServerSideClient();
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user)
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+
+    const { data, error } = await supabase
+      .from('expenses')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return NextResponse.json({ success: true, data });
+  } catch (error: any) {
+    console.error('Error fetching expenses:', error);
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
   }
-
-  // Get all expenses *for that user*
-  const { data, error } = await supabase
-    .from("expenses")
-    .select("*")
-    .eq('user_id', user.id) // <-- Only get expenses for this user
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json(data);
 }
 
-export async function POST(request: Request) {
-  // Get the logged-in user
-  const supabaseServer = await createServerSideClient();
-  const { data: { user } } = await supabaseServer.auth.getUser();
+export async function POST(req: Request) {
+  const supabase = createServerSideClient();
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user)
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+
+    const body = await req.json();
+    const { description, amount, category } = body;
+
+    if (!description || !amount)
+      return NextResponse.json(
+        { success: false, error: 'Missing required fields' },
+        { status: 400 }
+      );
+
+    const { data, error } = await supabase
+      .from('expenses')
+      .insert([
+        {
+          user_id: user.id,
+          description,
+          amount,
+          category: category || 'General',
+        },
+      ])
+      .select();
+
+    if (error) throw error;
+
+    return NextResponse.json({ success: true, data });
+  } catch (error: any) {
+    console.error('Error creating expense:', error);
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
   }
-  
-  // Add a new expense
-  const { amount, category, guilt, note } = await request.json();
-
-  const { data, error } = await supabase
-    .from("expenses")
-    .insert([{ amount, category, guilt, note, user_id: user.id }]) // <-- Stamp with user's ID
-    .select();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json(data ? data[0] : {});
 }

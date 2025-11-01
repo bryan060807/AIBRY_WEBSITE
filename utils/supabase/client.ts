@@ -1,8 +1,7 @@
-import { createBrowserClient } from '@supabase/ssr';
+'use client';
 
-export function createClientSideClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-}
+import { createBrowserClient } from '@supabase/ssr';
+import type { Database } from '@/types/supabase'; // optional, if you have a typed DB schema
+
+// Create a Supabase client specifically for client components
+export const supabase = createClientComponentClient<Database>();

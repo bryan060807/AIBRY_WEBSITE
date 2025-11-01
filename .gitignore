@@ -11,16 +11,24 @@ out/
 dist/
 
 # --- Environment Files ---
-.env*
+.env
+.env.local
+.env.*.local
 !.env.example
+
+# --- Supabase ---
+.supabase/
+supabase/.temp/
+supabase/functions/.netlify/
 
 # --- OS Files ---
 .DS_Store
-[cite_start]Thumbs.db [cite: 1]
-
-# [cite_start]--- Windows Specific --- [cite: 2]
-[cite_start]ehthumbs.db [cite: 2]
-[cite_start]Desktop.ini [cite: 2]
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+Icon?
+.AppleDouble
+.LSOverride
 
 # --- VSCode / Editors ---
 .vscode/
@@ -47,12 +55,7 @@ pnpm-lock.yaml
 # --- Git ---
 *.orig
 
-# --- Mac Specific ---
-.AppleDouble
-.LSOverride
-[cite_start]Icon? [cite: 1]
-
-# [cite_start]--- Misc --- [cite: 2]
-[cite_start]*.bak [cite: 2]
-[cite_start]*.tmp [cite: 2]
+# --- Misc ---
+*.bak
+*.tmp
 .vercel

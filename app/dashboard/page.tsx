@@ -1,107 +1,139 @@
-// app/dashboard/page.tsx
-import { createServerSideClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
-import DashboardForms from './DashboardForms';
-import UserActivity from './UserActivity'; // Import the new component
+import Image from 'next/image';
+import Link from 'next/link';
+import { cookies } from 'next/headers';
+import { createServerClient } from '@supabase/ssr';
+import type { Database } from '@/types/supabase';
 
-// --- NEW TYPES (exported for UserActivity to use) ---
-export type UserPost = {
-  id: number;
-  title: string;
-  created_at: string;
-  topic: string;
-}
-
-export type UserComment = {
-  id: number;
-  content: string;
-  created_at: string;
-  posts: { // from inner join
-    id: number;
-    title: string;
-    topic: string;
-  };
-}
-// --- END NEW TYPES ---
-
-async function getUserData(supabase: any, user: any) {
-  // Get public profile data
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .select('display_name')
-    .eq('id', user.id)
-    .single();
-  
-  if (error) {
-    console.error("Error fetching profile:", error.message);
-  }
-
-  return {
-    email: user.email,
-    display_name: profile?.display_name || '',
-  };
-}
+// Metadata for SEO
+export const metadata = {
+  title: 'Dashboard',
+  description: 'Manage your profile, activity, and community settings.',
+};
 
 export default async function DashboardPage() {
-  const supabase = await createServerSideClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  // Explicitly configure cookie handlers (modern @supabase/ssr requirement)
+  const cookieStore = cookies();
 
+  const supabase = createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get: (name: string) => cookieStore.get(name)?.value,
+        set: (name: string, value: string, options: any) => {
+          cookieStore.set({ name, value, ...options });
+        },
+        remove: (name: string, options: any) => {
+          cookieStore.set({ name, value: '', ...options });
+        },
+      },
+    }
+  );
+
+  // Get the logged-in user
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Redirect if not logged in
   if (!user) {
-    redirect('/login?message=You must be logged in to view this page.');
+    redirect('/login');
   }
 
-  // --- FETCH ALL DASHBOARD DATA IN PARALLEL ---
-  const [userData, postsData, commentsData] = await Promise.all([
-    getUserData(supabase, user),
-    
-    // Fetch user's posts
-    supabase
-      .from('posts')
-      .select('id, title, created_at, topic')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false }),
-      
-    // Fetch user's comments (and the post they belong to)
-    supabase
-      .from('comments')
-      .select('id, content, created_at, posts!inner(id, title, topic)')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-  ]);
-  
-  // Cast the data
-  const userPosts: UserPost[] = (postsData.data as unknown as UserPost[]) || [];
-  const userComments: UserComment[] = (commentsData.data as unknown as UserComment[]) || [];
-  // --- END DATA FETCHING ---
+  // Fetch profile
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single();
 
+  if (error) {
+    console.error('Error loading profile:', error.message);
+  }
 
   return (
-    // Updated layout: wider and ready for columns
-    <main className="mx-auto max-w-4xl px-4 py-16">
-      <h1 className="mb-8 text-4xl font-bold text-white">User Dashboard</h1>
-      <p className="mb-12 text-lg text-gray-300">
-        Welcome, <span className="font-bold text-white">{userData.display_name || userData.email}</span>.
-      </p>
-      
-      {/* New 2-Column Grid Layout */}
-      <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16">
-        
-        {/* Column 1: Settings Forms */}
-        <div className="flex-1">
-           <h2 className="text-2xl font-semibold text-white mb-6">Account Settings</h2>
-           <p className="mb-6 text-gray-400">
-             Update your public profile and private account details.
-           </p>
-           <DashboardForms userData={userData} />
-        </div>
-        
-        {/* Column 2: Forum Activity */}
-        <div className="flex-1">
-           <h2 className="text-2xl font-semibold text-white mb-6">Your Forum Activity</h2>
-           <UserActivity posts={userPosts} comments={userComments} />
+    <main className="max-w-4xl mx-auto mt-16 px-6 text-gray-100">
+      <h1 className="text-3xl font-bold mb-6 text-center">Dashboard</h1>
+
+      {/* --- PROFILE CARD --- */}
+      <section className="flex flex-col sm:flex-row items-center sm:items-start gap-6 bg-gray-900 border border-gray-800 rounded-2xl p-6 shadow-md mb-8">
+        {profile?.avatar_url ? (
+          <Image
+            src={profile.avatar_url}
+            alt="User Avatar"
+            width={100}
+            height={100}
+            className="rounded-full border border-gray-700 shadow-md object-cover"
+          />
+        ) : (
+          <div className="w-[100px] h-[100px] rounded-full border border-gray-700 flex items-center justify-center text-gray-500">
+            No Avatar
+          </div>
+        )}
+
+        <div className="flex flex-col flex-1">
+          <h2 className="text-2xl font-semibold text-white">
+            {profile?.full_name || user.email}
+          </h2>
+          {profile?.username && (
+            <p className="text-gray-400">@{profile.username}</p>
+          )}
+          {profile?.bio && (
+            <p className="mt-3 text-gray-300 text-sm">{profile.bio}</p>
+          )}
         </div>
 
-      </div>
+        <Link
+          href="/profile"
+          className="btn bg-[#629aa9] hover:bg-[#4f7f86] text-white font-semibold text-sm px-4 py-2"
+        >
+          Edit Profile
+        </Link>
+      </section>
+
+      {/* --- DASHBOARD LINKS --- */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        {dashboardLinks.map(({ href, icon, title, description }) => (
+          <Link
+            key={href}
+            href={href}
+            className="block rounded-2xl bg-gray-900 border border-gray-800 p-6 transition hover:border-[#629aa9] hover:shadow-lg"
+          >
+            <h3 className="text-xl font-semibold mb-1">
+              {icon} {title}
+            </h3>
+            <p className="text-gray-400 text-sm">{description}</p>
+          </Link>
+        ))}
+      </section>
     </main>
   );
 }
+
+const dashboardLinks = [
+  {
+    href: '/store',
+    icon: '🎧',
+    title: 'Music Store',
+    description: 'Access exclusive tracks and releases.',
+  },
+  {
+    href: '/todo',
+    icon: '📝',
+    title: 'To-Do',
+    description: 'Manage your creative workflow and tasks.',
+  },
+  {
+    href: '/forum',
+    icon: '💬',
+    title: 'Forum',
+    description: 'Join discussions with the AIBRY community.',
+  },
+  {
+    href: '/testimonials',
+    icon: '⭐',
+    title: 'Testimonials',
+    description: 'Read or submit fan feedback.',
+  },
+];

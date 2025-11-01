@@ -1,78 +1,175 @@
-// components/Header.tsx
-import Link from 'next/link';
-import { createServerSideClient } from '@/utils/supabase/server';
-import { logout } from '@/app/auth/actions';
+'use client';
 
-export default async function Header() {
-  const supabase = await createServerSideClient();
-  const { data: { user } } = await supabase.auth.getUser();
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { Menu, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { createBrowserClient } from '@supabase/ssr';
+import LogoutButton from '@/components/LogoutButton';
+
+export default function Header() {
+  const pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  // Detect scroll for dynamic header style
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Sync user session with Supabase
+  useEffect(() => {
+    let mounted = true;
+
+    const getUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (mounted) setUser(user);
+    };
+
+    getUser();
+
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (mounted) setUser(session?.user ?? null);
+    });
+
+    return () => {
+      mounted = false;
+      subscription.subscription.unsubscribe();
+    };
+  }, [supabase]);
+
+  const navItems = [
+    { href: '/store', label: 'Store' },
+    { href: '/merch', label: 'Merch' },
+    { href: '/archive', label: 'AI Archive' },
+    { href: '/forum', label: 'Forum' },
+    { href: '/monday-gpt', label: 'Monday-GPT' },
+    { href: '/todo', label: 'To-Do' },
+    { href: '/dashboard', label: 'Dashboard' },
+  ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-gray-800 bg-black/80 backdrop-blur-md">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-        
-        {/* Left Side: Logo & Main Nav */}
-        <div className="flex items-center gap-6">
-          <Link href="/" className="text-2xl font-bold text-white">
-            AIBRY
-          </Link>
-          <div className="hidden items-center gap-4 md:flex">
-            <Link href="/about" className="text-gray-300 transition hover:text-white">
-              About
-            </Link>
-            <Link href="/discography" className="text-gray-300 transition hover:text-white">
-              Discography
-            </Link>
-            <Link href="/gallery" className="text-gray-300 transition hover:text-white">
-              Gallery
-            </Link>
-            <Link href="/merch" className="text-gray-300 transition hover:text-white">
-              Merch
-            </Link>
-            {/* ADDED MUSIC STORE LINK */}
-            <Link href="/store" className="text-gray-300 transition hover:text-white">
-              Music Store
-            </Link>
-            <Link href="/forum" className="text-gray-300 transition hover:text-white">
-              Forum
-            </Link>
-            <Link href="/todo" className="text-gray-300 transition hover:text-white">
-              ToDO List
-            </Link>
-            <Link href="/monday-gpt" className="text-gray-300 transition hover:text-white">
-              Monday2.0
-            </Link>
-          </div>
-        </div>
+    <header
+      className={`sticky top-0 z-50 transition-all duration-300 ${
+        scrolled
+          ? 'bg-black/85 backdrop-blur-md border-b border-gray-800 shadow-lg shadow-black/20'
+          : 'bg-black/60 backdrop-blur border-b border-gray-800'
+      }`}
+    >
+      <div
+        className={`mx-auto flex max-w-6xl items-center justify-between px-4 ${
+          scrolled ? 'py-3' : 'py-5'
+        } transition-all duration-300`}
+      >
+        {/* Logo */}
+        <Link
+          href="/"
+          className={`text-white font-bold transition-all ${
+            scrolled ? 'text-xl' : 'text-2xl'
+          } hover:text-[#629aa9]`}
+        >
+          AIBRY
+        </Link>
 
-        {/* Right Side: Auth Links */}
-        <div className="flex items-center gap-4">
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+          {navItems.map(({ href, label }) => (
+            <Link
+              key={href}
+              href={href}
+              className={`relative hover:text-[#629aa9] transition ${
+                pathname === href
+                  ? 'text-[#629aa9] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-full after:bg-[#629aa9] after:content-[""]'
+                  : 'text-gray-300'
+              }`}
+            >
+              {label}
+            </Link>
+          ))}
+
           {user ? (
-            // --- Logged IN View ---
-            <>
-              <Link href="/dashboard" className="text-sm text-gray-300 transition hover:text-white">
-                Dashboard
-              </Link>
-              <form action={logout}>
-                <button
-                  type="submit"
-                  className="rounded-md bg-gray-700 px-3 py-2 text-sm font-medium text-white transition hover:bg-gray-600"
-                >
-                  Log Out
-                </button>
-              </form>
-            </>
+            <LogoutButton />
           ) : (
-            // --- Logged OUT View ---
             <Link
               href="/login"
-              className="rounded-md bg-[#629aa9] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#4f7f86]"
+              className={`relative hover:text-[#629aa9] transition ${
+                pathname === '/login' ? 'text-[#629aa9]' : 'text-gray-300'
+              }`}
             >
-              Login / Sign Up
+              Login
             </Link>
           )}
-        </div>
-      </nav>
+        </nav>
+
+        {/* Mobile Menu Toggle */}
+        <button
+          onClick={() => setMenuOpen((prev) => !prev)}
+          className="md:hidden text-gray-300 hover:text-[#629aa9] transition"
+          aria-label="Toggle menu"
+        >
+          {menuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
+
+      {/* Mobile Dropdown */}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.nav
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.25 }}
+            className="md:hidden bg-black/95 border-t border-gray-800 px-4 pb-4"
+          >
+            <ul className="flex flex-col space-y-3 mt-2 text-sm font-medium">
+              {navItems.map(({ href, label }) => (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    onClick={() => setMenuOpen(false)}
+                    className={`block py-2 transition ${
+                      pathname === href
+                        ? 'text-[#629aa9]'
+                        : 'text-gray-300 hover:text-[#629aa9]'
+                    }`}
+                  >
+                    {label}
+                  </Link>
+                </li>
+              ))}
+
+              <li className="pt-2 border-t border-gray-800">
+                {user ? (
+                  <LogoutButton />
+                ) : (
+                  <Link
+                    href="/login"
+                    onClick={() => setMenuOpen(false)}
+                    className={`block py-2 transition ${
+                      pathname === '/login'
+                        ? 'text-[#629aa9]'
+                        : 'text-gray-300 hover:text-[#629aa9]'
+                    }`}
+                  >
+                    Login
+                  </Link>
+                )}
+              </li>
+            </ul>
+          </motion.nav>
+        )}
+      </AnimatePresence>
     </header>
   );
 }

@@ -1,86 +1,98 @@
-"use client";
+'use client';
 
-import { useState, useCallback, useEffect } from "react";
-import { useSwipeable } from "react-swipeable";
-import { FaQuoteLeft, FaQuoteRight } from "react-icons/fa";
 
-const testimonials = [
-  {
-    user: "@2NDBLE$$ING",
-    quote: "These lyrics touched my freaking soul 💯 Please keep making music",
-  },
-  {
-    user: "@Kade Hansen",
-    quote: "Holy. you guys need to blow up!",
-  },
-  {
-    user: "@Ali Sher",
-    quote: "Thats so dope mannnnnnn 🔥",
-  },
-  {
-    user: "@Ray xavi",
-    quote: "Pure talent and you got an amazing system",
-  },
-  {
-    user: "@User 202949736",
-    quote: "on repeat!!!",
-  },
-];
+import { useEffect, useState } from 'react';
+import { createBrowserClient } from '@supabase/ssr';
+import { motion, AnimatePresence } from 'framer-motion';
+
+
+interface Testimonial {
+id: string;
+name: string;
+message: string;
+}
+
 
 export default function TestimonialsCarousel() {
-  const [index, setIndex] = useState(0);
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+const [current, setCurrent] = useState(0);
+const [loading, setLoading] = useState(true);
 
-  const next = useCallback(() => {
-    setIndex((prev) => (prev + 1) % testimonials.length);
-  }, []);
 
-  const prev = useCallback(() => {
-    setIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
-  }, []);
+useEffect(() => {
+const fetchTestimonials = async () => {
+const { data, error } = await supabase
+.from('testimonials')
+.select('id, name, message')
+.eq('approved', true)
+.order('created_at', { ascending: false });
 
-  const swipeHandlers = useSwipeable({
-    onSwipedLeft: () => next(),
-    onSwipedRight: () => prev(),
-    preventScrollOnSwipe: true,
-    trackTouch: true,
-    trackMouse: false,
-  });
 
-  useEffect(() => {
-    const timer = setInterval(next, 6000);
-    return () => clearInterval(timer);
-  }, [next]);
+if (!error && data) setTestimonials(data);
+setLoading(false);
+};
 
-  return (
-    <section className="mt-20 px-4 text-center" {...swipeHandlers}>
-      <h2 className="mb-6 text-2xl font-bold text-white">What Listeners Are Saying</h2>
 
-      <div className="relative mx-auto max-w-xl rounded bg-[#1b1b1b] p-8 text-white shadow-lg">
-        <div className="flex items-start justify-center gap-3">
-          <FaQuoteLeft className="text-3xl text-cassette-red mt-1" />
-          <p className="text-lg italic leading-relaxed">
-            &ldquo;{testimonials[index].quote}&rdquo;
-          </p>
-          <FaQuoteRight className="text-3xl text-cassette-red mt-1" />
-        </div>
+fetchTestimonials();
+}, [supabase]);
 
-        <p className="mt-4 text-sm text-gray-400">{testimonials[index].user}</p>
 
-        <div className="mt-6 flex justify-center gap-4">
-          <button
-            onClick={prev}
-            className="rounded-full border border-gray-500 px-3 py-1 text-sm hover:bg-gray-700"
-          >
-            ← Prev
-          </button>
-          <button
-            onClick={next}
-            className="rounded-full border border-gray-500 px-3 py-1 text-sm hover:bg-gray-700"
-          >
-            Next →
-          </button>
-        </div>
-      </div>
-    </section>
-  );
+useEffect(() => {
+if (testimonials.length > 1) {
+const interval = setInterval(() => {
+setCurrent((prev) => (prev + 1) % testimonials.length);
+}, 6000);
+return () => clearInterval(interval);
+}
+}, [testimonials]);
+
+
+if (loading) {
+return <div className="text-center text-gray-400 py-10">Loading testimonials…</div>;
+}
+
+
+if (testimonials.length === 0) {
+return <div className="text-center text-gray-400 py-10">No testimonials available yet.</div>;
+}
+
+
+const testimonial = testimonials[current];
+
+
+return (
+<section className="relative max-w-2xl mx-auto text-center my-12 px-4" aria-label="User testimonials">
+<AnimatePresence mode="wait">
+<motion.div
+key={testimonial.id}
+initial={{ opacity: 0, y: 10 }}
+animate={{ opacity: 1, y: 0 }}
+exit={{ opacity: 0, y: -10 }}
+transition={{ duration: 0.5 }}
+className="text-gray-300"
+>
+<p className="text-lg italic text-gray-200 mb-4">“{testimonial.message}”</p>
+<p className="text-sm font-semibold text-[var(--color-accent)]">— {testimonial.name}</p>
+</motion.div>
+</AnimatePresence>
+
+
+{testimonials.length > 1 && (
+<div className="flex justify-center gap-2 mt-6">
+{testimonials.map((_, index) => (
+<button
+key={index}
+onClick={() => setCurrent(index)}
+className={`h-2 w-2 rounded-full transition-all duration-300 ${index === current ? 'bg-[var(--color-accent)] w-4' : 'bg-gray-600'}`}
+aria-label={`View testimonial ${index + 1}`}
+/>
+))}
+</div>
+)}
+</section>
+);
 }

@@ -1,9 +1,34 @@
-import "./globals.css";
 import type { Metadata } from "next";
+import "./globals.css";
+import { Toaster } from "react-hot-toast";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import ContactForm from "@/components/ContactForm";
 
 export const metadata: Metadata = {
-  title: "AIBRY",
-  description: "AI-powered creativity platform",
+  title: {
+    default: "AIBRY",
+    template: "%s | AIBRY",
+  },
+  description: "Official site for AIBRY music, merch, and creative archive.",
+  metadataBase: new URL("https://aibry.shop"),
+  alternates: { canonical: "https://aibry.shop" },
+  icons: { icon: "/favicon.ico" },
+  openGraph: {
+    title: "AIBRY",
+    description: "Official site for AIBRY music, merch, and creative archive.",
+    url: "https://aibry.shop",
+    siteName: "AIBRY",
+    images: [{ url: "/images/logo.png", width: 800, height: 600 }],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AIBRY",
+    description: "Official site for AIBRY music and merch.",
+    images: ["/images/logo.png"],
+  },
 };
 
 export default function RootLayout({
@@ -13,21 +38,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
-        {/* Header */}
-        <header className="w-full py-4 border-b border-gray-800 bg-gray-950 text-center">
-          <h1 className="text-2xl font-bold text-indigo-400">AIBRY</h1>
-        </header>
-
-        {/* Main content */}
-        <main className="flex-grow w-full flex justify-center items-start px-4 py-8">
+      <body className="flex min-h-screen flex-col bg-black text-gray-100 antialiased">
+        <Toaster position="top-center" />
+        <Header />
+        <main id="main-content" className="flex-1 focus:outline-none">
           {children}
+          <ContactForm />
         </main>
-
-        {/* Footer */}
-        <footer className="w-full py-4 border-t border-gray-800 bg-gray-950 text-center text-sm text-gray-500">
-          &copy; {new Date().getFullYear()} AIBRY. All rights reserved.
-        </footer>
+        <Footer />
       </body>
     </html>
   );

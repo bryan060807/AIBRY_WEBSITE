@@ -1,37 +1,25 @@
-// utils/supabase/server.ts (FIXED)
-
-import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { createServerClient } from '@supabase/ssr';
+import type { Database } from '@/types/supabase';
 
-export async function createServerSideClient() {
+export function createServerSideClient() {
   const cookieStore = cookies();
 
-  // Ensure your SUPABASE_SERVICE_KEY is set in your Vercel environment
-  if (!process.env.SUPABASE_SERVICE_KEY) {
-    throw new Error("Missing env var: SUPABASE_SERVICE_KEY");
-  }
-
-  return createServerClient(
+  const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    // -----------------------------------------------------------------
-    // THE FIX: Use the Service Key for admin-level server actions
-    process.env.SUPABASE_SERVICE_KEY!,
-    // -----------------------------------------------------------------
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return cookieStore.getAll();
+        get: (name: string) => cookieStore.get(name)?.value,
+        set: (name: string, value: string, options: any) => {
+          cookieStore.set({ name, value, ...options });
         },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch (e) {
-            // This error is expected in Server Components, so we ignore it.
-          }
+        remove: (name: string, options: any) => {
+          cookieStore.set({ name, value: '', ...options });
         },
       },
     }
   );
+
+  return supabase;
 }

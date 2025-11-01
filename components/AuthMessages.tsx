@@ -1,4 +1,3 @@
-// components/AuthMessages.tsx
 "use client";
 
 import { useEffect } from 'react';

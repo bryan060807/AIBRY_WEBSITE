@@ -1,71 +1,72 @@
-// app/dashboard/actions.ts
 'use server';
 
-import { createServerSideClient } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { createServerSideClient } from '@/utils/supabase/server'; // assuming your wrapper uses cookies() internally
 
-// --- Action 1: Update public profile data (display_name) ---
-export async function updateProfile(prevState: any, formData: FormData) {
-  // ... your existing updateProfile function
-  const supabase = await createServerSideClient();
-  const displayName = formData.get('display_name') as string;
-
-  if (!displayName) {
-    return { message: 'Display Name cannot be empty.', success: false };
-  }
-
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return { message: 'Not authenticated.', success: false };
-  }
-
-  const { error } = await supabase
-    .from('profiles')
-    .update({ display_name: displayName })
-    .eq('id', user.id);
-
-  if (error) {
-    return { message: error.message, success: false };
-  }
-
-  revalidatePath('/dashboard');
-  return { message: 'Successfully updated profile!', success: true };
+interface ActionResponse {
+  message: string;
+  success: boolean;
 }
 
-// --- Action 2: Update secure auth data (email/phone) ---
-export async function updateAuth(prevState: any, formData: FormData) {
-  const supabase = await createServerSideClient();
-  const email = formData.get('email') as string;
-  // REMOVED: const phone = formData.get('phone') as string;
+// --- Update public profile ---
+export async function updateProfile(_: any, formData: FormData): Promise<ActionResponse> {
+  try {
+    const supabase = await createServerSideClient();
+    const displayName = (formData.get('display_name') as string)?.trim();
 
-  const { error } = await supabase.auth.updateUser({
-    email,
-    // REMOVED: phone,
-  });
+    if (!displayName) {
+      return { message: 'Display name cannot be empty.', success: false };
+    }
 
-  if (error) {
-    return { message: error.message, success: false };
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { message: 'Not authenticated.', success: false };
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ display_name: displayName })
+      .eq('id', user.id);
+
+    if (error) throw error;
+
+    revalidatePath('/dashboard');
+    return { message: 'Successfully updated profile!', success: true };
+  } catch (err: any) {
+    return { message: err.message || 'An unexpected error occurred.', success: false };
   }
-
-  revalidatePath('/dashboard');
-  return { message: 'Successfully updated account info!', success: true };
 }
 
-// --- Action 3: Update password ---
-export async function updatePassword(prevState: any, formData: FormData) {
-  // ... your existing updatePassword function
-  const supabase = await createServerSideClient();
-  const password = formData.get('password') as string;
+// --- Update email ---
+export async function updateAuth(_: any, formData: FormData): Promise<ActionResponse> {
+  try {
+    const supabase = await createServerSideClient();
+    const email = (formData.get('email') as string)?.trim();
 
-  if (password.length < 6) {
-    return { message: 'Password must be at least 6 characters.', success: false };
+    const { error } = await supabase.auth.updateUser({ email });
+    if (error) throw error;
+
+    revalidatePath('/dashboard');
+    return { message: 'Successfully updated account info!', success: true };
+  } catch (err: any) {
+    return { message: err.message || 'An unexpected error occurred.', success: false };
   }
+}
 
-  const { error } = await supabase.auth.updateUser({ password });
+// --- Update password ---
+export async function updatePassword(_: any, formData: FormData): Promise<ActionResponse> {
+  try {
+    const supabase = await createServerSideClient();
+    const password = (formData.get('password') as string)?.trim();
 
-  if (error) {
-    return { message: error.message, success: false };
+    if (!password || password.length < 6) {
+      return { message: 'Password must be at least 6 characters.', success: false };
+    }
+
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) throw error;
+
+    revalidatePath('/dashboard');
+    return { message: 'Successfully updated password!', success: true };
+  } catch (err: any) {
+    return { message: err.message || 'An unexpected error occurred.', success: false };
   }
-
-  return { message: 'Successfully updated password!', success: true };
 }

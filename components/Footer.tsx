@@ -1,51 +1,71 @@
-// components/Footer.tsx
-import Link from 'next/link';
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
 
 export default function Footer() {
-  const currentYear = new Date().getFullYear();
+  const [visible, setVisible] = useState(false);
+  const footerRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => setVisible(entry.isIntersecting),
+      { threshold: 0.2 }
+    );
+    if (footerRef.current) observer.observe(footerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <footer className="mt-20 w-full border-t border-gray-800 bg-black">
-      <div className="mx-auto max-w-6xl px-4 py-8">
-        <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
-          
-          {/* Footer Navigation */}
-          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-gray-400">
-            <Link href="/" className="transition hover:text-white">
-              Home
-            </Link>
-            <Link href="/about" className="transition hover:text-white">
-              About
-            </Link>
-            <Link href="/discography" className="transition hover:text-white">
-              Discography
-            </Link>
-            <Link href="/gallery" className="transition hover:text-white">
-              Gallery
-            </Link>
-            <Link href="/merch" className="transition hover:text-white">
-              Merch
-            </Link>
-            {/* ADDED MUSIC STORE LINK */}
-            <Link href="/store" className="transition hover:text-white">
-              Music Store
-            </Link>
-            <Link href="/forum" className="transition hover:text-white">
-              Forum
-            </Link>
-            <Link href="/todo" className="transition hover:text-white">
-              ToDO List
-            </Link>
-            <Link href="/monday-gpt" className="transition hover:text-white">
-              Monday2.0
-            </Link>
-          </div>
-          
-          {/* Copyright */}
-          <p className="text-sm text-gray-500">
-            &copy; {currentYear} AIBRY. All Rights Reserved.
-          </p>
+    <footer
+      ref={footerRef}
+      className={`mt-16 border-t border-gray-800 bg-black/90 text-gray-400 transform transition-all duration-700 ease-out ${
+        visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+      }`}
+    >
+      <div className="mx-auto max-w-5xl px-4 py-10 text-center">
+        <div className="mb-4 flex justify-center gap-6 flex-wrap">
+          <a
+            href="https://open.spotify.com/artist/6gw6SIOYGPhuMqOfLwJE9h"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-[var(--color-accent)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus)]"
+          >
+            Spotify
+          </a>
+          <a
+            href="https://soundcloud.com/bryan-miller-27"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-[var(--color-accent)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus)]"
+          >
+            SoundCloud
+          </a>
+          <a
+            href="https://aibry.bandcamp.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-[var(--color-accent)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus)]"
+          >
+            Bandcamp
+          </a>
+          <a
+            href="https://www.youtube.com/channel/UCQDPCw7xwl3sQWjUjtnL1AQ"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-[var(--color-accent)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus)]"
+          >
+            YouTube
+          </a>
+          <a
+            href="mailto:aibry@aibry.shop"
+            className="hover:text-[var(--color-accent)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus)]"
+          >
+            aibry@aibry.shop
+          </a>
         </div>
+        <p className="text-sm text-gray-500">
+          © {new Date().getFullYear()} AIBRY. All rights reserved.
+        </p>
       </div>
     </footer>
   );

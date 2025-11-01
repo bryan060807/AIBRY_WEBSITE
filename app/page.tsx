@@ -1,54 +1,69 @@
+'use client';
+
+
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import MusicLinks from "@/components/MusicLinks";
 import TestimonialsCarousel from "@/components/TestimonialsCarousel";
 import TestimonialForm from "@/components/TestimonialForm";
+import { useEffect, useRef, useState } from "react";
 
-export const metadata = {
-  title: "AIBRY",
-  description: "Welcome to my official website — music and merch.",
-};
+
+const LazyBandcamp = dynamic(() => import("@/components/BandcampEmbed"), {
+ssr: false,
+});
+
 
 export default function HomePage() {
-  return (
-    <main className="mx-auto max-w-3xl px-4 py-20 text-center">
-      {/* Logo Hero */}
-      <div className="mb-10 flex justify-center">
-        <Image
-          src="/images/logo.png"
-          alt="AIBRY Logo"
-          width={400}
-          height={400}
-          priority
-        />
-      </div>
+const [isVisible, setIsVisible] = useState(false);
+const ref = useRef<HTMLDivElement | null>(null);
 
-      <p className="mb-6 text-lg text-gray-300">
-        Welcome to my website — the official hub for my music and merch.
-      </p>
 
-      {/* Music Link Buttons */}
-      <div className="mb-12">
-        <MusicLinks />
-      </div>
+useEffect(() => {
+const observer = new IntersectionObserver(
+([entry]) => setIsVisible(entry.isIntersecting),
+{ threshold: 0.2 }
+);
+if (ref.current) observer.observe(ref.current);
+return () => observer.disconnect();
+}, []);
 
-      {/* Bandcamp Embed - Featured Album */}
-      <div className="my-12 flex justify-center">
-        <iframe
-          style={{ border: 0, width: "350px", height: "786px" }}
-          src="https://bandcamp.com/EmbeddedPlayer/album=247455740/size=large/bgcol=333333/linkcol=0f91ff/transparent=true/"
-          seamless
-        >
-          <a href="https://aibry.bandcamp.com/album/fault-line-bloom">
-            Fault Line Bloom by AIBRY
-          </a>
-        </iframe>
-      </div>
 
-      {/* Testimonials */}
-      <TestimonialsCarousel />
+return (
+<main className="mx-auto max-w-4xl px-4 py-20 text-center">
+<section className="mb-12">
+<Image
+src="/images/logo.png"
+alt="AIBRY Logo"
+width={400}
+height={400}
+priority
+className="mx-auto"
+/>
+<p className="mt-6 text-lg text-gray-300">
+Welcome to my official website — your hub for music, merch, and madness.
+</p>
+</section>
 
-      {/* Testimonial Submission Form */}
-      <TestimonialForm />
-    </main>
-  );
+
+<section aria-label="music links" className="mb-12">
+<MusicLinks />
+</section>
+
+
+<section ref={ref} aria-label="featured album" className="my-16 flex justify-center">
+{isVisible && <LazyBandcamp />}
+</section>
+
+
+<section aria-label="testimonials" className="my-16">
+<TestimonialsCarousel />
+</section>
+
+
+<section aria-label="submit testimonial" className="my-20">
+<TestimonialForm />
+</section>
+</main>
+);
 }

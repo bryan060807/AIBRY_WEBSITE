@@ -1,33 +1,114 @@
-// app/api/expenses/[id]/route.ts
+import { NextResponse } from 'next/server';
+import { createServerSideClient } from '@/utils/supabase/server';
+import type { Database } from '@/types/supabase';
 
-import { supabase } from "@/lib/supabaseClient";
-import { NextResponse } from "next/server";
-import { createServerSideClient } from '@/utils/supabase/server'; // Import server client
+type Expense = Database['public']['Tables']['expenses']['Row'];
 
-export async function DELETE(
-  request: Request,
+// GET /api/expenses/[id]
+export async function GET(
+  req: Request,
   { params }: { params: { id: string } }
 ) {
-  const { id } = params;
+  const supabase = createServerSideClient();
 
-  // Get the logged-in user
-  const supabaseServer = await createServerSideClient();
-  const { data: { user } } = await supabaseServer.auth.getUser();
+  try {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+    if (userError || !user)
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { data, error } = await supabase
+      .from('expenses')
+      .select('*')
+      .eq('id', params.id)
+      .eq('user_id', user.id)
+      .single();
+
+    if (error) throw error;
+
+    return NextResponse.json({ success: true, data });
+  } catch (error: any) {
+    console.error('Error fetching expense:', error);
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
   }
+}
 
-  // Delete the expense *only if* the user_id matches
-  const { error } = await supabase
-    .from("expenses")
-    .delete()
-    .eq('user_id', user.id) // <-- Security check
-    .eq("id", id);
+// PATCH /api/expenses/[id]
+export async function PATCH(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const supabase = createServerSideClient();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  try {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+    if (userError || !user)
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+
+    const body = await req.json();
+    const { description, amount, category } = body;
+
+    const { data, error } = await supabase
+      .from('expenses')
+      .update({
+        ...(description && { description }),
+        ...(amount && { amount }),
+        ...(category && { category }),
+      })
+      .eq('id', params.id)
+      .eq('user_id', user.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return NextResponse.json({ success: true, data });
+  } catch (error: any) {
+    console.error('Error updating expense:', error);
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
   }
+}
 
-  return NextResponse.json({ success: true });
+// DELETE /api/expenses/[id]
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const supabase = createServerSideClient();
+
+  try {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+    if (userError || !user)
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+
+    const { error } = await supabase
+      .from('expenses')
+      .delete()
+      .eq('id', params.id)
+      .eq('user_id', user.id);
+
+    if (error) throw error;
+
+    return NextResponse.json({ success: true, message: 'Expense deleted successfully.' });
+  } catch (error: any) {
+    console.error('Error deleting expense:', error);
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
+  }
 }
