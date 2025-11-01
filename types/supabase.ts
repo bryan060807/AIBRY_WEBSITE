@@ -13,6 +13,7 @@ export interface Database {
         Row: {
           id: string;
           username: string | null;
+          display_name: string | null; // Added to match actual schema
           full_name: string | null;
           avatar_url: string | null;
           bio: string | null;
@@ -22,6 +23,7 @@ export interface Database {
         Insert: {
           id: string;
           username?: string | null;
+          display_name?: string | null; // Added
           full_name?: string | null;
           avatar_url?: string | null;
           bio?: string | null;
@@ -31,6 +33,7 @@ export interface Database {
         Update: {
           id?: string;
           username?: string | null;
+          display_name?: string | null; // Added
           full_name?: string | null;
           avatar_url?: string | null;
           bio?: string | null;
@@ -140,6 +143,57 @@ export interface Database {
           title?: string;
           completed?: boolean;
           due_date?: string | null;
+          created_at?: string;
+        };
+      };
+
+      goals: {
+        Row: {
+          id: string;
+          user_id: string;
+          goal: string;
+          completed: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          goal: string;
+          completed?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          goal?: string;
+          completed?: boolean;
+          created_at?: string;
+        };
+      };
+
+      posts: {
+        Row: {
+          id: string;
+          user_id: string;
+          topic: string;
+          title: string;
+          content: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          topic: string;
+          title: string;
+          content: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          topic?: string;
+          title?: string;
+          content?: string;
           created_at?: string;
         };
       };
