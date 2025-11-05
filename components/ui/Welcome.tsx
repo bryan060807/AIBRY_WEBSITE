@@ -19,7 +19,7 @@ export default function Welcome() {
       </svg>
       <h3 className="text-lg font-semibold text-gray-400">Your song awaits</h3>
       <p className="mt-1 max-w-xs">
-        Fill in your lyrics and style notes, then click "Generate Song" to bring your creation to life.
+        Fill in your lyrics and style notes, then click &quot;Generate Song&quot; to bring your creation to life.
       </p>
     </div>
   );
