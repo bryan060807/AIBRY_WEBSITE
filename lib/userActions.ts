@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createSupabaseServerClient } from '@/lib/supabaseClient';
+import { createSupabaseServerClient } from '@/utils/supabase/server';
 
 interface ActionResponse {
   message: string;
