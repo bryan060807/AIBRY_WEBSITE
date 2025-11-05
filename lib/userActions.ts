@@ -17,12 +17,13 @@ export async function updateProfile(_: any, formData: FormData): Promise<ActionR
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { message: 'Not authenticated.', success: false };
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
       .update({ display_name: displayName })
-      .eq('id', user.id);
+      .eq('user_id', user.id); // <- make sure this matches your schema
 
     if (error) throw error;
+    if (data?.length === 0) return { message: 'No profile found to update.', success: false };
 
     revalidatePath('/dashboard');
     return { message: 'Successfully updated profile!', success: true };

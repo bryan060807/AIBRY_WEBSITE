@@ -42,7 +42,7 @@ export default function NewPostPage() {
           title: title.trim(),
           content: content.trim(),
           author: user.email || 'Anonymous',
-          author_id: user.id,
+          user_id: user.id,
         },
       ]);
 
