@@ -66,8 +66,11 @@ export default function LikeButton({ postId, commentId }: LikeButtonProps) {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'likes' },
         (payload) => {
-          const affectedId =
-            payload.new?.[column] || payload.old?.[column];
+          // Cast to Record<string, any> to allow dynamic indexing
+          const newData = payload.new as Record<string, any> | null;
+          const oldData = payload.old as Record<string, any> | null;
+          const affectedId = newData?.[column] ?? oldData?.[column];
+
           if (affectedId === targetId) {
             // Refresh like count
             supabase
