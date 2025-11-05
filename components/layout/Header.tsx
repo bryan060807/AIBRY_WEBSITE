@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { UserMenu } from '@/components/ui/UserMenu';
-import { createSupabaseBrowserClient } from '@/utils/supabase/client';
+import UserMenu from '@/components/ui/UserMenu';
+import { supabase } from '@/utils/supabase/client';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -20,7 +20,6 @@ const navLinks = [
 
 export default function Header() {
   const pathname = usePathname();
-  const supabase = createSupabaseBrowserClient();
   const [user, setUser] = useState<any>(null);
 
   // Fetch user on mount

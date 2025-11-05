@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { LogOut, User, LayoutDashboard, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { createSupabaseBrowserClient } from '@/utils/supabase/client';
+import { supabase } from '@/utils/supabase/client';
 
 interface UserMenuProps {
   user?: {
@@ -17,12 +17,22 @@ interface UserMenuProps {
   onClose?: () => void;
 }
 
-export function UserMenu({ user, mobile = false, onClose }: UserMenuProps) {
+export default function UserMenu({ user, mobile = false, onClose }: UserMenuProps) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
-  const supabase = createSupabaseBrowserClient();
+  const [currentUser, setCurrentUser] = useState<typeof user | null>(user || null);
 
+  // Fetch the user if not passed from parent
+  useEffect(() => {
+    if (!currentUser) {
+      supabase.auth.getUser().then(({ data }) => {
+        if (data?.user) setCurrentUser(data.user);
+      });
+    }
+  }, [currentUser]);
+
+  // Handle logout
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setOpen(false);
@@ -30,7 +40,7 @@ export function UserMenu({ user, mobile = false, onClose }: UserMenuProps) {
     router.push('/login');
   };
 
-  // Close dropdown on outside click or Escape key
+  // Close dropdown when clicking outside or pressing Escape
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -48,8 +58,8 @@ export function UserMenu({ user, mobile = false, onClose }: UserMenuProps) {
     };
   }, []);
 
-  // If no user, render a Sign In button instead
-  if (!user) {
+  // Render login button if no user
+  if (!currentUser) {
     return (
       <Link
         href="/login"
@@ -66,7 +76,7 @@ export function UserMenu({ user, mobile = false, onClose }: UserMenuProps) {
       ref={menuRef}
       className={`relative ${mobile ? 'w-full' : 'inline-block text-left'}`}
     >
-      {/* Button */}
+      {/* Menu button */}
       <button
         onClick={() => setOpen((prev) => !prev)}
         className={`flex items-center justify-between gap-2 rounded-md bg-gray-800 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700 transition w-full ${
@@ -75,7 +85,7 @@ export function UserMenu({ user, mobile = false, onClose }: UserMenuProps) {
         aria-haspopup="true"
         aria-expanded={open}
       >
-        <span>{user.email ?? 'Account'}</span>
+        <span>{currentUser.email ?? 'Account'}</span>
         <ChevronDown
           size={16}
           className={`${open ? 'rotate-180' : ''} transition-transform`}

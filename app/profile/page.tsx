@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
-import { createSupabaseBrowserClient } from '@/utils/supabase/client';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -15,7 +15,6 @@ interface Profile {
 }
 
 export default function ProfilePage() {
-  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -31,18 +30,19 @@ export default function ProfilePage() {
         return;
       }
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
-        .select('id, display_name, email, bio, avatar_url, created_at')
+        .select('id, display_name, bio, avatar_url, created_at')
         .eq('id', session.user.id)
         .single();
 
+      if (error) console.error('Error loading profile:', error.message);
       if (data) setProfile(data);
       setLoading(false);
     }
 
     loadProfile();
-  }, [router, supabase]);
+  }, [router]);
 
   if (loading) {
     return (
@@ -77,6 +77,7 @@ export default function ProfilePage() {
             {profile.display_name ? profile.display_name[0].toUpperCase() : '?'}
           </div>
         )}
+
         <h1 className="text-3xl font-bold text-white mb-2">
           {profile.display_name || 'Anonymous User'}
         </h1>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createSupabaseBrowserClient } from '@/utils/supabase/client';
+import { supabase } from '@/utils/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Testimonial {
@@ -11,7 +11,6 @@ interface Testimonial {
 }
 
 export default function TestimonialsCarousel() {
-  const supabase = createSupabaseBrowserClient();
 
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [current, setCurrent] = useState(0);

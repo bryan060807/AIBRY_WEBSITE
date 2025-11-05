@@ -33,7 +33,6 @@ function ForumCard({ href, title, description }: ForumCardProps) {
 
 export default async function ForumPage() {
   // Placeholder for future Supabase integration
-  // const supabase = createSupabaseServerClient();
 
   const boards = [
     {

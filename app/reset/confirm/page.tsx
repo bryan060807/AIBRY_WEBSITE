@@ -1,17 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
+import { supabase } from '@/utils/supabase/client';
 
 export default function ResetConfirmPage() {
   const router = useRouter();
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -24,17 +19,19 @@ export default function ResetConfirmPage() {
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.updateUser({ password });
-    setLoading(false);
 
-    if (error) {
-      console.error('Error updating password:', error);
-      toast.error(error.message || 'Failed to update password.');
-      return;
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+
+      toast.success('Password updated successfully!');
+      router.push('/login');
+    } catch (err: any) {
+      console.error('Error updating password:', err);
+      toast.error(err.message || 'Failed to update password.');
+    } finally {
+      setLoading(false);
     }
-
-    toast.success('Password updated successfully!');
-    router.push('/login');
   };
 
   return (

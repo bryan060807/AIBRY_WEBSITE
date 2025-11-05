@@ -3,18 +3,14 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
-import { createBrowserClient } from '@supabase/ssr';
+import { supabase } from '@/utils/supabase/client';
 
 export default function TestimonialForm() {
   const router = useRouter();
   const [content, setContent] = useState('');
   const [user, setUser] = useState<any>(null);
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-
+  // Fetch logged-in user once on mount
   useEffect(() => {
     const getUser = async () => {
       const {
@@ -22,9 +18,8 @@ export default function TestimonialForm() {
       } = await supabase.auth.getUser();
       setUser(user);
     };
-
     getUser();
-  }, [supabase]);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,20 +34,22 @@ export default function TestimonialForm() {
       return;
     }
 
-    const { error } = await supabase.from('testimonials').insert([
-      {
-        content: content.trim(),
-        user_id: user.id,
-      },
-    ]);
+    try {
+      const { error } = await supabase.from('testimonials').insert([
+        {
+          content: content.trim(),
+          user_id: user.id,
+        },
+      ]);
 
-    if (error) {
-      console.error('Error submitting testimonial:', error.message);
-      toast.error('Failed to submit testimonial.');
-    } else {
+      if (error) throw error;
+
       toast.success('Thanks for your testimonial!');
       setContent('');
       router.refresh();
+    } catch (error: any) {
+      console.error('Error submitting testimonial:', error.message);
+      toast.error('Failed to submit testimonial.');
     }
   };
 
@@ -73,7 +70,8 @@ export default function TestimonialForm() {
 
       <button
         type="submit"
-        className="w-full bg-[#629aa9] hover:bg-[#4f7f86] text-white font-semibold py-2 rounded-md transition"
+        disabled={!content.trim()}
+        className="w-full bg-[#629aa9] hover:bg-[#4f7f86] text-white font-semibold py-2 rounded-md transition disabled:opacity-50"
       >
         Submit
       </button>

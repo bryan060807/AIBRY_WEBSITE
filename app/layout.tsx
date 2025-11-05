@@ -1,20 +1,28 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
-
-/* 👇 Import order matters: Tailwind/theme first, app utilities second */
-import '../styles/global.css';
-import '../app/globals.css';
+import '../styles/global.css'; // Global Tailwind/theme first
+import '../app/globals.css';   // App-level globals second
 
 import { Header, Footer, ToasterProvider } from '@/components/layout';
 
-const inter = Inter({ subsets: ['latin'] });
+/**
+ * Font setup
+ */
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap', // Prevents flash of unstyled text (FOUT)
+});
 
+/**
+ * Metadata and Open Graph defaults
+ */
 export const metadata: Metadata = {
   title: {
     default: 'AIBRY',
     template: '%s | AIBRY',
   },
   description: 'Official site for AIBRY music and merch.',
+  metadataBase: new URL('https://aibry.com'),
   openGraph: {
     title: 'AIBRY',
     description: 'Official site for AIBRY music and merch.',
@@ -37,14 +45,18 @@ export const metadata: Metadata = {
     description: 'Official site for AIBRY music and merch.',
     images: ['/images/logo.png'],
   },
-  metadataBase: new URL('https://aibry.com'),
 };
 
-/* Optional but recommended for mobile browsers */
+/**
+ * Browser theming metadata
+ */
 export const viewport: Viewport = {
   themeColor: '#000000',
 };
 
+/**
+ * RootLayout — wraps the entire app (public + protected)
+ */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
@@ -54,12 +66,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
       </head>
+
       <body
-        className={`${inter.className} flex min-h-screen flex-col antialiased selection:bg-[#629aa9]/40 selection:text-white`}
+        className={`${inter.className} flex min-h-screen flex-col antialiased 
+          selection:bg-[#629aa9]/40 selection:text-white`}
       >
+        {/* Toast notifications available globally */}
         <ToasterProvider />
+
+        {/* Global navigation */}
         <Header />
-        <main className="flex-1">{children}</main>
+
+        {/* Content slot — supports both public and protected layouts */}
+        <main id="main-content" className="flex-1">
+          {children}
+        </main>
+
+        {/* Global footer */}
         <Footer />
       </body>
     </html>

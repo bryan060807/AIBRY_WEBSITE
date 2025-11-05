@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createSupabaseBrowserClient } from '@/utils/supabase/client';
+import { supabase } from '@/utils/supabase/client';
 import { Heart } from 'lucide-react';
 
 /**
@@ -22,7 +22,7 @@ export default function LikeButton({ postId, commentId }: LikeButtonProps) {
   const [liked, setLiked] = useState(false);
   const [count, setCount] = useState<number>(0);
   const [user, setUser] = useState<any>(null);
-  const supabase = createSupabaseBrowserClient();
+
 
   // Determine which column to use (post_id or comment_id)
   const column = postId ? 'post_id' : 'comment_id';

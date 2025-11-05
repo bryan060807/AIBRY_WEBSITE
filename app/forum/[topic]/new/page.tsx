@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { createSupabaseBrowserClient } from '@/utils/supabase/client';
+import { supabase } from '@/utils/supabase/client';
 
 export default function NewPostPage() {
   const router = useRouter();
   const { topic } = useParams();
-  const supabase = createSupabaseBrowserClient();  
+  
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');

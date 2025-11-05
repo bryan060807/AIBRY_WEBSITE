@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { createSupabaseBrowserClient } from '@/utils/supabase/client';
+import { supabase } from '@/utils/supabase/client';
 
 interface Todo {
   id: string;
@@ -9,7 +9,6 @@ interface Todo {
 }
 
 export default function TodoPage() {
-  const supabase = createSupabaseBrowserClient();
   const [todos, setTodos] = useState<Todo[]>([]);
   const [newTodo, setNewTodo] = useState('');
   const [loading, setLoading] = useState(true);

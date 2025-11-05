@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createSupabaseBrowserClient } from '@/utils/supabase/client';
+import { supabase } from '@/utils/supabase/client';
 import Link from 'next/link';
 import LikeButton from '@/components/ui/LikeButton'; // optional if you’re showing likes
 
@@ -21,8 +21,7 @@ export default function ClientRealtimePosts({
   initialPosts: Post[];
   topic: string;
 }) {
-  const [posts, setPosts] = useState<Post[]>(initialPosts);
-  const supabase = createSupabaseBrowserClient();  
+  const [posts, setPosts] = useState<Post[]>(initialPosts);  
 
   useEffect(() => {
     const channel = supabase
