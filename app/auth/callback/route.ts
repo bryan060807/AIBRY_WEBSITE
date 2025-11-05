@@ -1,4 +1,4 @@
-import { createServerClient } from '@supabase/ssr';
+import { createSupabaseServerClient } from '@/utils/supabase/server';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     const cookieStore = cookies();
     
     // Create a Supabase client configured to handle cookies
-    const supabase = createServerClient(
+    const supabase = createSupabaseServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
