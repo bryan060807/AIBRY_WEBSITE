@@ -1,44 +1,32 @@
-import { createSupabaseServerClient } from '@/utils/supabase/server';
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { createSupabaseServerClient } from '@/utils/supabase/server';
 
-// This is a Route Handler that Supabase redirects to after sign-in/sign-up
+/**
+ * Handles Supabase auth redirect callback.
+ * This route exchanges the code for a session.
+ */
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
   const origin = requestUrl.origin;
 
-  if (code) {
-    const cookieStore = cookies();
-    
-    // Create a Supabase client configured to handle cookies
-    const supabase = createSupabaseServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options)
-              );
-            } catch (error) {
-              // The setAll function is required but cookieStore.set() is not supported in a Route Handler.
-              // We rely on the redirect below to set the cookie in the browser.
-            }
-          },
-        },
-      }
-    );
-
-    // Exchange the code for a session
-    await supabase.auth.exchangeCodeForSession(code);
+  if (!code) {
+    return NextResponse.redirect(`${origin}/login?error=missing_code`);
   }
 
-  // URL to redirect to after sign in/sign up or email confirmation
-  // We'll redirect to the forum to complete the login process
-  return NextResponse.redirect(`${origin}/forum`);
+  const supabase = createSupabaseServerClient();
+
+  await supabase.auth.exchangeCodeForSession(code);
+
+  const response = NextResponse.redirect(`${origin}/dashboard`);
+
+  // Copy Supabase cookies into the response
+  const cookieStore = supabase._cookies ?? [];
+  if (Array.isArray(cookieStore)) {
+    for (const cookie of cookieStore) {
+      response.cookies.set(cookie.name, cookie.value, cookie);
+    }
+  }
+
+  return response;
 }
