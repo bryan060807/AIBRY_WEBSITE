@@ -1,84 +1,109 @@
-// app/auth/page.tsx
-"use client";
+'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase'; // Assuming you put the firebase.ts file in the lib directory
+import { useState } from 'react';
+import { useFormState } from 'react-dom';
+import { login, signup } from './actions';
+
+const loginInitial = { message: '' };
+const signupInitial = { message: '' };
 
 export default function AuthPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [isLogin, setIsLogin] = useState(true);
-  const [error, setError] = useState('');
-  const router = useRouter();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    try {
-      if (isLogin) {
-        await signInWithEmailAndPassword(auth, email, password); // Sign in the user
-      } else {
-        await createUserWithEmailAndPassword(auth, email, password); // Sign up a new user
-      }
-      router.push('/ai-archive'); // Redirect to the AI Archive page after successful auth
-    } catch (err: any) {
-      setError(err.message);
-    }
-  };
+  const [loginState, loginAction] = useFormState(login, loginInitial);
+  const [signupState, signupAction] = useFormState(signup, signupInitial);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-gray-100 p-6">
-      <div className="w-full max-w-md bg-gray-800 rounded-xl p-8 shadow-2xl">
-        <h2 className="text-2xl font-bold mb-6 text-cyan-400 text-center">
-          {isLogin ? 'Sign In' : 'Sign Up'}
-        </h2>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label htmlFor="email" className="block text-sm font-medium text-red-400 mb-1">
-              Email
-            </label>
+    <main className="mx-auto max-w-md px-4 py-16 text-gray-200">
+      <div className="mb-6 flex border-b border-gray-700">
+        <button
+          onClick={() => setIsLogin(true)}
+          className={`w-1/2 py-3 font-semibold ${
+            isLogin ? 'border-b-2 border-[#629aa9] text-white' : 'text-gray-500'
+          }`}
+        >
+          Sign In
+        </button>
+        <button
+          onClick={() => setIsLogin(false)}
+          className={`w-1/2 py-3 font-semibold ${
+            !isLogin ? 'border-b-2 border-[#629aa9] text-white' : 'text-gray-500'
+          }`}
+        >
+          Sign Up
+        </button>
+      </div>
+
+      {isLogin ? (
+        <form action={loginAction} className="space-y-4">
+          <h2 className="text-2xl font-bold text-white">Welcome Back</h2>
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-1">Email</label>
             <input
+              name="email"
               type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 bg-gray-900 text-gray-200 border border-gray-700 rounded-lg"
+              className="w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white"
               required
             />
           </div>
-          <div className="mb-4">
-            <label htmlFor="password" className="block text-sm font-medium text-red-400 mb-1">
-              Password
-            </label>
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-1">Password</label>
             <input
+              name="password"
               type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 bg-gray-900 text-gray-200 border border-gray-700 rounded-lg"
+              className="w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white"
               required
             />
           </div>
-          {error && <p className="text-red-500 mb-4">{error}</p>}
+          {loginState?.message && <p className="text-sm text-red-500">{loginState.message}</p>}
           <button
             type="submit"
-            className="w-full py-3 rounded-lg bg-red-600 text-white font-bold hover:bg-red-700 transition"
+            className="w-full rounded bg-[#629aa9] py-3 font-semibold hover:bg-[#4f7f86] transition"
           >
-            {isLogin ? 'Sign In' : 'Sign Up'}
+            Sign In
           </button>
         </form>
-        <div className="text-center mt-6">
+      ) : (
+        <form action={signupAction} className="space-y-4">
+          <h2 className="text-2xl font-bold text-white">Create Account</h2>
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-1">Display Name</label>
+            <input
+              name="display_name"
+              type="text"
+              className="w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-1">Email</label>
+            <input
+              name="email"
+              type="email"
+              className="w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-1">Password</label>
+            <input
+              name="password"
+              type="password"
+              className="w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white"
+              required
+              minLength={6}
+            />
+          </div>
+          {signupState?.message && (
+            <p className="text-sm text-red-500">{signupState.message}</p>
+          )}
           <button
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-cyan-400 hover:underline"
+            type="submit"
+            className="w-full rounded bg-[#629aa9] py-3 font-semibold hover:bg-[#4f7f86] transition"
           >
-            {isLogin ? 'Need an account? Sign Up' : 'Already have an account? Sign In'}
+            Sign Up
           </button>
-        </div>
-      </div>
-    </div>
+        </form>
+      )}
+    </main>
   );
 }

@@ -1,34 +1,46 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createServerSideClient } from '@/utils/supabase/server';
-import type { Database } from '@/types/supabase';
+import { createSupabaseServerClient } from '@/utils/supabase/server';
 
-export async function updateProfile(prevState: any, formData: FormData) {
-  const supabase = createServerSideClient(); // typed client
+interface AuthActionResponse {
+  message: string;
+  success: boolean;
+}
 
-  const displayName = formData.get('display_name') as string;
+// ==========================================================
+// UPDATE USER PROFILE
+// ==========================================================
+export async function updateProfile(
+  _prevState: AuthActionResponse,
+  formData: FormData
+): Promise<AuthActionResponse> {
+  const supabase = createSupabaseServerClient();
+  const displayName = (formData.get('display_name') as string)?.trim();
+
   if (!displayName) {
-    return { message: 'Display Name cannot be empty.', success: false };
+    return { message: 'Display name cannot be empty.', success: false };
   }
 
-  const { data, error: userError } = await supabase.auth.getUser();
-  if (userError || !data?.user) {
+  // Authenticate user
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
     return { message: 'Not authenticated.', success: false };
   }
 
-  const { error: profileError } = await supabase
+  // Update the existing profile (NOT insert)
+  const { error: updateError } = await supabase
     .from('profiles')
-    .insert([
-      {
-        id: data.user.id,
-        display_name: displayName,
-      },
-    ])
-    .select();
+    .update({ display_name: displayName })
+    .eq('id', user.id);
 
-  if (profileError) {
-    return { message: profileError.message, success: false };
+  if (updateError) {
+    console.error('Profile update error:', updateError);
+    return { message: 'Failed to update profile. Please try again.', success: false };
   }
 
   revalidatePath('/dashboard');

@@ -1,34 +1,43 @@
-// app/newsletter/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function NewsletterPage() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
+  const successRef = useRef<HTMLParagraphElement | null>(null);
 
   const subscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus("sending");
     setErrorMessage("");
 
-    // Use the local API route, just like the modal
-    const res = await fetch("/api/newsletter", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
+    try {
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
 
-    if (res.ok) {
+      if (!res.ok) {
+        const result = await res.json().catch(() => ({}));
+        throw new Error(result.error || "Something went wrong. Try again.");
+      }
+
       setStatus("success");
       setEmail("");
-    } else {
-      const result = await res.json();
-      setErrorMessage(result.error || "Something went wrong. Try again.");
+    } catch (err: any) {
+      setErrorMessage(err.message);
       setStatus("error");
     }
   };
+
+  useEffect(() => {
+    if (status === "success" && successRef.current) {
+      successRef.current.focus();
+    }
+  }, [status]);
 
   return (
     <main className="mx-auto max-w-xl px-4 py-20 text-center">
@@ -44,6 +53,10 @@ export default function NewsletterPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          aria-label="Email address"
+          autoComplete="email"
+          pattern="^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+          title="Enter a valid email address"
           className="w-full rounded px-4 py-2 text-black"
           disabled={status === "sending"}
         />
@@ -57,10 +70,19 @@ export default function NewsletterPage() {
       </form>
 
       {status === "success" && (
-        <p className="mt-4 text-green-400">You&apos;re subscribed! 🔥</p>
+        <p
+          ref={successRef}
+          tabIndex={-1}
+          aria-live="polite"
+          className="mt-4 text-green-400"
+        >
+          You&apos;re subscribed! 🔥
+        </p>
       )}
       {status === "error" && (
-        <p className="mt-4 text-red-400">{errorMessage}</p>
+        <p aria-live="polite" className="mt-4 text-red-400">
+          {errorMessage}
+        </p>
       )}
     </main>
   );
