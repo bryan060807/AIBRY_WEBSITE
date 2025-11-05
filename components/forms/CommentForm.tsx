@@ -5,13 +5,13 @@ import { useFormState } from 'react-dom';
 import { insertComment } from '@/actions/comment-actions';
 
 interface FormState {
-  message?: string;
+  message: string;
 }
 
 interface CommentFormProps {
   postId: string;
   topic: string;
-  parentId?: string; // for future threaded replies
+  parentId?: string;
   placeholder?: string;
   compact?: boolean;
 }
@@ -28,29 +28,21 @@ export default function CommentForm({
   const [visible, setVisible] = useState(true);
   const [content, setContent] = useState('');
 
-  // Bind post + topic for the server action
+  // bind static args first
   const boundAction = insertComment.bind(null, postId, topic);
   const [state, formAction] = useFormState(boundAction, initialState);
-
-  const handleSubmit = async (formData: FormData) => {
-    await formAction(formData);
-    if (state?.message?.toLowerCase().includes('success')) {
-      setContent('');
-      setVisible(false);
-    }
-  };
 
   if (!visible && state?.message?.toLowerCase().includes('success')) {
     return (
       <p className="mt-3 text-sm text-green-500">
-        {state?.message || 'Comment posted successfully!'}
+        {state.message || 'Comment posted successfully!'}
       </p>
     );
   }
 
   return (
     <form
-      action={handleSubmit}
+      action={formAction} // ✅ use the useFormState action directly
       className={`${
         compact ? 'p-3' : 'p-5'
       } mt-6 rounded-lg border border-gray-800 bg-gray-900 space-y-4`}
