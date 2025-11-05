@@ -10,7 +10,6 @@ const navLinks = [
   { href: '/store', label: 'Store' },
   { href: '/merch', label: 'Merch' },
   { href: '/todo', label: 'To-Do' },
-  { href: '/monday-gpt', label: 'Monday GPT' },
   { href: '/gallery', label: 'Gallery' },
   { href: '/newsletter', label: 'Newsletter' },
   { href: '/contact', label: 'Contact' },
