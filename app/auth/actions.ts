@@ -7,7 +7,10 @@ import { redirect } from 'next/navigation';
 /**
  * Handles user signup (server-side)
  */
-export async function signup(formData: FormData) {
+export async function signup(
+  prevState: { message: string },
+  formData: FormData
+) {
   const supabase = createSupabaseServerClient();
 
   const email = String(formData.get('email'));
@@ -33,7 +36,10 @@ export async function signup(formData: FormData) {
 /**
  * Handles user login (server-side)
  */
-export async function login(formData: FormData) {
+export async function login(
+  prevState: { message: string },
+  formData: FormData
+) {
   const supabase = createSupabaseServerClient();
 
   const email = String(formData.get('email'));
