@@ -1,11 +1,11 @@
 'use server';
 
-import { createSupabaseServerClient } from '@/utils/supabase/client';
+import { createSupabaseBrowserClient } from '@/utils/supabase/client';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
 export async function signup(formData: FormData) {
-  const supabase = createSupabaseServerClient();
+  const supabase = createSupabaseBrowserClient();
   const email = String(formData.get('email'));
   const password = String(formData.get('password'));
   const displayName = String(formData.get('display_name'));
