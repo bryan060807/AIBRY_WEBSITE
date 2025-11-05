@@ -1,8 +1,10 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { UserMenu } from '@/components/ui/UserMenu';
+import { createSupabaseBrowserClient } from '@/utils/supabase/client';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -18,6 +20,22 @@ const navLinks = [
 
 export default function Header() {
   const pathname = usePathname();
+  const supabase = createSupabaseBrowserClient();
+  const [user, setUser] = useState<any>(null);
+
+  // Fetch user on mount
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUser(data?.user ?? null));
+
+    // Optional: subscribe to auth state changes
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      subscription?.subscription.unsubscribe();
+    };
+  }, [supabase]);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-800 bg-black/70 backdrop-blur-md">
@@ -47,12 +65,9 @@ export default function Header() {
 
         {/* User Menu */}
         <div className="flex items-center gap-3">
-          <UserMenu />
+          <UserMenu user={user} />
         </div>
       </div>
-
-      {/* Optional: Mobile nav toggle (future expansion) */}
-      {/* You can later add a mobile menu here if needed */}
     </header>
   );
 }
