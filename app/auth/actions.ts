@@ -1,11 +1,15 @@
 'use server';
 
-import { createSupabaseBrowserClient } from '@/utils/supabase/client';
+import { createSupabaseServerClient } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
+/**
+ * Handles user signup (server-side)
+ */
 export async function signup(formData: FormData) {
-  const supabase = createSupabaseBrowserClient();
+  const supabase = createSupabaseServerClient();
+
   const email = String(formData.get('email'));
   const password = String(formData.get('password'));
   const displayName = String(formData.get('display_name'));
@@ -26,12 +30,19 @@ export async function signup(formData: FormData) {
   redirect('/login');
 }
 
+/**
+ * Handles user login (server-side)
+ */
 export async function login(formData: FormData) {
   const supabase = createSupabaseServerClient();
+
   const email = String(formData.get('email'));
   const password = String(formData.get('password'));
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
   if (error) {
     return { message: error.message };
@@ -39,11 +50,4 @@ export async function login(formData: FormData) {
 
   revalidatePath('/');
   redirect('/dashboard');
-}
-
-export async function logout() {
-  const supabase = createSupabaseServerClient();
-  await supabase.auth.signOut();
-  revalidatePath('/');
-  redirect('/');
 }
