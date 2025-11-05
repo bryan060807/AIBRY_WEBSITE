@@ -8,7 +8,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { createSupabaseBrowserClient } from '@/utils/supabase/client';
 
 interface UserMenuProps {
-  user: any;
+  user?: {
+    id?: string;
+    email?: string;
+    user_metadata?: { name?: string };
+  };
   mobile?: boolean;
   onClose?: () => void;
 }
@@ -26,7 +30,7 @@ export function UserMenu({ user, mobile = false, onClose }: UserMenuProps) {
     router.push('/login');
   };
 
-  // Close menu on outside click
+  // Close dropdown on outside click or Escape key
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -44,6 +48,19 @@ export function UserMenu({ user, mobile = false, onClose }: UserMenuProps) {
     };
   }, []);
 
+  // If no user, render a Sign In button instead
+  if (!user) {
+    return (
+      <Link
+        href="/login"
+        onClick={onClose}
+        className="rounded-md bg-[#629aa9] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4f7f86] transition"
+      >
+        Sign In
+      </Link>
+    );
+  }
+
   return (
     <div
       ref={menuRef}
@@ -58,7 +75,7 @@ export function UserMenu({ user, mobile = false, onClose }: UserMenuProps) {
         aria-haspopup="true"
         aria-expanded={open}
       >
-        <span>{user?.email || 'Account'}</span>
+        <span>{user.email ?? 'Account'}</span>
         <ChevronDown
           size={16}
           className={`${open ? 'rotate-180' : ''} transition-transform`}
@@ -83,20 +100,22 @@ export function UserMenu({ user, mobile = false, onClose }: UserMenuProps) {
                 setOpen(false);
                 onClose?.();
               }}
-              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-[var(--cassette-blue)] transition"
+              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-[#629aa9] transition"
             >
               <User size={16} /> Profile
             </Link>
+
             <Link
               href="/dashboard"
               onClick={() => {
                 setOpen(false);
                 onClose?.();
               }}
-              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-[var(--cassette-blue)] transition"
+              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-[#629aa9] transition"
             >
               <LayoutDashboard size={16} /> Dashboard
             </Link>
+
             <button
               onClick={handleLogout}
               className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-red-400 transition"
