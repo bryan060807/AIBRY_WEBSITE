@@ -5,6 +5,14 @@ import { supabase } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { toast } from 'react-hot-toast';
+import {
+  Instagram,
+  Twitter,
+  Music2,
+  Video,
+  Facebook,
+  Music,
+} from 'lucide-react';
 
 interface Profile {
   id: string;
@@ -15,6 +23,8 @@ interface Profile {
   twitter?: string;
   spotify?: string;
   tiktok?: string;
+  facebook?: string;
+  soundcloud?: string;
 }
 
 export default function EditProfilePage() {
@@ -30,7 +40,6 @@ export default function EditProfilePage() {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-
       if (!session?.user) {
         router.push('/login');
         return;
@@ -39,15 +48,13 @@ export default function EditProfilePage() {
       const { data, error } = await supabase
         .from('profiles')
         .select(
-          'id, display_name, bio, avatar_url, instagram, twitter, spotify, tiktok'
+          'id, display_name, bio, avatar_url, instagram, twitter, spotify, tiktok, facebook, soundcloud'
         )
         .eq('id', session.user.id)
         .single();
 
-      if (error) {
-        console.error('Error fetching profile:', error);
-        toast.error('Failed to load profile.');
-      } else {
+      if (error) toast.error('Failed to load profile.');
+      else {
         setProfile(data);
         setDisplayName(data.display_name || '');
         setBio(data.bio || '');
@@ -57,13 +64,36 @@ export default function EditProfilePage() {
     fetchProfile();
   }, [router]);
 
+  const normalizeSocialLink = (platform: string, value: string): string => {
+    if (!value) return '';
+    const trimmed = value.trim();
+    if (trimmed.startsWith('http')) return trimmed;
+    const username = trimmed.startsWith('@') ? trimmed.slice(1) : trimmed;
+    switch (platform) {
+      case 'instagram':
+        return `https://instagram.com/${username}`;
+      case 'twitter':
+        return `https://twitter.com/${username}`;
+      case 'tiktok':
+        return `https://tiktok.com/@${username}`;
+      case 'facebook':
+        return `https://facebook.com/${username}`;
+      case 'soundcloud':
+        return `https://soundcloud.com/${username}`;
+      case 'spotify':
+        return trimmed.startsWith('open.spotify.com')
+          ? `https://${trimmed}`
+          : 'https://open.spotify.com/';
+      default:
+        return trimmed;
+    }
+  };
+
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
       const file = e.target.files?.[0];
       if (!file || !profile) return;
-
       setUploading(true);
-
       const ext = file.name.split('.').pop();
       const fileName = `${profile.id}-${Date.now()}.${ext}`;
       const filePath = `avatars/${fileName}`;
@@ -71,7 +101,6 @@ export default function EditProfilePage() {
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, { upsert: true });
-
       if (uploadError) throw uploadError;
 
       const { data: publicData } = supabase.storage.from('avatars').getPublicUrl(filePath);
@@ -81,13 +110,11 @@ export default function EditProfilePage() {
         .from('profiles')
         .update({ avatar_url: publicUrl })
         .eq('id', profile.id);
-
       if (updateError) throw updateError;
 
       toast.success('Avatar updated!');
       setProfile({ ...profile, avatar_url: publicUrl });
-    } catch (error: any) {
-      console.error(error);
+    } catch {
       toast.error('Error uploading avatar.');
     } finally {
       setUploading(false);
@@ -96,23 +123,34 @@ export default function EditProfilePage() {
 
   const handleSave = async () => {
     if (!profile) return;
-
     setSaving(true);
+
+    const updated = {
+      ...profile,
+      instagram: normalizeSocialLink('instagram', profile.instagram || ''),
+      twitter: normalizeSocialLink('twitter', profile.twitter || ''),
+      spotify: normalizeSocialLink('spotify', profile.spotify || ''),
+      tiktok: normalizeSocialLink('tiktok', profile.tiktok || ''),
+      facebook: normalizeSocialLink('facebook', profile.facebook || ''),
+      soundcloud: normalizeSocialLink('soundcloud', profile.soundcloud || ''),
+    };
+
     const { error } = await supabase
       .from('profiles')
       .update({
         display_name: displayName,
         bio,
-        instagram: profile.instagram,
-        twitter: profile.twitter,
-        spotify: profile.spotify,
-        tiktok: profile.tiktok,
+        instagram: updated.instagram,
+        twitter: updated.twitter,
+        spotify: updated.spotify,
+        tiktok: updated.tiktok,
+        facebook: updated.facebook,
+        soundcloud: updated.soundcloud,
       })
       .eq('id', profile.id);
 
-    if (error) {
-      toast.error('Error saving profile.');
-    } else {
+    if (error) toast.error('Error saving profile.');
+    else {
       toast.success('Profile updated!');
       router.push('/profile');
     }
@@ -125,6 +163,19 @@ export default function EditProfilePage() {
         <p>Loading profile...</p>
       </main>
     );
+
+  const socials = [
+    { key: 'instagram', icon: Instagram, color: '#E1306C' },
+    { key: 'twitter', icon: Twitter, color: '#1DA1F2' },
+    { key: 'spotify', icon: Music2, color: '#1DB954' },
+    { key: 'tiktok', icon: Video, color: '#FE2C55' },
+    { key: 'facebook', icon: Facebook, color: '#1877F2' },
+    { key: 'soundcloud', icon: Music, color: '#FF5500' },
+  ];
+
+  const activeSocials = socials.filter(
+    ({ key }) => profile[key as keyof Profile]
+  );
 
   return (
     <main className="mx-auto max-w-lg px-4 py-12 text-white">
@@ -170,39 +221,38 @@ export default function EditProfilePage() {
           className="mt-4 w-full rounded-md border border-gray-700 bg-gray-900 p-3 text-gray-200 placeholder-gray-500 focus:border-[#629aa9] focus:ring-2 focus:ring-[#629aa9]"
         />
 
-        {/* Social Links */}
+        {/* Social fields */}
         <div className="w-full space-y-3 mt-6">
           <h2 className="text-lg font-semibold text-white mb-2">Social Links</h2>
-
-          <input
-            type="text"
-            value={profile.instagram || ''}
-            onChange={(e) => setProfile({ ...profile, instagram: e.target.value })}
-            placeholder="Instagram URL"
-            className="w-full rounded-md border border-gray-700 bg-gray-900 p-3 text-gray-200 placeholder-gray-500 focus:border-[#629aa9] focus:ring-2 focus:ring-[#629aa9]"
-          />
-          <input
-            type="text"
-            value={profile.twitter || ''}
-            onChange={(e) => setProfile({ ...profile, twitter: e.target.value })}
-            placeholder="Twitter URL"
-            className="w-full rounded-md border border-gray-700 bg-gray-900 p-3 text-gray-200 placeholder-gray-500 focus:border-[#629aa9] focus:ring-2 focus:ring-[#629aa9]"
-          />
-          <input
-            type="text"
-            value={profile.spotify || ''}
-            onChange={(e) => setProfile({ ...profile, spotify: e.target.value })}
-            placeholder="Spotify URL"
-            className="w-full rounded-md border border-gray-700 bg-gray-900 p-3 text-gray-200 placeholder-gray-500 focus:border-[#629aa9] focus:ring-2 focus:ring-[#629aa9]"
-          />
-          <input
-            type="text"
-            value={profile.tiktok || ''}
-            onChange={(e) => setProfile({ ...profile, tiktok: e.target.value })}
-            placeholder="TikTok URL"
-            className="w-full rounded-md border border-gray-700 bg-gray-900 p-3 text-gray-200 placeholder-gray-500 focus:border-[#629aa9] focus:ring-2 focus:ring-[#629aa9]"
-          />
+          {socials.map(({ key }) => (
+            <input
+              key={key}
+              type="text"
+              value={(profile[key as keyof Profile] as string) || ''}
+              onChange={(e) => setProfile({ ...profile, [key]: e.target.value })}
+              placeholder={`${key.charAt(0).toUpperCase() + key.slice(1)} handle or URL`}
+              className="w-full rounded-md border border-gray-700 bg-gray-900 p-3 text-gray-200 placeholder-gray-500 focus:border-[#629aa9] focus:ring-2 focus:ring-[#629aa9]"
+            />
+          ))}
         </div>
+
+        {/* Live color preview */}
+        {activeSocials.length > 0 && (
+          <div className="flex gap-5 mt-4">
+            {activeSocials.map(({ key, icon: Icon, color }) => (
+              <a
+                key={key}
+                href={normalizeSocialLink(key, profile[key as keyof Profile] as string)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="transition-transform hover:scale-110"
+                style={{ color }}
+              >
+                <Icon size={22} />
+              </a>
+            ))}
+          </div>
+        )}
 
         <button
           onClick={handleSave}
