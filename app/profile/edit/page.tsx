@@ -35,11 +35,16 @@ export default function EditProfilePage() {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Change this to your actual public default avatar URL
+  const DEFAULT_AVATAR_URL =
+    'https://your-supabase-project-url.supabase.co/storage/v1/object/public/avatars/default-avatar.png';
+
   useEffect(() => {
     async function fetchProfile() {
       const {
         data: { session },
       } = await supabase.auth.getSession();
+
       if (!session?.user) {
         router.push('/login');
         return;
@@ -53,8 +58,37 @@ export default function EditProfilePage() {
         .eq('id', session.user.id)
         .single();
 
-      if (error) toast.error('Failed to load profile.');
-      else {
+      // --- AUTO-CREATE FALLBACK ---
+      if (error && error.code === 'PGRST116') {
+        const defaultName = session.user.email?.split('@')[0] || 'User';
+        const { error: insertError } = await supabase.from('profiles').insert({
+          id: session.user.id,
+          display_name: defaultName,
+          bio: '',
+          avatar_url: DEFAULT_AVATAR_URL,
+        });
+
+        if (insertError) {
+          console.error('Insert error:', insertError);
+          toast.error('Failed to create profile.');
+          return;
+        }
+
+        setProfile({
+          id: session.user.id,
+          display_name: defaultName,
+          bio: '',
+          avatar_url: DEFAULT_AVATAR_URL,
+        });
+        setDisplayName(defaultName);
+        toast.success('New profile created!');
+        return;
+      }
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        toast.error('Failed to load profile.');
+      } else {
         setProfile(data);
         setDisplayName(data.display_name || '');
         setBio(data.bio || '');
@@ -69,6 +103,7 @@ export default function EditProfilePage() {
     const trimmed = value.trim();
     if (trimmed.startsWith('http')) return trimmed;
     const username = trimmed.startsWith('@') ? trimmed.slice(1) : trimmed;
+
     switch (platform) {
       case 'instagram':
         return `https://instagram.com/${username}`;
@@ -94,6 +129,7 @@ export default function EditProfilePage() {
       const file = e.target.files?.[0];
       if (!file || !profile) return;
       setUploading(true);
+
       const ext = file.name.split('.').pop();
       const fileName = `${profile.id}-${Date.now()}.${ext}`;
       const filePath = `avatars/${fileName}`;
@@ -101,20 +137,25 @@ export default function EditProfilePage() {
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, { upsert: true });
+
       if (uploadError) throw uploadError;
 
-      const { data: publicData } = supabase.storage.from('avatars').getPublicUrl(filePath);
+      const { data: publicData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
       const publicUrl = publicData.publicUrl;
 
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: publicUrl })
         .eq('id', profile.id);
+
       if (updateError) throw updateError;
 
       toast.success('Avatar updated!');
       setProfile({ ...profile, avatar_url: publicUrl });
-    } catch {
+    } catch (err) {
+      console.error(err);
       toast.error('Error uploading avatar.');
     } finally {
       setUploading(false);
@@ -221,7 +262,7 @@ export default function EditProfilePage() {
           className="mt-4 w-full rounded-md border border-gray-700 bg-gray-900 p-3 text-gray-200 placeholder-gray-500 focus:border-[#629aa9] focus:ring-2 focus:ring-[#629aa9]"
         />
 
-        {/* Social fields */}
+        {/* Social Links */}
         <div className="w-full space-y-3 mt-6">
           <h2 className="text-lg font-semibold text-white mb-2">Social Links</h2>
           {socials.map(({ key }) => (
