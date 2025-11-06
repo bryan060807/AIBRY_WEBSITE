@@ -1,7 +1,7 @@
 'use client';
 
 import { useFormState } from 'react-dom';
-import { updateProfile, updateAuth, updatePassword } from '@/lib/userActions';
+import { updateProfile, updateEmail as updateAuth, updatePassword } from '@/actions/account-actions';
 
 const initialState = { message: '', success: false };
 

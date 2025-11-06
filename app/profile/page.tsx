@@ -8,7 +8,7 @@ import Link from 'next/link';
 interface Profile {
   id: string;
   display_name: string;
-  email: string;
+  email?: string;
   bio?: string;
   avatar_url?: string;
   created_at?: string;
