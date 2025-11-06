@@ -21,25 +21,32 @@ const navLinks = [
 export default function Header() {
   const pathname = usePathname();
   const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch user on mount
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data?.user ?? null));
+    // On mount, check session first (more reliable than getUser)
+    const fetchSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      setUser(data?.session?.user ?? null);
+      setLoading(false);
+    };
 
-    // Optional: subscribe to auth state changes
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+    fetchSession();
+
+    // Subscribe to auth state changes
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
 
     return () => {
-      subscription?.subscription.unsubscribe();
+      listener?.subscription?.unsubscribe();
     };
-  }, [supabase]);
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-800 bg-black/70 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-        {/* Logo / Brand */}
+        {/* Logo */}
         <Link
           href="/"
           className="text-xl font-bold tracking-wide text-[#629aa9] hover:text-[#83c0cc] transition-colors"
@@ -47,7 +54,7 @@ export default function Header() {
           AIBRY
         </Link>
 
-        {/* Desktop Navigation */}
+        {/* Nav links (desktop) */}
         <nav className="hidden lg:flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium text-gray-300">
           {navLinks.map((link) => (
             <Link
@@ -64,7 +71,7 @@ export default function Header() {
 
         {/* User Menu */}
         <div className="flex items-center gap-3">
-          <UserMenu user={user} />
+          {!loading && <UserMenu user={user} />}
         </div>
       </div>
     </header>

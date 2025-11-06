@@ -12,7 +12,7 @@ interface UserMenuProps {
     id?: string;
     email?: string;
     user_metadata?: { name?: string };
-  };
+  } | null;
   mobile?: boolean;
   onClose?: () => void;
 }
@@ -21,24 +21,12 @@ export default function UserMenu({ user, mobile = false, onClose }: UserMenuProp
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
-  const [currentUser, setCurrentUser] = useState<typeof user | null>(user || null);
 
-  // Fetch the user if not passed from parent
+  // Keep local state in sync with prop updates
+  const [currentUser, setCurrentUser] = useState(user ?? null);
   useEffect(() => {
-    if (!currentUser) {
-      supabase.auth.getUser().then(({ data }) => {
-        if (data?.user) setCurrentUser(data.user);
-      });
-    }
-  }, [currentUser]);
-
-  // Handle logout
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setOpen(false);
-    onClose?.();
-    router.push('/login');
-  };
+    setCurrentUser(user ?? null);
+  }, [user]);
 
   // Close dropdown when clicking outside or pressing Escape
   useEffect(() => {
@@ -57,6 +45,18 @@ export default function UserMenu({ user, mobile = false, onClose }: UserMenuProp
       document.removeEventListener('keydown', handleEscape);
     };
   }, []);
+
+  // Logout handler
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setOpen(false);
+      onClose?.();
+      router.push('/login');
+    } catch (err) {
+      console.error('Logout failed:', err);
+    }
+  };
 
   // Render login button if no user
   if (!currentUser) {
@@ -85,7 +85,7 @@ export default function UserMenu({ user, mobile = false, onClose }: UserMenuProp
         aria-haspopup="true"
         aria-expanded={open}
       >
-        <span>{currentUser.email ?? 'Account'}</span>
+        <span>{currentUser.user_metadata?.name || currentUser.email || 'Account'}</span>
         <ChevronDown
           size={16}
           className={`${open ? 'rotate-180' : ''} transition-transform`}
