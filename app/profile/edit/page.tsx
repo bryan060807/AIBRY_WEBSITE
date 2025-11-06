@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { supabase } from '@/utils/supabase/client';
+import { useEffect, useState, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { supabase } from '@/utils/supabase/client';
 import { toast } from 'react-hot-toast';
 import {
   Instagram,
@@ -34,11 +34,11 @@ export default function EditProfilePage() {
   const [bio, setBio] = useState('');
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
-  // Change this to your actual public default avatar URL
-  const DEFAULT_AVATAR_URL =
-    'https://your-supabase-project-url.supabase.co/storage/v1/object/public/avatars/default-avatar.png';
+  const DEFAULT_AVATAR_URL = '/images/default-avatar.png';
 
+  // Fetch profile
   useEffect(() => {
     async function fetchProfile() {
       const {
@@ -58,8 +58,8 @@ export default function EditProfilePage() {
         .eq('id', session.user.id)
         .single();
 
-      // --- AUTO-CREATE FALLBACK ---
       if (error && error.code === 'PGRST116') {
+        // If profile doesn’t exist, create one
         const defaultName = session.user.email?.split('@')[0] || 'User';
         const { error: insertError } = await supabase.from('profiles').insert({
           id: session.user.id,
@@ -98,38 +98,13 @@ export default function EditProfilePage() {
     fetchProfile();
   }, [router]);
 
-  const normalizeSocialLink = (platform: string, value: string): string => {
-    if (!value) return '';
-    const trimmed = value.trim();
-    if (trimmed.startsWith('http')) return trimmed;
-    const username = trimmed.startsWith('@') ? trimmed.slice(1) : trimmed;
-
-    switch (platform) {
-      case 'instagram':
-        return `https://instagram.com/${username}`;
-      case 'twitter':
-        return `https://twitter.com/${username}`;
-      case 'tiktok':
-        return `https://tiktok.com/@${username}`;
-      case 'facebook':
-        return `https://facebook.com/${username}`;
-      case 'soundcloud':
-        return `https://soundcloud.com/${username}`;
-      case 'spotify':
-        return trimmed.startsWith('open.spotify.com')
-          ? `https://${trimmed}`
-          : 'https://open.spotify.com/';
-      default:
-        return trimmed;
-    }
-  };
-
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Avatar upload handler
+  const handleAvatarUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     try {
       const file = e.target.files?.[0];
       if (!file || !profile) return;
-      setUploading(true);
 
+      setUploading(true);
       const ext = file.name.split('.').pop();
       const fileName = `${profile.id}-${Date.now()}.${ext}`;
       const filePath = `avatars/${fileName}`;
@@ -140,9 +115,10 @@ export default function EditProfilePage() {
 
       if (uploadError) throw uploadError;
 
-      const { data: publicData } = supabase.storage
+      const { data: publicData } = await supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
+
       const publicUrl = publicData.publicUrl;
 
       const { error: updateError } = await supabase
@@ -152,8 +128,9 @@ export default function EditProfilePage() {
 
       if (updateError) throw updateError;
 
-      toast.success('Avatar updated!');
       setProfile({ ...profile, avatar_url: publicUrl });
+      setAvatarPreview(publicUrl);
+      toast.success('Avatar updated!');
     } catch (err) {
       console.error(err);
       toast.error('Error uploading avatar.');
@@ -162,12 +139,34 @@ export default function EditProfilePage() {
     }
   };
 
+  // Normalize social media links
+  const normalizeSocialLink = (platform: string, value: string): string => {
+    if (!value) return '';
+    const trimmed = value.trim();
+    if (trimmed.startsWith('http')) return trimmed;
+    const username = trimmed.startsWith('@') ? trimmed.slice(1) : trimmed;
+
+    const patterns: Record<string, string> = {
+      instagram: `https://instagram.com/${username}`,
+      twitter: `https://twitter.com/${username}`,
+      spotify: `https://open.spotify.com/${username}`,
+      tiktok: `https://tiktok.com/@${username}`,
+      facebook: `https://facebook.com/${username}`,
+      soundcloud: `https://soundcloud.com/${username}`,
+    };
+
+    return patterns[platform] || trimmed;
+  };
+
+  // Save changes
   const handleSave = async () => {
     if (!profile) return;
     setSaving(true);
 
     const updated = {
       ...profile,
+      display_name: displayName,
+      bio,
       instagram: normalizeSocialLink('instagram', profile.instagram || ''),
       twitter: normalizeSocialLink('twitter', profile.twitter || ''),
       spotify: normalizeSocialLink('spotify', profile.spotify || ''),
@@ -178,20 +177,13 @@ export default function EditProfilePage() {
 
     const { error } = await supabase
       .from('profiles')
-      .update({
-        display_name: displayName,
-        bio,
-        instagram: updated.instagram,
-        twitter: updated.twitter,
-        spotify: updated.spotify,
-        tiktok: updated.tiktok,
-        facebook: updated.facebook,
-        soundcloud: updated.soundcloud,
-      })
+      .update(updated)
       .eq('id', profile.id);
 
-    if (error) toast.error('Error saving profile.');
-    else {
+    if (error) {
+      console.error(error);
+      toast.error('Error saving profile.');
+    } else {
       toast.success('Profile updated!');
       router.push('/profile');
     }
@@ -214,10 +206,6 @@ export default function EditProfilePage() {
     { key: 'soundcloud', icon: Music, color: '#FF5500' },
   ];
 
-  const activeSocials = socials.filter(
-    ({ key }) => profile[key as keyof Profile]
-  );
-
   return (
     <main className="mx-auto max-w-lg px-4 py-12 text-white">
       <h1 className="mb-6 text-2xl font-bold">Edit Profile</h1>
@@ -225,22 +213,28 @@ export default function EditProfilePage() {
       <div className="flex flex-col items-center space-y-4">
         {/* Avatar */}
         <div className="relative">
-          {profile.avatar_url ? (
-            <Image
-              src={profile.avatar_url}
-              alt="Avatar"
-              width={120}
-              height={120}
-              className="rounded-full border border-gray-700 object-cover"
+          <Image
+            src={
+              avatarPreview ||
+              profile.avatar_url ||
+              DEFAULT_AVATAR_URL
+            }
+            alt="Avatar"
+            width={120}
+            height={120}
+            className="rounded-full border border-gray-700 object-cover"
+          />
+
+          <label
+            className="absolute bottom-0 right-0 cursor-pointer rounded-full bg-[#629aa9] p-2 text-sm text-white hover:bg-[#4f7f86] transition"
+          >
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarUpload}
+              hidden
             />
-          ) : (
-            <div className="flex h-[120px] w-[120px] items-center justify-center rounded-full border border-gray-700 bg-gray-800 text-gray-500">
-              No Avatar
-            </div>
-          )}
-          <label className="absolute bottom-0 right-0 cursor-pointer rounded-full bg-[#629aa9] p-2 text-sm text-white hover:bg-[#4f7f86] transition">
-            <input type="file" accept="image/*" onChange={handleAvatarUpload} hidden />
-            {uploading ? '…' : '✎'}
+            {uploading ? '⏳' : '📸'}
           </label>
         </div>
 
@@ -250,7 +244,7 @@ export default function EditProfilePage() {
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           placeholder="Display Name"
-          className="mt-4 w-full rounded-md border border-gray-700 bg-gray-900 p-3 text-gray-200 placeholder-gray-500 focus:border-[#629aa9] focus:ring-2 focus:ring-[#629aa9]"
+          className="mt-4 w-full rounded-md border border-gray-700 bg-gray-900 p-3 text-gray-200 placeholder-gray-500 focus:ring-2 focus:ring-[#629aa9] outline-none"
         />
 
         {/* Bio */}
@@ -259,42 +253,27 @@ export default function EditProfilePage() {
           onChange={(e) => setBio(e.target.value)}
           rows={4}
           placeholder="Write something about yourself..."
-          className="mt-4 w-full rounded-md border border-gray-700 bg-gray-900 p-3 text-gray-200 placeholder-gray-500 focus:border-[#629aa9] focus:ring-2 focus:ring-[#629aa9]"
+          className="mt-4 w-full rounded-md border border-gray-700 bg-gray-900 p-3 text-gray-200 placeholder-gray-500 focus:ring-2 focus:ring-[#629aa9] outline-none"
         />
 
         {/* Social Links */}
         <div className="w-full space-y-3 mt-6">
           <h2 className="text-lg font-semibold text-white mb-2">Social Links</h2>
-          {socials.map(({ key }) => (
+          {socials.map(({ key, icon: Icon, color }) => (
             <input
               key={key}
               type="text"
               value={(profile[key as keyof Profile] as string) || ''}
-              onChange={(e) => setProfile({ ...profile, [key]: e.target.value })}
-              placeholder={`${key.charAt(0).toUpperCase() + key.slice(1)} handle or URL`}
-              className="w-full rounded-md border border-gray-700 bg-gray-900 p-3 text-gray-200 placeholder-gray-500 focus:border-[#629aa9] focus:ring-2 focus:ring-[#629aa9]"
+              onChange={(e) =>
+                setProfile({ ...profile, [key]: e.target.value })
+              }
+              placeholder={`${key[0].toUpperCase()}${key.slice(1)} handle or URL`}
+              className="w-full rounded-md border border-gray-700 bg-gray-900 p-3 text-gray-200 placeholder-gray-500 focus:ring-2 focus:ring-[#629aa9] outline-none"
             />
           ))}
         </div>
 
-        {/* Live color preview */}
-        {activeSocials.length > 0 && (
-          <div className="flex gap-5 mt-4">
-            {activeSocials.map(({ key, icon: Icon, color }) => (
-              <a
-                key={key}
-                href={normalizeSocialLink(key, profile[key as keyof Profile] as string)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="transition-transform hover:scale-110"
-                style={{ color }}
-              >
-                <Icon size={22} />
-              </a>
-            ))}
-          </div>
-        )}
-
+        {/* Save button */}
         <button
           onClick={handleSave}
           disabled={saving}
