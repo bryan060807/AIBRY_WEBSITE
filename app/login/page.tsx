@@ -16,8 +16,7 @@ export default function LoginPage() {
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession();
       if (data?.session) {
-        // Already logged in, redirect away from /login
-        router.replace('/'); // change '/' to '/dashboard' if needed
+        router.replace('/');
       } else {
         setCheckingSession(false);
       }
@@ -25,20 +24,16 @@ export default function LoginPage() {
 
     checkSession();
 
-    // Listen for sign-in or sign-out events
     const { data: subscription } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        if (session) router.replace('/'); // Redirect on login
+        if (session) router.replace('/');
       }
     );
 
-    return () => {
-      subscription.subscription.unsubscribe();
-    };
+    return () => subscription.subscription.unsubscribe();
   }, [router]);
 
   if (checkingSession) {
-    // Avoid flicker by showing nothing while checking auth
     return (
       <main className="flex min-h-screen items-center justify-center bg-black text-gray-400">
         <p>Checking session...</p>
@@ -46,7 +41,7 @@ export default function LoginPage() {
     );
   }
 
-  // --- Login and Signup handlers ---
+  // --- Login handler ---
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -56,32 +51,52 @@ export default function LoginPage() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (error) {
-      toast.error(error.message);
-    } else {
+    if (error) toast.error(error.message);
+    else {
       toast.success('Welcome back!');
       router.replace('/');
     }
     setLoading(false);
   };
 
+  // --- Signup handler with newsletter opt-in ---
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
     const displayName = formData.get('display_name') as string;
+    const newsletterOptIn = formData.get('newsletter_opt_in') === 'on';
 
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { display_name: displayName } },
-    });
 
-    if (error) toast.error(error.message);
-    else toast.success('Check your email to confirm your account.');
-    setLoading(false);
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { display_name: displayName } },
+      });
+
+      if (error) throw error;
+
+      const user = data.user;
+      if (!user) throw new Error('Signup succeeded but no user returned.');
+
+      // Create profile row with newsletter preference
+      const { error: profileError } = await supabase.from('profiles').insert({
+        id: user.id,
+        display_name: displayName,
+        newsletter_opt_in: newsletterOptIn,
+      });
+
+      if (profileError) console.warn('Profile insert warning:', profileError);
+
+      toast.success('Check your email to confirm your account.');
+    } catch (err: any) {
+      toast.error(err.message || 'Signup failed.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -166,12 +181,27 @@ export default function LoginPage() {
             required
             className="w-full rounded-md border border-gray-700 bg-gray-900 p-3 text-white"
           />
+
+          {/* Newsletter opt-in */}
+          <label className="flex items-start gap-2 text-sm text-gray-300">
+            <input
+              type="checkbox"
+              name="newsletter_opt_in"
+              className="mt-0.5 h-4 w-4 rounded border-gray-600 bg-gray-800 text-[#629aa9] focus:ring-[#629aa9]"
+            />
+            <span>
+              Sign me up for updates, new releases, and the occasional surprise drop.
+            </span>
+          </label>
+
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded bg-[#629aa9] py-3 font-semibold text-white hover:bg-[#4f7f86] transition"
+            className={`w-full rounded bg-[#629aa9] py-3 font-semibold text-white hover:bg-[#4f7f86] transition ${
+              loading ? 'opacity-70 cursor-not-allowed' : ''
+            }`}
           >
-            {loading ? 'Signing up…' : 'Sign Up'}
+            {loading ? 'Creating account…' : 'Sign Up'}
           </button>
         </form>
       )}
