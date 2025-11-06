@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Instagram, Twitter, Music2, Video } from 'lucide-react';
 
 interface Profile {
   id: string;
@@ -12,6 +13,10 @@ interface Profile {
   bio?: string;
   avatar_url?: string;
   created_at?: string;
+  instagram?: string;
+  twitter?: string;
+  spotify?: string;
+  tiktok?: string;
 }
 
 export default function ProfilePage() {
@@ -32,7 +37,9 @@ export default function ProfilePage() {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, display_name, bio, avatar_url, created_at')
+        .select(
+          'id, display_name, email, bio, avatar_url, created_at, instagram, twitter, spotify, tiktok'
+        )
         .eq('id', session.user.id)
         .single();
 
@@ -91,11 +98,76 @@ export default function ProfilePage() {
             </time>
           </p>
         )}
+
+        {/* Social Links */}
+        {(profile.instagram ||
+          profile.twitter ||
+          profile.spotify ||
+          profile.tiktok) && (
+          <div className="flex justify-center gap-5 mt-6 text-gray-400">
+            {profile.instagram && (
+              <Link
+                href={
+                  profile.instagram.startsWith('http')
+                    ? profile.instagram
+                    : `https://${profile.instagram}`
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-[#629aa9] transition"
+              >
+                <Instagram size={22} />
+              </Link>
+            )}
+            {profile.twitter && (
+              <Link
+                href={
+                  profile.twitter.startsWith('http')
+                    ? profile.twitter
+                    : `https://${profile.twitter}`
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-[#629aa9] transition"
+              >
+                <Twitter size={22} />
+              </Link>
+            )}
+            {profile.spotify && (
+              <Link
+                href={
+                  profile.spotify.startsWith('http')
+                    ? profile.spotify
+                    : `https://${profile.spotify}`
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-[#629aa9] transition"
+              >
+                <Music2 size={22} />
+              </Link>
+            )}
+            {profile.tiktok && (
+              <Link
+                href={
+                  profile.tiktok.startsWith('http')
+                    ? profile.tiktok
+                    : `https://${profile.tiktok}`
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-[#629aa9] transition"
+              >
+                <Video size={22} />
+              </Link>
+            )}
+          </div>
+        )}
       </section>
 
       <div className="text-center mt-10">
         <Link
-          href="/dashboard"
+          href="/profile/edit"
           className="bg-[#629aa9] hover:bg-[#4f7f86] text-white px-6 py-3 rounded-md font-semibold transition"
         >
           Edit Profile
