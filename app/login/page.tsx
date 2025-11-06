@@ -1,166 +1,180 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { toast } from 'react-hot-toast';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast';
 import { supabase } from '@/utils/supabase/client';
 
-/**
- * PasswordReset — accessible modal overlay for password reset email requests.
- */
-export default function PasswordReset() {
+export default function LoginPage() {
   const router = useRouter();
-  const modalRef = useRef<HTMLDivElement>(null);
-  const [email, setEmail] = useState('');
+  const [view, setView] = useState<'login' | 'signup'>('login');
   const [loading, setLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
 
-  /** Close modal on Escape key */
+  // Redirect if already logged in
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        router.back();
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data?.session) {
+        // Already logged in, redirect away from /login
+        router.replace('/'); // change '/' to '/dashboard' if needed
+      } else {
+        setCheckingSession(false);
       }
     };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [router]);
 
-  /** Trap focus within modal */
-  useEffect(() => {
-    const modal = modalRef.current;
-    if (!modal) return;
+    checkSession();
 
-    const focusableElements = modal.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    // Listen for sign-in or sign-out events
+    const { data: subscription } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (session) router.replace('/'); // Redirect on login
+      }
     );
 
-    const firstElement = focusableElements[0];
-    const lastElement = focusableElements[focusableElements.length - 1];
+    return () => {
+      subscription.subscription.unsubscribe();
+    };
+  }, [router]);
 
-    function handleTab(e: KeyboardEvent) {
-      if (e.key !== 'Tab') return;
+  if (checkingSession) {
+    // Avoid flicker by showing nothing while checking auth
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-black text-gray-400">
+        <p>Checking session...</p>
+      </main>
+    );
+  }
 
-      if (e.shiftKey) {
-        // Shift + Tab: move backward
-        if (document.activeElement === firstElement) {
-          e.preventDefault();
-          lastElement.focus();
-        }
-      } else {
-        // Tab: move forward
-        if (document.activeElement === lastElement) {
-          e.preventDefault();
-          firstElement.focus();
-        }
-      }
-    }
-
-    document.addEventListener('keydown', handleTab);
-    firstElement?.focus();
-
-    return () => document.removeEventListener('keydown', handleTab);
-  }, []);
-
-  const handleReset = async (e: React.FormEvent) => {
+  // --- Login and Signup handlers ---
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    if (!email.trim()) {
-      toast.error('Please enter your email address.');
-      return;
-    }
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
 
     setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-    try {
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${siteUrl}/login/update`,
-      });
-
-      if (error) throw error;
-
-      toast.success('Check your inbox for a password reset link.');
-      router.push('/login');
-    } catch (err: any) {
-      console.error('Password reset error:', err);
-      toast.error(err.message || 'Failed to send reset email.');
-    } finally {
-      setLoading(false);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success('Welcome back!');
+      router.replace('/');
     }
+    setLoading(false);
+  };
+
+  const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+    const displayName = formData.get('display_name') as string;
+
+    setLoading(true);
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { display_name: displayName } },
+    });
+
+    if (error) toast.error(error.message);
+    else toast.success('Check your email to confirm your account.');
+    setLoading(false);
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="reset-title"
-      ref={modalRef}
-    >
-      <div className="relative w-full max-w-sm m-4 rounded-xl border border-gray-700 bg-gray-800 p-8 shadow-2xl">
-        {/* Close button */}
+    <main className="mx-auto max-w-md px-4 py-16 text-white">
+      <div className="mb-6 flex border-b border-gray-700">
         <button
-          onClick={() => router.back()}
-          className="absolute top-3 right-3 text-gray-500 hover:text-white transition-colors"
-          aria-label="Close reset form"
+          onClick={() => setView('login')}
+          className={`w-1/2 py-3 font-semibold ${
+            view === 'login' ? 'border-b-2 border-[#629aa9]' : 'text-gray-500'
+          }`}
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            className="w-6 h-6"
-          >
-            <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
-          </svg>
+          Sign In
         </button>
+        <button
+          onClick={() => setView('signup')}
+          className={`w-1/2 py-3 font-semibold ${
+            view === 'signup' ? 'border-b-2 border-[#629aa9]' : 'text-gray-500'
+          }`}
+        >
+          Sign Up
+        </button>
+      </div>
 
-        <div className="mb-6 text-center">
-          <h2 id="reset-title" className="text-2xl font-bold text-[#629aa9]">
-            Reset Password
-          </h2>
-          <p className="mt-1 text-sm text-gray-400">
-            Enter your account email to receive a password reset link.
-          </p>
-        </div>
+      {view === 'login' ? (
+        <form onSubmit={handleLogin} className="space-y-4">
+          <h1 className="text-2xl font-bold">Welcome Back</h1>
+          <p className="text-gray-400">Sign in to your account.</p>
 
-        <form onSubmit={handleReset} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="sr-only">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email"
-              autoComplete="email"
-              required
-              className="w-full rounded-md border border-gray-700 bg-gray-900 p-3 text-gray-200 placeholder-gray-500 focus:border-[#629aa9] focus:ring-2 focus:ring-[#629aa9] transition duration-200"
-            />
-          </div>
-
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            required
+            className="w-full rounded-md border border-gray-700 bg-gray-900 p-3 text-white"
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            required
+            className="w-full rounded-md border border-gray-700 bg-gray-900 p-3 text-white"
+          />
           <button
             type="submit"
             disabled={loading}
-            className={`w-full flex justify-center items-center rounded-md py-3 px-4 font-bold text-white transition duration-200 ${
-              loading
-                ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                : 'bg-[#629aa9] hover:bg-[#4f7f86]'
-            }`}
+            className="w-full rounded bg-[#629aa9] py-3 font-semibold text-white hover:bg-[#4f7f86] transition"
           >
-            {loading ? 'Sending link…' : 'Send Reset Link'}
+            {loading ? 'Signing in…' : 'Sign In'}
           </button>
 
-          <p className="mt-2 text-center text-sm text-gray-400">
-            Remembered your password?{' '}
-            <a href="/login" className="text-[#629aa9] hover:text-[#4f7f86]">
-              Back to Sign In
+          <p className="text-center text-sm text-gray-400">
+            Forgot your password?{' '}
+            <a href="/login/reset" className="text-[#629aa9] hover:text-[#4f7f86]">
+              Reset it
             </a>
           </p>
         </form>
-      </div>
-    </div>
+      ) : (
+        <form onSubmit={handleSignup} className="space-y-4">
+          <h1 className="text-2xl font-bold">Create Account</h1>
+          <p className="text-gray-400">Join the community.</p>
+
+          <input
+            type="text"
+            name="display_name"
+            placeholder="Display Name"
+            required
+            className="w-full rounded-md border border-gray-700 bg-gray-900 p-3 text-white"
+          />
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            required
+            className="w-full rounded-md border border-gray-700 bg-gray-900 p-3 text-white"
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password (min 6 chars)"
+            minLength={6}
+            required
+            className="w-full rounded-md border border-gray-700 bg-gray-900 p-3 text-white"
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded bg-[#629aa9] py-3 font-semibold text-white hover:bg-[#4f7f86] transition"
+          >
+            {loading ? 'Signing up…' : 'Sign Up'}
+          </button>
+        </form>
+      )}
+    </main>
   );
 }
