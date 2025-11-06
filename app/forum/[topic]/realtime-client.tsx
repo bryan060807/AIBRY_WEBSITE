@@ -74,7 +74,7 @@ export default function ClientRealtimePosts({ initialPosts, topic }: { initialPo
                 timeStyle: 'short',
               })}
             </span>
-            <LikeButton postID={post.id} />
+            <LikeButton postId={post.id} />
           </div>
         </article>
       ))}
