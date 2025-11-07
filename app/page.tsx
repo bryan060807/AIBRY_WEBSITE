@@ -1,17 +1,9 @@
 'use client';
 
 import Image from 'next/image';
-import dynamic from 'next/dynamic';
 import { useEffect, useRef, useState } from 'react';
 import { MusicLinks, TestimonialsCarousel } from '@/components/ui';
 import { TestimonialForm } from '@/components/forms';
-
-const BandcampEmbed = dynamic(() => import('@/components/ui/BandcampEmbed'), {
-  ssr: false,
-  loading: () => (
-    <div className="text-gray-500 text-sm mt-8">Loading Bandcamp player...</div>
-  ),
-});
 
 export default function HomePage() {
   const [isVisible, setIsVisible] = useState(false);
@@ -22,10 +14,12 @@ export default function HomePage() {
       setIsVisible(true);
       return;
     }
+
     const observer = new IntersectionObserver(
       ([entry]) => setIsVisible(entry.isIntersecting),
       { threshold: 0.2 }
     );
+
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
   }, []);
@@ -54,15 +48,14 @@ export default function HomePage() {
         <MusicLinks />
       </section>
 
-      {/* Featured Album */}
-      <section ref={ref} className="my-20 flex justify-center">
-        {isVisible && <BandcampEmbed />}
-      </section>
-
       {/* Testimonials Display */}
-      <section className="my-20">
-        <h2 className="text-3xl font-semibold text-white mb-6">What People Say</h2>
-        <TestimonialsCarousel />
+      <section ref={ref} className="my-20">
+        {isVisible && (
+          <>
+            <h2 className="text-3xl font-semibold text-white mb-6">What People Say</h2>
+            <TestimonialsCarousel />
+          </>
+        )}
       </section>
 
       {/* Testimonial Submission Form */}

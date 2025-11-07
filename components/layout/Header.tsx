@@ -14,8 +14,6 @@ const navLinks = [
   { href: '/store', label: 'Store' },
   { href: '/merch', label: 'Merch' },
   { href: '/todo', label: 'To-Do' },
-  { href: '/gallery', label: 'Gallery' },
-  { href: '/newsletter', label: 'Newsletter' },
   { href: '/contact', label: 'Contact' },
   { href: '/about', label: 'About' },
 ];
@@ -26,7 +24,7 @@ export default function Header() {
   const [loading, setLoading] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Fetch session and subscribe to changes
+  // Fetch session and subscribe to auth changes
   useEffect(() => {
     const fetchSession = async () => {
       const { data } = await supabase.auth.getSession();
@@ -43,7 +41,7 @@ export default function Header() {
     return () => listener?.subscription?.unsubscribe();
   }, []);
 
-  const toggleMobile = () => setMobileOpen((prev) => !prev);
+  const toggleMobile = () => setMobileOpen(prev => !prev);
   const closeMobile = () => setMobileOpen(false);
 
   return (
@@ -59,7 +57,7 @@ export default function Header() {
 
         {/* Desktop Nav */}
         <nav className="hidden lg:flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium text-gray-300">
-          {navLinks.map((link) => (
+          {navLinks.map(link => (
             <Link
               key={link.href}
               href={link.href}
@@ -72,12 +70,12 @@ export default function Header() {
           ))}
         </nav>
 
-        {/* User menu (desktop) */}
+        {/* User Menu (desktop) */}
         <div className="hidden lg:flex items-center gap-3">
           {!loading && <UserMenu user={user} />}
         </div>
 
-        {/* Hamburger button (mobile only) */}
+        {/* Hamburger Button (mobile only) */}
         <button
           onClick={toggleMobile}
           className="lg:hidden rounded-md p-2 text-gray-300 hover:text-white hover:bg-gray-800 transition"
@@ -99,7 +97,7 @@ export default function Header() {
             className="lg:hidden border-t border-gray-800 bg-black/90 backdrop-blur-sm shadow-lg"
           >
             <nav className="flex flex-col px-4 py-3 space-y-2 text-gray-300">
-              {navLinks.map((link) => (
+              {navLinks.map(link => (
                 <Link
                   key={link.href}
                   href={link.href}
@@ -111,7 +109,6 @@ export default function Header() {
                   {link.label}
                 </Link>
               ))}
-
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
