@@ -44,7 +44,7 @@ export default function HomePage() {
             className="rounded-xl shadow-lg"
           />
           <div className="max-w-md text-left">
-            <h3 className="text-2xl font-semibold mb-3 text-[#83c0cc]">"Fault Line Bloom"</h3>
+            <h3 className="text-2xl font-semibold mb-3 text-[#83c0cc]">&quot;Fault Line Bloom&quot;</h3>
             <p className="text-gray-400 mb-6">
               A haunting blend of emotion and distortion — AIBRY’s latest sonic eruption.
             </p>
