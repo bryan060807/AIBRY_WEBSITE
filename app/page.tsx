@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -30,6 +30,26 @@ export default function HomePage() {
         >
           Listen Now
         </Link>
+      </section>
+
+      {/* Live Review Clip Section */}
+      <section className="py-16 bg-black border-t border-gray-800 text-center">
+        <h2 className="text-3xl font-semibold text-white mb-8">
+          Live Review: <span className="text-[#83c0cc]">AIBRY on Stream</span>
+        </h2>
+        <div className="max-w-4xl mx-auto rounded-xl overflow-hidden shadow-lg border border-gray-800">
+          <div className="relative pb-[56.25%] h-0">
+            <iframe
+              src="https://www.youtube.com/embed/Z38Mjfj3Owo?si=UXdKVtN01OoNOlhr&amp;clip=Ugkx4_SbgyZ7bbQBno-UCeK1RaK-zF2PmMD8&amp;clipt=EPjMgQIY3PyCAg"
+              title="AIBRY - Live Review Clip"
+              className="absolute top-0 left-0 w-full h-full"
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+            />
+          </div>
+        </div>
       </section>
 
       {/* Featured Release */}
@@ -75,7 +95,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Visual Identity / About Section */}
+      {/* About Section */}
       <section className="relative py-24 bg-gradient-to-t from-black via-gray-900 to-black text-center">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-3xl font-semibold text-white mb-6">The Sound of Surviving</h2>
@@ -92,7 +112,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Music / Video Grid */}
+      {/* Latest Visuals */}
       <section className="py-24 bg-black border-t border-gray-800">
         <h2 className="text-3xl font-semibold text-white text-center mb-10">Latest Visuals</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto px-6">
@@ -113,7 +133,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Merch or Fan CTA */}
+      {/* Support Section */}
       <section className="py-24 bg-gradient-to-b from-gray-900 to-black text-center">
         <h2 className="text-3xl font-semibold text-white mb-6">Support the Sound</h2>
         <p className="text-gray-400 mb-8">
@@ -135,7 +155,7 @@ export default function HomePage() {
           <Link href="https://www.instagram.com/aibrymusic/" target="_blank">Instagram</Link>
           <Link href="https://www.facebook.com/profile.php?id=61579129561083" target="_blank">Facebook</Link>
           <Link href="https://www.tiktok.com/@_aibry" target="_blank">TikTok</Link>
-          <Link href="https://discord.com/channels/1433362326177845331/1433372248437293087" target="_blank">Discord</Link>
+          <Link href="https://discord.com/channels/1433362326177845331/143372248437293087" target="_blank">Discord</Link>
           <Link href="https://allmylinks.com/aibry" target="_blank">AllMyLinks</Link>
         </div>
       </section>
