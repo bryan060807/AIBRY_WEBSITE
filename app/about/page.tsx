@@ -1,76 +1,110 @@
-import Image from "next/image";
+"use client";
 
-export const metadata = {
-  title: "About | AIBRY",
-  description: "Learn more about AIBRY and the music behind the name.",
+import HeadTags from "@/components/ui/HeadTags";
+import Image from "next/image";
+import Link from "next/link";
+
+const aboutSchema = {
+  "@context": "https://schema.org",
+  "@type": "MusicGroup",
+  name: "AIBRY",
+  genre: ["Metal", "Trapmetal", "Dark Trap"],
+  description:
+    "A deeper look at AIBRY — an artist forging raw emotion into sound. Metal. Emotion. Chaos.",
+  url: "https://aibry.shop/about",
+  image: "https://aibry.shop/images/banner1.jpg",
+  sameAs: [
+    "https://www.instagram.com/aibrymusic/",
+    "https://www.tiktok.com/@_aibry",
+    "https://open.spotify.com/artist/6gw6SIOYGPhuMqOfLwJE9h",
+    "https://music.apple.com/us/artist/aibry/1830943798",
+    "https://allmylinks.com/aibry",
+  ],
 };
 
 export default function AboutPage() {
   return (
-    <main className="relative mx-auto max-w-4xl px-4 py-12">
-      {/* Background Watermark */}
-      <div
-        className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-5"
-        aria-hidden="true"
-      >
-        <Image
-          src="/images/logo.png"
-          alt=""
-          width={800}
-          height={800}
-          className="w-3/4 max-w-lg object-contain"
-        />
-      </div>
+    <main className="min-h-screen bg-black text-gray-100">
+      {/* SEO Metadata */}
+      <HeadTags
+        title="About AIBRY | The Sound of Surviving"
+        description="AIBRY creates unfiltered metal and trapmetal with raw emotion and unflinching honesty. Learn the story behind the sound."
+        image="/images/banner1.jpg"
+      />
 
-      {/* Banner Image */}
-      <section
-        className="relative mb-10 w-full overflow-hidden rounded-lg shadow-lg"
-        aria-label="AIBRY artistic banner portrait"
-      >
-        <Image
-          src="/images/about/throne.jpg"
-          alt="AIBRY artistic portrait on a throne"
-          width={1200}
-          height={800}
-          className="w-full rounded-lg object-contain"
-          priority
-        />
-      </section>
+      {/* JSON-LD Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(aboutSchema) }}
+      />
 
-      {/* Main Bio Section */}
-      <section className="relative z-10 text-center">
-        <h1 className="mb-6 text-3xl font-bold text-gray-100">About AIBRY</h1>
-        <p className="mb-6 text-lg text-gray-200 leading-relaxed">
-          AIBRY is a project born out of raw emotion and storytelling. My music
-          blends heavy riffs, dark atmospheres, and melodic hooks — always
-          aiming to connect with listeners on a deeper level. Each track is a
-          piece of my journey, carrying both the scars and the hope that define
-          who I am.
-        </p>
-        <h2 className="mt-10 mb-4 text-2xl font-semibold text-gray-100">
-          The Mission
-        </h2>
-        <p className="text-lg text-gray-200 leading-relaxed">
-          This site is the hub for everything AIBRY: music, merch, and updates.
-          Thanks for listening and being part of the story.
-        </p>
-      </section>
-
-      {/* Secondary Portrait */}
-      <section
-        className="relative z-10 mt-12 flex justify-center"
-        aria-label="AIBRY shadow portrait"
-      >
-        <div className="w-full max-w-md overflow-hidden rounded-lg shadow-lg">
-          <Image
-            src="/images/about/shadow-portrait.jpg"
-            alt="AIBRY shadow portrait"
-            width={600}
-            height={800}
-            className="w-full object-cover"
-          />
+      {/* About Hero */}
+      <section className="relative py-24 bg-gradient-to-b from-black via-gray-900 to-black text-center">
+        <div className="max-w-4xl mx-auto px-6">
+          <h1 className="text-5xl font-bold text-[#83c0cc] mb-6">The Sound of Surviving</h1>
+          <p className="text-gray-400 text-lg leading-relaxed max-w-2xl mx-auto">
+            AIBRY began as a raw outlet — a collision between survival and self-expression.  
+            Blending metal, trapmetal, and chaos, AIBRY transforms emotion into distortion and pain into art.
+          </p>
         </div>
       </section>
+
+      {/* Image + Bio */}
+      <section className="py-16 bg-black border-t border-gray-800 flex flex-col md:flex-row items-center justify-center gap-10 px-8">
+        <Image
+          src="/images/about/about-photo.jpg"
+          alt="AIBRY performing live"
+          width={400}
+          height={400}
+          className="rounded-xl shadow-lg object-cover"
+        />
+        <div className="max-w-lg">
+          <h2 className="text-3xl font-semibold text-white mb-4">More Than Music</h2>
+          <p className="text-gray-400 mb-6 leading-relaxed">
+            Every track is a reflection of chaos, control, and catharsis — 
+            a fight between destruction and creation.  
+            AIBRY stands for honesty in emotion, intensity in sound, and connection through darkness.
+          </p>
+          <p className="text-gray-400 mb-6 leading-relaxed">
+            Whether screaming into distortion or whispering through a storm,  
+            AIBRY’s art is survival — not spectacle.
+          </p>
+          <Link
+            href="https://open.spotify.com/artist/6gw6SIOYGPhuMqOfLwJE9h"
+            target="_blank"
+            className="bg-[#83c0cc] hover:bg-[#6eb5c0] text-black font-semibold px-6 py-3 rounded-lg transition-colors"
+          >
+            Listen on Spotify
+          </Link>
+        </div>
+      </section>
+
+      {/* Call to Action */}
+      <section className="py-24 bg-gradient-to-t from-gray-900 to-black text-center border-t border-gray-800">
+        <h2 className="text-3xl font-semibold text-white mb-4">Join the Movement</h2>
+        <p className="text-gray-400 mb-8">
+          Be part of something louder than pain — follow AIBRY and stay connected.
+        </p>
+        <div className="flex flex-wrap justify-center gap-5 text-[#83c0cc]">
+          <Link href="https://www.instagram.com/aibrymusic/" target="_blank">
+            Instagram
+          </Link>
+          <Link href="https://www.tiktok.com/@_aibry" target="_blank">
+            TikTok
+          </Link>
+          <Link href="https://open.spotify.com/artist/6gw6SIOYGPhuMqOfLwJE9h" target="_blank">
+            Spotify
+          </Link>
+          <Link href="https://music.apple.com/us/artist/aibry/1830943798" target="_blank">
+            Apple Music
+          </Link>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-gray-800 bg-black text-center py-6 text-sm text-gray-500">
+        <p>© {new Date().getFullYear()} AIBRY. Built for the broken and the bold.</p>
+      </footer>
     </main>
   );
 }
