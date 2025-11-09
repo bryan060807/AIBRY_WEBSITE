@@ -1,363 +1,197 @@
 'use client';
 
-import { useEffect, useState, ChangeEvent, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import NextImage from 'next/image';
-import Cropper from 'react-easy-crop';
-import { v4 as uuidv4 } from 'uuid';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/utils/supabase/client';
-import { toast } from 'react-hot-toast';
-import {
-  Instagram,
-  Twitter,
-  Music2,
-  Video,
-  Facebook,
-  Music,
-} from 'lucide-react';
-
-interface Profile {
-  id: string;
-  display_name: string;
-  bio?: string;
-  avatar_url?: string;
-  instagram?: string;
-  twitter?: string;
-  spotify?: string;
-  tiktok?: string;
-  facebook?: string;
-  soundcloud?: string;
-}
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 export default function EditProfilePage() {
   const router = useRouter();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [displayName, setDisplayName] = useState('');
-  const [bio, setBio] = useState('');
+  const [profile, setProfile] = useState<any>(null);
   const [saving, setSaving] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const [imageSrc, setImageSrc] = useState<string | null>(null);
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
-  const [uploading, setUploading] = useState(false);
-
-  const DEFAULT_AVATAR_URL = '/images/default-avatar.png';
 
   useEffect(() => {
-    async function fetchProfile() {
+    async function loadProfile() {
       const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session?.user) {
-        router.push('/login');
-        return;
-      }
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return router.push('/login');
 
       const { data, error } = await supabase
         .from('profiles')
-        .select(
-          'id, display_name, bio, avatar_url, instagram, twitter, spotify, tiktok, facebook, soundcloud'
-        )
-        .eq('id', session.user.id)
+        .select('*')
+        .eq('id', user.id)
         .single();
 
-      if (error && error.code === 'PGRST116') {
-        const defaultName = session.user.email?.split('@')[0] || 'User';
-        const { error: insertError } = await supabase.from('profiles').insert({
-          id: session.user.id,
-          display_name: defaultName,
-          bio: '',
-          avatar_url: DEFAULT_AVATAR_URL,
-        });
-
-        if (insertError) {
-          toast.error('Failed to create profile.');
-          return;
-        }
-
-        setProfile({
-          id: session.user.id,
-          display_name: defaultName,
-          bio: '',
-          avatar_url: DEFAULT_AVATAR_URL,
-        });
-        setDisplayName(defaultName);
-        toast.success('New profile created!');
-        return;
-      }
-
-      if (error) {
-        console.error('Error fetching profile:', error);
-        toast.error('Failed to load profile.');
-      } else {
-        setProfile(data);
-        setDisplayName(data.display_name || '');
-        setBio(data.bio || '');
-      }
+      if (error) console.error('Error loading profile:', error.message);
+      setProfile(data);
     }
 
-    fetchProfile();
+    loadProfile();
   }, [router]);
 
-  const onFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.addEventListener('load', () => setImageSrc(reader.result as string));
-    reader.readAsDataURL(file);
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
   };
 
-  const getCroppedImage = useCallback(async () => {
-    if (!imageSrc || !croppedAreaPixels) return null;
-
-    const image = await createImage(imageSrc);
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
-
-    const { width, height } = croppedAreaPixels;
-    canvas.width = width;
-    canvas.height = height;
-    ctx.drawImage(
-      image,
-      croppedAreaPixels.x,
-      croppedAreaPixels.y,
-      width,
-      height,
-      0,
-      0,
-      width,
-      height
-    );
-
-    return new Promise<Blob | null>((resolve) => {
-      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.9);
-    });
-  }, [imageSrc, croppedAreaPixels]);
-
-  const handleSaveAvatar = async () => {
-    if (!profile) return;
-    setUploading(true);
-    const blob = await getCroppedImage();
-    if (!blob) return;
-
-    const fileName = `${uuidv4()}.jpg`;
-    const { error: uploadError } = await supabase.storage
-      .from('avatars')
-      .upload(fileName, blob, { upsert: true });
-
-    if (uploadError) {
-      toast.error('Avatar upload failed.');
-      setUploading(false);
-      return;
-    }
-
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from('avatars').getPublicUrl(fileName);
-
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ avatar_url: publicUrl })
-      .eq('id', profile.id);
-
-    if (updateError) toast.error('Failed to update avatar.');
-    else {
-      toast.success('Avatar updated!');
-      setProfile({ ...profile, avatar_url: publicUrl });
-      setAvatarPreview(publicUrl);
-      setImageSrc(null);
-    }
-    setUploading(false);
-  };
-
-  const normalizeSocialLink = (platform: string, value: string): string => {
-    if (!value) return '';
-    const trimmed = value.trim();
-    if (trimmed.startsWith('http')) return trimmed;
-    const username = trimmed.startsWith('@') ? trimmed.slice(1) : trimmed;
-
-    const patterns: Record<string, string> = {
-      instagram: `https://instagram.com/${username}`,
-      twitter: `https://twitter.com/${username}`,
-      spotify: `https://open.spotify.com/${username}`,
-      tiktok: `https://tiktok.com/@${username}`,
-      facebook: `https://facebook.com/${username}`,
-      soundcloud: `https://soundcloud.com/${username}`,
-    };
-
-    return patterns[platform] || trimmed;
-  };
-
-  const handleSave = async () => {
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!profile) return;
     setSaving(true);
 
-    const updated = {
-      display_name: displayName,
-      bio,
-      instagram: normalizeSocialLink('instagram', profile.instagram || ''),
-      twitter: normalizeSocialLink('twitter', profile.twitter || ''),
-      spotify: normalizeSocialLink('spotify', profile.spotify || ''),
-      tiktok: normalizeSocialLink('tiktok', profile.tiktok || ''),
-      facebook: normalizeSocialLink('facebook', profile.facebook || ''),
-      soundcloud: normalizeSocialLink('soundcloud', profile.soundcloud || ''),
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return router.push('/login');
+
+    let avatarPath = profile.avatar_url;
+
+    if (avatarFile) {
+      const ext = avatarFile.name.split('.').pop();
+      const filePath = `${user.id}/${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, avatarFile, { upsert: true });
+
+      if (uploadError) {
+        console.error('Avatar upload failed:', uploadError.message);
+        setSaving(false);
+        return;
+      }
+
+      avatarPath = filePath;
+    }
+
+    const updates = {
+      display_name: (e.target as any).display_name.value,
+      bio: (e.target as any).bio.value,
+      instagram: (e.target as any).instagram.value,
+      tiktok: (e.target as any).tiktok.value,
+      spotify: (e.target as any).spotify.value,
+      facebook: (e.target as any).facebook.value,
+      soundcloud: (e.target as any).soundcloud.value,
+      newsletter_opt_in: (e.target as any).newsletter_opt_in.checked,
+      avatar_url: avatarPath,
+      updated_at: new Date().toISOString(),
     };
 
     const { error } = await supabase
       .from('profiles')
-      .update(updated)
-      .eq('id', profile.id);
+      .update(updates)
+      .eq('id', user.id);
 
-    if (error) toast.error('Error saving profile.');
-    else {
-      toast.success('Profile updated!');
-      router.push('/profile');
+    if (error) {
+      console.error('Profile update failed:', error.message);
+      setSaving(false);
+      return;
     }
+
     setSaving(false);
+    router.push('/profile');
   };
 
-  if (!profile)
+  if (!profile) {
     return (
-      <main className="flex min-h-screen items-center justify-center text-gray-400">
-        <p>Loading profile...</p>
+      <main className="min-h-screen bg-black text-gray-400 flex items-center justify-center">
+        <p>Loading editor...</p>
       </main>
     );
+  }
 
-  const socials = [
-    { key: 'instagram', icon: Instagram },
-    { key: 'twitter', icon: Twitter },
-    { key: 'spotify', icon: Music2 },
-    { key: 'tiktok', icon: Video },
-    { key: 'facebook', icon: Facebook },
-    { key: 'soundcloud', icon: Music },
-  ];
+  const avatarUrl =
+    avatarPreview ||
+    (profile.avatar_url
+      ? supabase.storage.from('avatars').getPublicUrl(profile.avatar_url).data.publicUrl
+      : '/images/default-avatar.png');
 
   return (
-    <main className="mx-auto max-w-lg px-4 py-12 text-white">
-      <h1 className="mb-6 text-2xl font-bold text-[#83c0cc]">Edit Profile</h1>
+    <main className="min-h-screen bg-black text-gray-100 py-24 px-6 flex flex-col items-center">
+      <form
+        onSubmit={handleSave}
+        className="max-w-xl w-full bg-gray-900 border border-gray-800 p-8 rounded-2xl space-y-4 shadow-lg"
+      >
+        <h1 className="text-3xl font-bold text-[#83c0cc] mb-6 text-center">
+          Edit Profile
+        </h1>
 
-      <div className="flex flex-col items-center space-y-4">
-        <div className="relative">
-          <NextImage
-            src={avatarPreview || profile.avatar_url || DEFAULT_AVATAR_URL}
-            alt="Avatar"
-            width={120}
-            height={120}
-            className="rounded-full border-2 border-[#83c0cc] object-cover shadow-[0_0_20px_rgba(131,192,204,0.4)]"
+        {/* Avatar Upload */}
+        <div className="flex flex-col items-center mb-4">
+          <Image
+            src={avatarUrl}
+            alt="avatar preview"
+            width={100}
+            height={100}
+            className="rounded-full border border-[#83c0cc] mb-3 object-cover"
           />
-          <label className="absolute bottom-0 right-0 cursor-pointer rounded-full bg-[#83c0cc] p-2 text-black hover:bg-[#6eb5c0] transition">
-            <input type="file" accept="image/*" onChange={onFileChange} hidden />
-            📸
+          <label className="text-sm text-gray-400 cursor-pointer hover:text-[#83c0cc]">
+            Change Avatar
+            <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
           </label>
         </div>
 
-        {imageSrc && (
-          <div className="fixed inset-0 z-50 flex flex-col items-center justify-center backdrop-blur-md bg-black/70">
-            <div className="relative w-[90vw] max-w-md h-[70vh] bg-gradient-to-b from-gray-950 via-gray-900 to-black border border-[#83c0cc]/30 rounded-2xl overflow-hidden shadow-[0_0_40px_rgba(131,192,204,0.3)]">
-              <Cropper
-                image={imageSrc}
-                crop={crop}
-                zoom={zoom}
-                aspect={1}
-                onCropChange={setCrop}
-                onZoomChange={setZoom}
-                onCropComplete={(_, area) => setCroppedAreaPixels(area)}
-                cropShape="round"
-                showGrid={false}
-              />
-            </div>
-            <div className="flex flex-col gap-3 mt-4 w-full max-w-md text-center">
+        {/* Display Name */}
+        <label className="block text-sm text-gray-300">
+          Display Name
+          <input
+            type="text"
+            name="display_name"
+            defaultValue={profile.display_name ?? ''}
+            className="mt-1 w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white"
+          />
+        </label>
+
+        {/* Bio */}
+        <label className="block text-sm text-gray-300">
+          Bio
+          <textarea
+            name="bio"
+            defaultValue={profile.bio ?? ''}
+            rows={3}
+            className="mt-1 w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white"
+          />
+        </label>
+
+        {/* Social Links */}
+        <div className="grid md:grid-cols-2 gap-4">
+          {['instagram', 'tiktok', 'spotify', 'facebook', 'soundcloud'].map((field) => (
+            <label key={field} className="block text-sm text-gray-300 capitalize">
+              {field}
               <input
-                type="range"
-                min={1}
-                max={3}
-                step={0.1}
-                value={zoom}
-                onChange={(e) => setZoom(Number(e.target.value))}
-                className="w-full accent-[#83c0cc]"
+                type="url"
+                name={field}
+                defaultValue={profile[field] ?? ''}
+                placeholder={`https://${field}.com/yourprofile`}
+                className="mt-1 w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white"
               />
-              <div className="flex justify-between gap-4">
-                <button
-                  onClick={() => setImageSrc(null)}
-                  className="flex-1 border border-gray-600 text-gray-300 py-2 rounded hover:bg-gray-800 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveAvatar}
-                  disabled={uploading}
-                  className="flex-1 bg-[#83c0cc] hover:bg-[#6eb5c0] text-black font-semibold py-2 rounded transition"
-                >
-                  {uploading ? 'Saving…' : 'Save Avatar'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <input
-          type="text"
-          value={displayName}
-          onChange={(e) => setDisplayName(e.target.value)}
-          placeholder="Display Name"
-          className="mt-4 w-full rounded-md border border-gray-700 bg-gray-900 p-3 text-gray-200 placeholder-gray-500 focus:ring-2 focus:ring-[#83c0cc] outline-none"
-        />
-
-        <textarea
-          value={bio}
-          onChange={(e) => setBio(e.target.value)}
-          rows={4}
-          placeholder="Write something about yourself..."
-          className="mt-4 w-full rounded-md border border-gray-700 bg-gray-900 p-3 text-gray-200 placeholder-gray-500 focus:ring-2 focus:ring-[#83c0cc] outline-none"
-        />
-
-        <div className="w-full space-y-3 mt-6">
-          <h2 className="text-lg font-semibold text-white mb-2">Social Links</h2>
-          {socials.map(({ key }) => (
-            <input
-              key={key}
-              type="text"
-              value={(profile[key as keyof Profile] as string) || ''}
-              onChange={(e) =>
-                setProfile({ ...profile, [key]: e.target.value })
-              }
-              placeholder={`${key[0].toUpperCase()}${key.slice(1)} handle or URL`}
-              className="w-full rounded-md border border-gray-700 bg-gray-900 p-3 text-gray-200 placeholder-gray-500 focus:ring-2 focus:ring-[#83c0cc] outline-none"
-            />
+            </label>
           ))}
         </div>
 
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className={`mt-5 w-full rounded-md py-3 font-semibold text-white transition ${
-            saving
-              ? 'bg-gray-700 cursor-not-allowed text-gray-400'
-              : 'bg-[#83c0cc] hover:bg-[#6eb5c0] text-black'
-          }`}
-        >
-          {saving ? 'Saving…' : 'Save Changes'}
-        </button>
+        {/* Newsletter */}
+        <label className="flex items-center gap-2 text-sm text-gray-300 mt-4">
+          <input
+            type="checkbox"
+            name="newsletter_opt_in"
+            defaultChecked={profile.newsletter_opt_in ?? false}
+            className="h-4 w-4 rounded border-gray-600 bg-gray-800 text-[#83c0cc]"
+          />
+          Subscribe to AIBRY updates
+        </label>
 
+        {/* Save */}
         <button
-          onClick={() => router.push('/profile')}
-          className="text-sm text-gray-400 hover:text-[#83c0cc] mt-3 transition"
+          type="submit"
+          disabled={saving}
+          className="w-full bg-[#83c0cc] hover:bg-[#6eb5c0] text-black font-semibold py-2 rounded-md transition"
         >
-          ← Back to Profile
+          {saving ? 'Saving...' : 'Save Changes'}
         </button>
-      </div>
+      </form>
     </main>
   );
-}
-
-async function createImage(url: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.addEventListener('load', () => resolve(img));
-    img.addEventListener('error', (err) => reject(err));
-    img.src = url;
-  });
 }

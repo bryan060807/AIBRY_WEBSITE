@@ -4,14 +4,12 @@ import { createSupabaseServerClient } from '@/utils/supabase/server';
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
-
-  // Initialize Supabase server client
   const supabase = createSupabaseServerClient();
 
-  // Get current session
+  // Securely get authenticated user
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const path = req.nextUrl.pathname;
 
@@ -19,10 +17,7 @@ export async function middleware(req: NextRequest) {
   // Route groups
   // ------------------------------------------------
 
-  // These routes require authentication
   const protectedPaths = ['/dashboard', '/profile', '/todo'];
-
-  // Forum: read-only allowed, posting/editing restricted
   const forumNewPost = /\/forum\/[^/]+\/new$/.test(path);
   const forumEdit = /\/forum\/[^/]+\/edit$/.test(path);
 
@@ -31,7 +26,6 @@ export async function middleware(req: NextRequest) {
     forumNewPost ||
     forumEdit;
 
-  // These routes should NOT be accessed when already logged in
   const authRoutes = ['/login', '/login/reset', '/login/update'];
   const isAuthRoute = authRoutes.some((p) => path.startsWith(p));
 
@@ -40,20 +34,50 @@ export async function middleware(req: NextRequest) {
   // ------------------------------------------------
 
   // 1. Unauthenticated user accessing protected content
-  if (isProtected && !session) {
+  if (isProtected && !user) {
     const redirectUrl = new URL('/login', req.url);
-    // preserve intended destination
     redirectUrl.searchParams.set('redirect', req.nextUrl.pathname);
     return NextResponse.redirect(redirectUrl);
   }
 
   // 2. Authenticated user accessing login/reset/update → send to dashboard
-  if (session && isAuthRoute) {
+  if (user && isAuthRoute) {
     const redirectUrl = new URL('/dashboard', req.url);
     return NextResponse.redirect(redirectUrl);
   }
 
-  // 3. All other cases proceed normally
+  // ------------------------------------------------
+  // 3. Auto-create username if missing
+  // ------------------------------------------------
+  if (user) {
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('username, display_name')
+        .eq('id', user.id)
+        .single();
+
+      if (!error && profile && !profile.username) {
+        const raw =
+          profile.display_name ||
+          user.email?.split('@')[0] ||
+          `user-${user.id.slice(0, 6)}`;
+
+        const username = raw
+          .replace(/[^a-zA-Z0-9_-]/g, '')
+          .toLowerCase()
+          .slice(0, 20);
+
+        await supabase.from('profiles').update({ username }).eq('id', user.id);
+      }
+    } catch (err) {
+      console.error('Failed to auto-assign username:', err);
+    }
+  }
+
+  // ------------------------------------------------
+  // 4. Proceed as usual
+  // ------------------------------------------------
   return res;
 }
 
@@ -66,6 +90,6 @@ export const config = {
     '/profile/:path*',
     '/todo/:path*',
     '/forum/:path*',
-    '/login/:path*', // guards auth pages for signed-in users
+    '/login/:path*',
   ],
 };
