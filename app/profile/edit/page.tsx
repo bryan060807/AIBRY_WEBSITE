@@ -17,6 +17,7 @@ export default function EditProfilePage() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
+
       if (!user) return router.push('/login');
 
       const { data, error } = await supabase
@@ -52,11 +53,19 @@ export default function EditProfilePage() {
     let avatarPath = profile.avatar_url;
 
     if (avatarFile) {
-      const ext = avatarFile.name.split('.').pop();
-      const filePath = `${user.id}/${Date.now()}.${ext}`;
+      const fileExt = avatarFile.name.split('.').pop();
+      const filePath = `avatars/${user.id}/avatar.${fileExt}`;
+
+      // Delete old avatar (optional)
+      await supabase.storage.from('avatars').remove([filePath]);
+
+      // Upload new one
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, avatarFile, { upsert: true });
+        .upload(filePath, avatarFile, {
+          upsert: true,
+          cacheControl: '3600',
+        });
 
       if (uploadError) {
         console.error('Avatar upload failed:', uploadError.message);
@@ -64,18 +73,21 @@ export default function EditProfilePage() {
         return;
       }
 
+      // Only store relative path
       avatarPath = filePath;
     }
 
+    const form = e.target as HTMLFormElement;
+
     const updates = {
-      display_name: (e.target as any).display_name.value,
-      bio: (e.target as any).bio.value,
-      instagram: (e.target as any).instagram.value,
-      tiktok: (e.target as any).tiktok.value,
-      spotify: (e.target as any).spotify.value,
-      facebook: (e.target as any).facebook.value,
-      soundcloud: (e.target as any).soundcloud.value,
-      newsletter_opt_in: (e.target as any).newsletter_opt_in.checked,
+      display_name: (form.display_name as any).value,
+      bio: (form.bio as any).value,
+      instagram: (form.instagram as any).value,
+      tiktok: (form.tiktok as any).value,
+      spotify: (form.spotify as any).value,
+      facebook: (form.facebook as any).value,
+      soundcloud: (form.soundcloud as any).value,
+      newsletter_opt_in: (form.newsletter_opt_in as any).checked,
       avatar_url: avatarPath,
       updated_at: new Date().toISOString(),
     };
@@ -113,24 +125,29 @@ export default function EditProfilePage() {
     <main className="min-h-screen bg-black text-gray-100 py-24 px-6 flex flex-col items-center">
       <form
         onSubmit={handleSave}
-        className="max-w-xl w-full bg-gray-900 border border-gray-800 p-8 rounded-2xl space-y-4 shadow-lg"
+        className="max-w-xl w-full bg-gray-900 border border-gray-800 p-8 rounded-2xl space-y-6 shadow-lg"
       >
         <h1 className="text-3xl font-bold text-[#83c0cc] mb-6 text-center">
           Edit Profile
         </h1>
 
         {/* Avatar Upload */}
-        <div className="flex flex-col items-center mb-4">
+        <div className="flex flex-col items-center mb-6">
           <Image
             src={avatarUrl}
             alt="avatar preview"
-            width={100}
-            height={100}
+            width={120}
+            height={120}
             className="rounded-full border border-[#83c0cc] mb-3 object-cover"
           />
           <label className="text-sm text-gray-400 cursor-pointer hover:text-[#83c0cc]">
             Change Avatar
-            <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="hidden"
+            />
           </label>
         </div>
 
@@ -140,8 +157,8 @@ export default function EditProfilePage() {
           <input
             type="text"
             name="display_name"
-            defaultValue={profile.display_name ?? ''}
-            className="mt-1 w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white"
+            defaultValue={profile.display_name || ''}
+            className="mt-1 w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white focus:border-[#83c0cc] focus:ring-[#83c0cc]"
           />
         </label>
 
@@ -150,9 +167,9 @@ export default function EditProfilePage() {
           Bio
           <textarea
             name="bio"
-            defaultValue={profile.bio ?? ''}
+            defaultValue={profile.bio || ''}
             rows={3}
-            className="mt-1 w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white"
+            className="mt-1 w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white focus:border-[#83c0cc] focus:ring-[#83c0cc]"
           />
         </label>
 
@@ -164,9 +181,9 @@ export default function EditProfilePage() {
               <input
                 type="url"
                 name={field}
-                defaultValue={profile[field] ?? ''}
+                defaultValue={profile[field] || ''}
                 placeholder={`https://${field}.com/yourprofile`}
-                className="mt-1 w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white"
+                className="mt-1 w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white focus:border-[#83c0cc] focus:ring-[#83c0cc]"
               />
             </label>
           ))}
@@ -177,8 +194,8 @@ export default function EditProfilePage() {
           <input
             type="checkbox"
             name="newsletter_opt_in"
-            defaultChecked={profile.newsletter_opt_in ?? false}
-            className="h-4 w-4 rounded border-gray-600 bg-gray-800 text-[#83c0cc]"
+            defaultChecked={profile.newsletter_opt_in || false}
+            className="h-4 w-4 rounded border-gray-600 bg-gray-800 text-[#83c0cc] focus:ring-[#83c0cc]"
           />
           Subscribe to AIBRY updates
         </label>
@@ -189,7 +206,7 @@ export default function EditProfilePage() {
           disabled={saving}
           className="w-full bg-[#83c0cc] hover:bg-[#6eb5c0] text-black font-semibold py-2 rounded-md transition"
         >
-          {saving ? 'Saving...' : 'Save Changes'}
+          {saving ? 'Saving…' : 'Save Changes'}
         </button>
       </form>
     </main>

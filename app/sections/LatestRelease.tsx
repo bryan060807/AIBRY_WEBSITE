@@ -15,15 +15,10 @@ interface LatestReleaseProps {
   links: PlatformLink[];
 }
 
-export default function LatestRelease({
-  imageSrc,
-  title,
-  description,
-  links,
-}: LatestReleaseProps) {
+export default function LatestRelease({ imageSrc, title, description, links }: LatestReleaseProps) {
   return (
     <section className="py-24 bg-black border-t border-gray-800 text-center">
-      <h2 className="text-3xl font-semibold text-white mb-10">Latest Release</h2>
+      <h2 className="text-3xl font-semibold text-white mb-10">Latest Album</h2>
       <div className="flex flex-col md:flex-row items-center justify-center gap-8 px-8">
         <Image
           src={imageSrc}
@@ -36,16 +31,20 @@ export default function LatestRelease({
           <h3 className="text-2xl font-semibold mb-3 text-[#83c0cc]">{title}</h3>
           <p className="text-gray-400 mb-6">{description}</p>
           <div className="flex gap-4 flex-wrap">
-            {links.map((link, index) => (
-              <Link
-                key={index}
-                href={link.href}
-                target="_blank"
-                className="px-5 py-2 rounded border border-[#83c0cc] hover:bg-[#83c0cc] hover:text-black font-semibold transition-colors"
-              >
-                {link.name}
-              </Link>
-            ))}
+            {links && Array.isArray(links) && links.length > 0 ? (
+              links.map((link, index) => (
+                <Link
+                  key={index}
+                  href={link.href}
+                  target="_blank"
+                  className="px-5 py-2 rounded border border-[#83c0cc] hover:bg-[#83c0cc] hover:text-black font-semibold transition-colors"
+                >
+                  {link.name}
+                </Link>
+              ))
+            ) : (
+              <p className="text-gray-500 italic">No links available</p>
+            )}
           </div>
         </div>
       </div>
