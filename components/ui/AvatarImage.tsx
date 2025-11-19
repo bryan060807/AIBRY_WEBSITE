@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { supabase } from "@/utils/supabase/client";
+import { useAvatar } from "@/context/AvatarContext";
+import { motion } from "framer-motion";
 
 interface AvatarImageProps {
   userId: string | null;
@@ -11,69 +13,71 @@ interface AvatarImageProps {
   alt?: string;
 }
 
+/**
+ * AvatarImage — Displays a user avatar that automatically updates
+ * when the user uploads a new one (via AvatarContext).
+ *
+ * Data source:
+ * - Primary: `profiles.avatar_url`
+ * - Fallback: `/images/default-avatar.png`
+ */
 export function AvatarImage({
   userId,
   size = 120,
   className = "",
   alt = "User avatar",
 }: AvatarImageProps) {
+  const { avatarUrl } = useAvatar(); // ✅ live global context for instant updates
   const [imgSrc, setImgSrc] = useState("/images/default-avatar.png");
 
+  // ✅ Load avatar from DB when userId or context changes
   useEffect(() => {
     if (!userId) return;
 
-    async function loadAvatar() {
+    async function fetchAvatar() {
       try {
-        // 1️⃣ Try to get avatar_url from profile table
-        const { data: profile, error: profileError } = await supabase
+        const { data, error } = await supabase
           .from("profiles")
           .select("avatar_url")
           .eq("id", userId)
           .single();
 
-        if (profileError) {
-          console.warn("No profile record found:", profileError.message);
-        }
-
-        if (profile?.avatar_url) {
-          setImgSrc(profile.avatar_url);
+        if (error) {
+          console.warn("Avatar load warning:", error.message);
           return;
         }
 
-        // 2️⃣ If no avatar_url in DB, fetch from storage
-        const { data: files, error: listError } = await supabase.storage
-          .from("avatars")
-          .list(`avatars/${userId}`, { limit: 1 });
-
-        if (listError) {
-          console.error("Error listing avatars:", listError);
-          return;
-        }
-
-        if (files && files.length > 0) {
-          const filePath = `avatars/${userId}/${files[0].name}`;
-          const { data: { publicUrl } } = supabase.storage
-            .from("avatars")
-            .getPublicUrl(filePath);
-
-          setImgSrc(publicUrl);
+        if (data?.avatar_url) {
+          setImgSrc(data.avatar_url);
+        } else {
+          setImgSrc("/images/default-avatar.png");
         }
       } catch (err: any) {
-        console.error("Error loading avatar:", err.message);
+        console.error("Error fetching avatar:", err.message);
+        setImgSrc("/images/default-avatar.png");
       }
     }
 
-    loadAvatar();
-  }, [userId]);
+    fetchAvatar();
+  }, [userId, avatarUrl]); // reacts to both login and avatar updates
 
   return (
-    <Image
-      src={imgSrc}
-      alt={alt}
-      width={size}
-      height={size}
-      onError={() => setImgSrc("/images/default-avatar.png")}
-      className={`rounded-full border border-[#83c0cc] object-cover ${className}`}
-    />
+    <motion.div
+      key={imgSrc}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className={`relative inline-block ${className}`}
+    >
+      <Image
+        src={imgSrc || "/images/default-avatar.png"}
+        alt={alt}
+        width={size}
+        height={size}
+        onError={() => setImgSrc("/images/default-avatar.png")}
+        className="rounded-full border border-[#83c0cc] object-cover shadow-sm"
+        priority
+      />
+    </motion.div>
   );
 }

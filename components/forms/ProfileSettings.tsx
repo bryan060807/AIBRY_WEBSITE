@@ -8,6 +8,7 @@ import {
   updatePassword,
   updateAvatar,
 } from '@/actions/account-actions';
+import { useAvatar } from '@/context/AvatarContext'; // ✅ new import
 
 type FormState = {
   message?: string;
@@ -26,6 +27,9 @@ export default function ProfileSettings({
   const [activeForm, setActiveForm] = useState<typeof tabs[number]>('profile');
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(userData.avatar_url || null);
+
+  // ✅ use AvatarContext to sync global avatar (Header, UserMenu, etc.)
+  const { refreshAvatar } = useAvatar();
 
   const [profileState, profileAction] = useFormState(updateProfile, {
     message: '',
@@ -49,6 +53,13 @@ export default function ProfileSettings({
     await action(formData);
     setLoading(false);
   };
+
+  // ✅ Re-fetch the avatar from Supabase after successful upload
+  useEffect(() => {
+    if (avatarState.success) {
+      refreshAvatar(); // refresh global context
+    }
+  }, [avatarState.success, refreshAvatar]);
 
   return (
     <section className="space-y-8">
@@ -113,6 +124,7 @@ export default function ProfileSettings({
           type="submit"
           className={buttonClasses}
           disabled={loading}
+          onClick={() => setLoading(true)}
         >
           {loading ? 'Uploading…' : 'Update Avatar'}
         </button>

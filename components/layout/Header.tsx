@@ -6,26 +6,33 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/utils/supabase/client";
 import { Menu, X } from "lucide-react";
-import Image from "next/image";
-import { useAvatar } from "@/context/AvatarContext";
 import UserMenu from "@/components/ui/UserMenu";
+import { useAvatar } from "@/context/AvatarContext";
+import { AvatarImage } from "@/components/ui/AvatarImage";
 
 export default function Header() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [session, setSession] = useState<any>(null);
-  const { avatarUrl, refreshAvatar } = useAvatar();
+  const { refreshAvatar } = useAvatar();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSession(data?.session));
+    // 🔹 Fetch current session and avatar on mount
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data?.session);
+      if (data?.session?.user) refreshAvatar(data.session.user.id);
+    });
+
+    // 🔹 Listen for login/logout events
     const { data: listener } = supabase.auth.onAuthStateChange((_e, sess) => {
       setSession(sess);
       if (sess?.user) refreshAvatar(sess.user.id);
+      else refreshAvatar(); // clear on logout
     });
+
     return () => listener.subscription.unsubscribe();
   }, [refreshAvatar]);
 
-  // Navigation
   const navLinks = [
     { href: "/", label: "Home" },
     { href: "/forum", label: "Forum" },
@@ -41,7 +48,7 @@ export default function Header() {
   return (
     <header className="bg-black/70 backdrop-blur border-b border-gray-800 sticky top-0 z-50">
       <div className="mx-auto max-w-6xl flex justify-between items-center px-4 py-4">
-        {/* Left: Logo */}
+        {/* Logo */}
         <Link href="/" className="text-xl font-bold text-white tracking-wide">
           AIBRY
         </Link>
@@ -65,21 +72,18 @@ export default function Header() {
           <div className="ml-4 flex items-center gap-3">
             {session ? (
               <>
-                {/* Avatar with fade-in animation */}
+                {/* Animated Avatar */}
                 <motion.div
-                  key={avatarUrl}
+                  key={session.user?.id}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.25 }}
                   className="relative w-9 h-9"
                 >
-                  <Image
-                    src={avatarUrl || "/images/default-avatar.png"}
-                    alt="User avatar"
-                    width={36}
-                    height={36}
-                    className="rounded-full border border-gray-700 object-cover"
-                    priority
+                  <AvatarImage
+                    userId={session.user.id}
+                    size={36}
+                    className="border-gray-700"
                   />
                 </motion.div>
                 <UserMenu session={session} />
@@ -105,7 +109,7 @@ export default function Header() {
         </button>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Dropdown */}
       <AnimatePresence>
         {menuOpen && (
           <motion.nav
@@ -135,19 +139,16 @@ export default function Header() {
                 {session ? (
                   <>
                     <motion.div
-                      key={avatarUrl}
+                      key={session.user?.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.25 }}
                       className="relative w-9 h-9"
                     >
-                      <Image
-                        src={avatarUrl || "/images/default-avatar.png"}
-                        alt="User avatar"
-                        width={36}
-                        height={36}
-                        className="rounded-full border border-gray-700 object-cover"
-                        priority
+                      <AvatarImage
+                        userId={session.user.id}
+                        size={36}
+                        className="border-gray-700"
                       />
                     </motion.div>
                     <UserMenu session={session} />
