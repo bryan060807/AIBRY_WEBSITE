@@ -5,6 +5,7 @@ import "@/app/globals.css";
 
 import { siteMetadata } from "@/lib/metadata";
 import { Header, Footer, ToasterProvider } from "@/components/layout";
+import { AvatarProvider } from "@/context/AvatarContext"; // 👈 NEW IMPORT
 
 /**
  * Font setup
@@ -73,19 +74,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body
         className={`${inter.className} flex min-h-screen flex-col antialiased selection:bg-[#629aa9]/40 selection:text-white`}
       >
-        {/* Global toast notifications */}
-        <ToasterProvider />
+        {/* Context provider wraps the app so header & forms share avatar state */}
+        <AvatarProvider>
+          {/* Global toast notifications */}
+          <ToasterProvider />
 
-        {/* Global navigation */}
-        <Header />
+          {/* Global navigation */}
+          <Header />
 
-        {/* Page content */}
-        <main id="main-content" className="flex-1">
-          {children}
-        </main>
+          {/* Page content */}
+          <main id="main-content" className="flex-1">
+            {children}
+          </main>
 
-        {/* Global footer */}
-        <Footer />
+          {/* Global footer */}
+          <Footer />
+        </AvatarProvider>
       </body>
     </html>
   );

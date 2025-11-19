@@ -100,3 +100,73 @@ export async function updatePassword(
   revalidateAccountPages();
   return { message: 'Password updated successfully.', success: true };
 }
+
+/* ==========================================================
+   4. UPDATE AVATAR
+   ========================================================== */
+export async function updateAvatar(
+  _prevState: ActionResponse,
+  formData: FormData
+): Promise<ActionResponse> {
+  const supabase = createSupabaseServerClient();
+  const file = formData.get('avatar') as File;
+
+  if (!file) {
+    return { message: 'No file uploaded.', success: false };
+  }
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    redirect('/login?message=Please sign in again.');
+  }
+
+  const folder = `avatars/${user.id}`;
+  const fileExt = file.name.split('.').pop();
+  const filePath = `${folder}/avatar.${fileExt}`;
+
+  try {
+    // 1️⃣ Delete any existing avatar(s)
+    const { data: existingFiles } = await supabase.storage.from('avatars').list(folder);
+
+    if (existingFiles && existingFiles.length > 0) {
+      const oldPaths = existingFiles.map((f) => `${folder}/${f.name}`);
+      await supabase.storage.from('avatars').remove(oldPaths);
+    }
+
+    // 2️⃣ Upload new avatar
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, file, { upsert: true });
+
+    if (uploadError) {
+      console.error('Avatar upload error:', uploadError);
+      return { message: 'Failed to upload avatar.', success: false };
+    }
+
+    // 3️⃣ Get public URL
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from('avatars').getPublicUrl(filePath);
+
+    // 4️⃣ Save URL in profile
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ avatar_url: publicUrl })
+      .eq('id', user.id);
+
+    if (updateError) {
+      console.error('Profile update error:', updateError);
+      return { message: 'Failed to save avatar URL.', success: false };
+    }
+
+    revalidateAccountPages();
+    return { message: 'Avatar updated successfully.', success: true };
+  } catch (err: any) {
+    console.error('Avatar update error:', err.message);
+    return { message: err.message || 'Unexpected error updating avatar.', success: false };
+  }
+}
