@@ -6,7 +6,7 @@ import { supabase } from '@/utils/supabase/client';
 type AvatarContextType = {
   avatarUrl: string | null;
   setAvatarUrl: (url: string | null) => void;
-  refreshAvatar: (userId: string) => Promise<void>;
+  refreshAvatar: (userId?: string) => Promise<void>; // ✅ optional param
 };
 
 const AvatarContext = createContext<AvatarContextType | undefined>(undefined);
@@ -14,12 +14,9 @@ const AvatarContext = createContext<AvatarContextType | undefined>(undefined);
 export function AvatarProvider({ children }: { children: ReactNode }) {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
-  // Load current avatar from Supabase when user logs in
   useEffect(() => {
-    async function loadAvatar() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+    async function fetchAvatar() {
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data, error } = await supabase
@@ -30,22 +27,39 @@ export function AvatarProvider({ children }: { children: ReactNode }) {
 
       if (!error && data?.avatar_url) {
         setAvatarUrl(data.avatar_url);
+      } else {
+        setAvatarUrl(null);
       }
     }
 
-    loadAvatar();
+    fetchAvatar();
+
+    const { data: subscription } = supabase.auth.onAuthStateChange((_e, sess) => {
+      if (sess?.user) fetchAvatar();
+      else setAvatarUrl(null);
+    });
+
+    return () => subscription?.subscription.unsubscribe();
   }, []);
 
-  // Force reload avatar from DB after update
-  async function refreshAvatar(userId: string) {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('avatar_url')
-      .eq('id', userId)
-      .single();
+  // ✅ Allow refresh with or without explicit userId
+  async function refreshAvatar(userId?: string) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const targetId = userId || user?.id;
+      if (!targetId) return;
 
-    if (!error && data?.avatar_url) {
-      setAvatarUrl(data.avatar_url);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('id', targetId)
+        .single();
+
+      if (!error && data?.avatar_url) {
+        setAvatarUrl(data.avatar_url);
+      }
+    } catch (err) {
+      console.error('Error refreshing avatar:', err);
     }
   }
 
