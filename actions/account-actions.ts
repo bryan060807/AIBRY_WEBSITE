@@ -73,7 +73,10 @@ export async function updateEmail(
   }
 
   revalidateAccountPages();
-  return { message: 'Email updated successfully. Please verify your inbox.', success: true };
+  return {
+    message: 'Email updated successfully. Please verify your inbox.',
+    success: true,
+  };
 }
 
 /* ==========================================================
@@ -87,7 +90,10 @@ export async function updatePassword(
   const password = (formData.get('password') as string)?.trim();
 
   if (!password || password.length < 6) {
-    return { message: 'Password must be at least 6 characters.', success: false };
+    return {
+      message: 'Password must be at least 6 characters.',
+      success: false,
+    };
   }
 
   const { error } = await supabase.auth.updateUser({ password });
@@ -102,7 +108,7 @@ export async function updatePassword(
 }
 
 /* ==========================================================
-   4. UPDATE AVATAR
+   4. UPDATE AVATAR (Fixed persistence + cleanup)
    ========================================================== */
 export async function updateAvatar(
   _prevState: ActionResponse,
@@ -115,44 +121,57 @@ export async function updateAvatar(
     return { message: 'No file uploaded.', success: false };
   }
 
+  // Get current user
   const {
     data: { user },
     error: userError,
   } = await supabase.auth.getUser();
 
   if (userError || !user) {
+    console.error('User not authenticated:', userError);
     redirect('/login?message=Please sign in again.');
   }
 
   const folder = `avatars/${user.id}`;
-  const fileExt = file.name.split('.').pop();
+  const fileExt = file.name.split('.').pop() || 'png';
   const filePath = `${folder}/avatar.${fileExt}`;
 
   try {
-    // 1️⃣ Delete any existing avatar(s)
-    const { data: existingFiles } = await supabase.storage.from('avatars').list(folder);
+    // 🧹 1. Remove any existing avatars in user's folder
+    const { data: existingFiles } = await supabase.storage
+      .from('avatars')
+      .list(folder);
 
-    if (existingFiles && existingFiles.length > 0) {
+    if (existingFiles?.length) {
       const oldPaths = existingFiles.map((f) => `${folder}/${f.name}`);
       await supabase.storage.from('avatars').remove(oldPaths);
     }
 
-    // 2️⃣ Upload new avatar
+    // 📤 2. Upload the new avatar
     const { error: uploadError } = await supabase.storage
       .from('avatars')
-      .upload(filePath, file, { upsert: true });
+      .upload(filePath, file, {
+        cacheControl: '0', // ensures fresh fetch
+        upsert: true,
+      });
 
     if (uploadError) {
       console.error('Avatar upload error:', uploadError);
       return { message: 'Failed to upload avatar.', success: false };
     }
 
-    // 3️⃣ Get public URL
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from('avatars').getPublicUrl(filePath);
+    // 🔗 3. Get public URL
+    const { data: publicUrlData } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(filePath);
 
-    // 4️⃣ Save URL in profile
+    const publicUrl = publicUrlData?.publicUrl;
+
+    if (!publicUrl) {
+      return { message: 'Failed to retrieve avatar URL.', success: false };
+    }
+
+    // 💾 4. Save public URL to user profile
     const { error: updateError } = await supabase
       .from('profiles')
       .update({ avatar_url: publicUrl })
@@ -163,10 +182,18 @@ export async function updateAvatar(
       return { message: 'Failed to save avatar URL.', success: false };
     }
 
+    // 🔄 5. Revalidate profile and dashboard pages
     revalidateAccountPages();
-    return { message: 'Avatar updated successfully.', success: true };
+
+    return {
+      message: 'Avatar updated successfully.',
+      success: true,
+    };
   } catch (err: any) {
     console.error('Avatar update error:', err.message);
-    return { message: err.message || 'Unexpected error updating avatar.', success: false };
+    return {
+      message: err.message || 'Unexpected error updating avatar.',
+      success: false,
+    };
   }
 }
