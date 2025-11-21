@@ -35,7 +35,6 @@ export default function Header() {
 
   const navLinks = [
     { href: "/", label: "Home" },
-    { href: "/thanksgiving-feast", label: "Thanksgiving Feast" }, // 💛 special page
     { href: "/forum", label: "Forum" },
     { href: "/store", label: "Store" },
     { href: "/todo", label: "To-Do" },
