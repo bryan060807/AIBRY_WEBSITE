@@ -1,0 +1,160 @@
+From 90c2b7a43c77f1f2e10b3f839b3f74e1d76c28d0 Mon Sep 17 00:00:00 2001
+From: AIBRY - Website Magician <support@aibry.shop>
+Date: Fri, 29 Nov 2025 00:00:00 +0000
+Subject: [PATCH] SEO & Performance Optimization for AIBRY.shop
+
+---
+ app/layout.tsx      | 51 +++++++++++++++++++++++++++++++++++++++++++++++++++
+ app/sitemap.ts       | 15 +++++++++++++++
+ next.config.mjs      | 11 ++++++++++-
+ package.json         |  3 ++-
+ public/robots.txt    |  4 ++++
+ vercel.json          | 14 ++++++++++++++
+ 6 files changed, 96 insertions(+), 2 deletions(-)
+ create mode 100644 app/sitemap.ts
+ create mode 100644 public/robots.txt
+
+diff --git a/app/layout.tsx b/app/layout.tsx
+index 4f4fdd4..89d9b71 100644
+--- a/app/layout.tsx
++++ b/app/layout.tsx
+@@
+ import type { Metadata, Viewport } from "next";
+ import { Inter } from "next/font/google";
+ import "@/styles/global.css";
+ import "@/app/globals.css";
+ 
+ import { siteMetadata } from "@/lib/metadata";
+ import { Header, Footer, ToasterProvider } from "@/components/layout";
+ import { AvatarProvider } from "@/context/AvatarContext"; // 🧠 Existing structure retained
+
++import { Analytics } from "@vercel/analytics/react";
++
++// --- SEO Metadata Enhancement ---
++export const metadata: Metadata = {
++  title: "AIBRY — Intelligent Web Experiences",
++  description:
++    "AIBRY builds modern, fast, and accessible web experiences powered by Next.js and AI-driven design principles.",
++  metadataBase: new URL("https://aibry.shop"),
++  openGraph: {
++    title: "AIBRY — Web Crafted with Intelligence",
++    description:
++      "Explore AIBRY — AI-enhanced, accessible, and high-performance web development.",
++    url: "https://aibry.shop",
++    siteName: "AIBRY",
++    images: [
++      {
++        url: "/og-image.jpg",
++        width: 1200,
++        height: 630,
++        alt: "AIBRY Website Preview",
++      },
++    ],
++    locale: "en_US",
++    type: "website",
++  },
++  twitter: {
++    card: "summary_large_image",
++    site: "@aibryweb",
++    title: "AIBRY — Intelligent Web Experiences",
++    description:
++      "Discover the power of AI-assisted, performance-first web design with AIBRY.",
++    images: ["/og-image.jpg"],
++  },
++};
++
+ export default function RootLayout({ children }: { children: React.ReactNode }) {
+   return (
+     <html lang="en">
+       <body className="bg-black text-gray-100 scroll-smooth dark:bg-black dark:text-gray-100">
+         <AvatarProvider>
+           <ToasterProvider />
+           <Header />
+           <main id="main-content" className="flex-1">
+             {children}
+           </main>
+           <Footer />
++          <Analytics />
+         </AvatarProvider>
+       </body>
+     </html>
+   );
+ }
+diff --git a/app/sitemap.ts b/app/sitemap.ts
+new file mode 100644
+--- /dev/null
++++ b/app/sitemap.ts
+@@
++import { MetadataRoute } from "next";
++
++export default function sitemap(): MetadataRoute.Sitemap {
++  return [
++    {
++      url: "https://aibry.shop",
++      lastModified: new Date(),
++      changeFrequency: "monthly",
++      priority: 1.0,
++    },
++  ];
++}
+diff --git a/next.config.mjs b/next.config.mjs
+index 936a88a..8e3a0b5 100644
+--- a/next.config.mjs
++++ b/next.config.mjs
+@@
+ /** @type {import('next').NextConfig} */
+ const nextConfig = {
+-  reactStrictMode: true,
++  reactStrictMode: true,
++  compress: true,
++  experimental: {
++    optimizeCss: true,
++  },
++  images: {
++    formats: ["image/avif", "image/webp"],
++    deviceSizes: [320, 640, 1080, 1920],
++  },
+ };
+ 
+ export default nextConfig;
+diff --git a/package.json b/package.json
+index 4009e23..32f9e43 100644
+--- a/package.json
++++ b/package.json
+@@
+   "dependencies": {
+     "next": "14.1.0",
+     "react": "18.3.1",
+     "react-dom": "18.3.1",
+-    "typescript": "^5.3.3"
++    "typescript": "^5.3.3",
++    "@vercel/analytics": "^1.1.1"
+   },
+diff --git a/public/robots.txt b/public/robots.txt
+new file mode 100644
+--- /dev/null
++++ b/public/robots.txt
+@@
++User-agent: *
++Allow: /
++Sitemap: https://aibry.shop/sitemap.xml
+diff --git a/vercel.json b/vercel.json
+index e69de29..a7f2fbd 100644
+--- a/vercel.json
++++ b/vercel.json
+@@
++{
++  "headers": [
++    {
++      "source": "/(.*)",
++      "headers": [
++        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
++        { "key": "X-Content-Type-Options", "value": "nosniff" },
++        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
++        { "key": "X-Frame-Options", "value": "SAMEORIGIN" }
++      ]
++    }
++  ]
++}
+-- 
+2.39.3
