@@ -1,46 +1,32 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "@/styles/global.css";
 import "@/app/globals.css";
 
 import { siteMetadata } from "@/lib/metadata";
 import { Header, Footer, ToasterProvider } from "@/components/layout";
-import { AvatarProvider } from "@/context/AvatarContext"; // 👈 NEW IMPORT
+import { AvatarProvider } from "@/context/AvatarContext";
+import { Analytics } from "@vercel/analytics/react";
 
-/**
- * Font setup
- */
+// ✅ Font setup
 const inter = Inter({
   subsets: ["latin"],
-  display: "swap", // Prevents FOUT (Flash of Unstyled Text)
+  display: "swap",
 });
 
-/**
- * Metadata (merged from your version + centralized config)
- */
+// ✅ Centralized metadata
 export const metadata: Metadata = {
   title: {
     default: siteMetadata.title,
-    template: `%s | ${siteMetadata.title}`,
+    template: `%s | ${siteMetadata.siteName}`,
   },
   description: siteMetadata.description,
-  metadataBase: new URL(siteMetadata.url),
   keywords: siteMetadata.keywords,
+  metadataBase: new URL(siteMetadata.url),
+  authors: [{ name: siteMetadata.author }],
+  themeColor: siteMetadata.themeColor,
   openGraph: {
-    title: siteMetadata.title,
-    description: siteMetadata.description,
-    url: siteMetadata.url,
-    siteName: siteMetadata.title,
-    images: [
-      {
-        url: siteMetadata.image,
-        width: 1200,
-        height: 630,
-        alt: "AIBRY Official Banner",
-      },
-    ],
-    locale: "en_US",
-    type: "website",
+    ...siteMetadata.openGraph,
   },
   twitter: {
     card: "summary_large_image",
@@ -48,47 +34,121 @@ export const metadata: Metadata = {
     description: siteMetadata.description,
     images: [siteMetadata.image],
   },
-  authors: [{ name: siteMetadata.author }],
+  icons: {
+    icon: siteMetadata.favicon,
+  },
 };
 
-/**
- * Browser theming metadata
- */
-export const viewport: Viewport = {
-  themeColor: siteMetadata.themeColor,
+// ✅ JSON-LD Structured Data (Artist + Website + Example Recordings)
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "MusicGroup",
+      "@id": "https://aibry.shop/#musicgroup",
+      name: "AIBRY",
+      url: "https://aibry.shop",
+      description:
+        "AIBRY is the sound of unfiltered emotion — a fusion of metal, trapmetal, and raw chaos.",
+      genre: ["Metal", "Trapmetal", "Dark Trap"],
+      image: "https://aibry.shop/images/og-banner.jpg",
+      logo: "https://aibry.shop/images/logo.png",
+      sameAs: [
+        "https://www.instagram.com/aibrymusic/",
+        "https://www.tiktok.com/@_aibry",
+        "https://open.spotify.com/artist/6gw6SIOYGPhuMqOfLwJE9h",
+        "https://music.apple.com/us/artist/aibry/1830943798",
+      ],
+      member: [
+        {
+          "@type": "Person",
+          name: "AIBRY",
+          roleName: "Vocalist / Producer",
+        },
+      ],
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://aibry.shop/#website",
+      url: "https://aibry.shop",
+      name: "AIBRY.shop",
+      publisher: { "@id": "https://aibry.shop/#musicgroup" },
+      inLanguage: "en-US",
+      potentialAction: {
+        "@type": "SearchAction",
+        target: "https://aibry.shop/search?q={search_term_string}",
+        "query-input": "required name=search_term_string",
+      },
+    },
+    // Example of MusicRecording entries — you can extend or generate dynamically later
+    {
+      "@type": "MusicRecording",
+      name: "BLOODWIRE",
+      url: "https://aibry.shop/discography/bloodwire",
+      inAlbum: {
+        "@type": "MusicAlbum",
+        name: "BLOODWIRE",
+        byArtist: { "@id": "https://aibry.shop/#musicgroup" },
+      },
+      byArtist: { "@id": "https://aibry.shop/#musicgroup" },
+      datePublished: "2024-06-01",
+      duration: "PT3M12S",
+      genre: "Trapmetal",
+      offers: {
+        "@type": "Offer",
+        url: "https://open.spotify.com/track/xxx",
+        price: "0.00",
+        priceCurrency: "USD",
+        availability: "https://schema.org/InStock",
+      },
+    },
+    {
+      "@type": "MusicRecording",
+      name: "MIRRORS",
+      url: "https://aibry.shop/discography/mirrors",
+      inAlbum: {
+        "@type": "MusicAlbum",
+        name: "MIRRORS",
+        byArtist: { "@id": "https://aibry.shop/#musicgroup" },
+      },
+      byArtist: { "@id": "https://aibry.shop/#musicgroup" },
+      datePublished: "2024-09-15",
+      duration: "PT2M58S",
+      genre: "Metal / Industrial",
+      offers: {
+        "@type": "Offer",
+        url: "https://music.apple.com/us/album/mirrors/1830943798",
+        price: "0.00",
+        priceCurrency: "USD",
+        availability: "https://schema.org/InStock",
+      },
+    },
+  ],
 };
 
-/**
- * RootLayout — wraps the entire app (public + protected)
- */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="en"
-      className="bg-black text-gray-100 scroll-smooth dark:bg-black dark:text-gray-100"
-    >
+    <html lang="en">
       <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
+        {/* JSON-LD structured data for artist, website, and recordings */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
       </head>
-
       <body
-        className={`${inter.className} flex min-h-screen flex-col antialiased selection:bg-[#629aa9]/40 selection:text-white`}
+        className={`bg-black text-gray-100 scroll-smooth dark:bg-black dark:text-gray-100 ${inter.className}`}
       >
-        {/* Context provider wraps the app so header & forms share avatar state */}
         <AvatarProvider>
-          {/* Global toast notifications */}
           <ToasterProvider />
-
-          {/* Global navigation */}
           <Header />
 
-          {/* Page content */}
           <main id="main-content" className="flex-1">
             {children}
           </main>
 
-          {/* Global footer */}
           <Footer />
+          <Analytics />
         </AvatarProvider>
       </body>
     </html>

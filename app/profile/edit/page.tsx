@@ -1,16 +1,20 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { supabase } from '@/utils/supabase/client';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/utils/supabase/client";
+import { useAvatar } from "@/context/AvatarContext";
+import { AvatarBase } from "@/components/ui/AvatarBase";
+import { updateAvatar, updateProfile } from "@/actions/account-actions";
 
 export default function EditProfilePage() {
   const router = useRouter();
+  const { avatarUrl, refreshAvatar } = useAvatar();
+
   const [profile, setProfile] = useState<any>(null);
-  const [saving, setSaving] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     async function loadProfile() {
@@ -18,15 +22,15 @@ export default function EditProfilePage() {
         data: { user },
       } = await supabase.auth.getUser();
 
-      if (!user) return router.push('/login');
+      if (!user) return router.push("/login");
 
       const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
         .single();
 
-      if (error) console.error('Error loading profile:', error.message);
+      if (error) console.error("Error loading profile:", error.message);
       setProfile(data);
     }
 
@@ -45,40 +49,22 @@ export default function EditProfilePage() {
     if (!profile) return;
     setSaving(true);
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return router.push('/login');
-
-    let avatarPath = profile.avatar_url;
-
+    // 1️⃣ Avatar upload
     if (avatarFile) {
-      const fileExt = avatarFile.name.split('.').pop();
-      const filePath = `avatars/${user.id}/avatar.${fileExt}`;
+      const formData = new FormData();
+      formData.append("avatar", avatarFile);
 
-      // Delete old avatar (optional)
-      await supabase.storage.from('avatars').remove([filePath]);
-
-      // Upload new one
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, avatarFile, {
-          upsert: true,
-          cacheControl: '3600',
-        });
-
-      if (uploadError) {
-        console.error('Avatar upload failed:', uploadError.message);
+      const result = await updateAvatar({ message: "", success: false }, formData);
+      if (!result.success) {
+        console.error("Avatar upload failed:", result.message);
         setSaving(false);
         return;
       }
-
-      // Only store relative path
-      avatarPath = filePath;
+      await refreshAvatar();
     }
 
+    // 2️⃣ Profile data
     const form = e.target as HTMLFormElement;
-
     const updates = {
       display_name: (form.display_name as any).value,
       bio: (form.bio as any).value,
@@ -88,23 +74,22 @@ export default function EditProfilePage() {
       facebook: (form.facebook as any).value,
       soundcloud: (form.soundcloud as any).value,
       newsletter_opt_in: (form.newsletter_opt_in as any).checked,
-      avatar_url: avatarPath,
-      updated_at: new Date().toISOString(),
     };
 
-    const { error } = await supabase
-      .from('profiles')
-      .update(updates)
-      .eq('id', user.id);
+    const formData = new FormData();
+    Object.entries(updates).forEach(([k, v]) =>
+      formData.append(k, String(v ?? ""))
+    );
 
-    if (error) {
-      console.error('Profile update failed:', error.message);
+    const profileResult = await updateProfile({ message: "", success: false }, formData);
+    if (!profileResult.success) {
+      console.error("Profile update failed:", profileResult.message);
       setSaving(false);
       return;
     }
 
     setSaving(false);
-    router.push('/profile');
+    router.push("/profile");
   };
 
   if (!profile) {
@@ -115,11 +100,7 @@ export default function EditProfilePage() {
     );
   }
 
-  const avatarUrl =
-    avatarPreview ||
-    (profile.avatar_url
-      ? supabase.storage.from('avatars').getPublicUrl(profile.avatar_url).data.publicUrl
-      : '/images/default-avatar.png');
+  const previewUrl = avatarPreview || avatarUrl || "/images/default-avatar.png";
 
   return (
     <main className="min-h-screen bg-black text-gray-100 py-24 px-6 flex flex-col items-center">
@@ -133,13 +114,7 @@ export default function EditProfilePage() {
 
         {/* Avatar Upload */}
         <div className="flex flex-col items-center mb-6">
-          <Image
-            src={avatarUrl}
-            alt="avatar preview"
-            width={120}
-            height={120}
-            className="rounded-full border border-[#83c0cc] mb-3 object-cover"
-          />
+          <AvatarBase src={previewUrl} size={120} className="mb-3" />
           <label className="text-sm text-gray-400 cursor-pointer hover:text-[#83c0cc]">
             Change Avatar
             <input
@@ -157,7 +132,7 @@ export default function EditProfilePage() {
           <input
             type="text"
             name="display_name"
-            defaultValue={profile.display_name || ''}
+            defaultValue={profile.display_name || ""}
             className="mt-1 w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white focus:border-[#83c0cc] focus:ring-[#83c0cc]"
           />
         </label>
@@ -167,7 +142,7 @@ export default function EditProfilePage() {
           Bio
           <textarea
             name="bio"
-            defaultValue={profile.bio || ''}
+            defaultValue={profile.bio || ""}
             rows={3}
             className="mt-1 w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white focus:border-[#83c0cc] focus:ring-[#83c0cc]"
           />
@@ -175,13 +150,13 @@ export default function EditProfilePage() {
 
         {/* Social Links */}
         <div className="grid md:grid-cols-2 gap-4">
-          {['instagram', 'tiktok', 'spotify', 'facebook', 'soundcloud'].map((field) => (
+          {["instagram", "tiktok", "spotify", "facebook", "soundcloud"].map((field) => (
             <label key={field} className="block text-sm text-gray-300 capitalize">
               {field}
               <input
                 type="url"
                 name={field}
-                defaultValue={profile[field] || ''}
+                defaultValue={profile[field] || ""}
                 placeholder={`https://${field}.com/yourprofile`}
                 className="mt-1 w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white focus:border-[#83c0cc] focus:ring-[#83c0cc]"
               />
@@ -200,13 +175,13 @@ export default function EditProfilePage() {
           Subscribe to AIBRY updates
         </label>
 
-        {/* Save */}
+        {/* Save Button */}
         <button
           type="submit"
           disabled={saving}
           className="w-full bg-[#83c0cc] hover:bg-[#6eb5c0] text-black font-semibold py-2 rounded-md transition"
         >
-          {saving ? 'Saving…' : 'Save Changes'}
+          {saving ? "Saving…" : "Save Changes"}
         </button>
       </form>
     </main>
