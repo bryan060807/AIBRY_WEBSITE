@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "@/styles/global.css";
 import "@/app/globals.css";
@@ -14,7 +14,7 @@ const inter = Inter({
   display: "swap",
 });
 
-// ✅ Centralized metadata
+// ✅ Centralized Metadata
 export const metadata: Metadata = {
   title: {
     default: siteMetadata.title,
@@ -24,7 +24,6 @@ export const metadata: Metadata = {
   keywords: siteMetadata.keywords,
   metadataBase: new URL(siteMetadata.url),
   authors: [{ name: siteMetadata.author }],
-  themeColor: siteMetadata.themeColor,
   openGraph: {
     ...siteMetadata.openGraph,
   },
@@ -39,7 +38,12 @@ export const metadata: Metadata = {
   },
 };
 
-// ✅ JSON-LD Structured Data (Artist + Website + Example Recordings)
+// ✅ Viewport configuration (for theme color)
+export const viewport: Viewport = {
+  themeColor: siteMetadata.themeColor || "#0a0a0a",
+};
+
+// ✅ JSON-LD Structured Data
 const jsonLd = {
   "@context": "https://schema.org",
   "@graph": [
@@ -80,7 +84,6 @@ const jsonLd = {
         "query-input": "required name=search_term_string",
       },
     },
-    // Example of MusicRecording entries — you can extend or generate dynamically later
     {
       "@type": "MusicRecording",
       name: "BLOODWIRE",
@@ -126,7 +129,12 @@ const jsonLd = {
   ],
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+// ✅ Root Layout
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
       <head>
@@ -142,11 +150,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AvatarProvider>
           <ToasterProvider />
           <Header />
-
           <main id="main-content" className="flex-1">
             {children}
           </main>
-
           <Footer />
           <Analytics />
         </AvatarProvider>
