@@ -9,6 +9,7 @@ export const siteMetadata = {
   author: "AIBRY",
   language: "en-US",
   locale: "en_US",
+  themeColor: "#0a0a0a",
 
   // Canonical domain
   url: "https://aibry.shop",
