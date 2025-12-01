@@ -1,4 +1,5 @@
 "use client";
+
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { supabase } from "@/utils/supabase/client";
@@ -6,12 +7,34 @@ import { useAvatar } from "@/context/AvatarContext";
 import { motion } from "framer-motion";
 import { normalizeAvatarUrl } from "@/lib/normalizeAvatarUrl";
 
-export function AvatarImage({ userId, size = 120, className = "", alt = "User avatar" }) {
+/** ============================================================
+ * AvatarImage Component
+ * ------------------------------------------------------------
+ * Fetches and displays a user avatar from Supabase or context.
+ * - Fallback: `/images/default-avatar.png`
+ * - Smooth fade-in via Framer Motion
+ * - Responsive and accessible
+ * ============================================================ */
+
+interface AvatarImageProps {
+  userId?: string;
+  size?: number;
+  className?: string;
+  alt?: string;
+}
+
+export function AvatarImage({
+  userId,
+  size = 120,
+  className = "",
+  alt = "User avatar",
+}: AvatarImageProps) {
   const { avatarUrl } = useAvatar();
   const [imgSrc, setImgSrc] = useState("/images/default-avatar.png");
 
   useEffect(() => {
     if (!userId) return;
+
     async function fetchAvatar() {
       try {
         const { data, error } = await supabase
@@ -32,6 +55,7 @@ export function AvatarImage({ userId, size = 120, className = "", alt = "User av
         setImgSrc("/images/default-avatar.png");
       }
     }
+
     fetchAvatar();
   }, [userId, avatarUrl]);
 
@@ -48,8 +72,8 @@ export function AvatarImage({ userId, size = 120, className = "", alt = "User av
         alt={alt}
         width={size}
         height={size}
-        onError={() => setImgSrc("/images/default-avatar.png")}
         className="rounded-full border border-[#83c0cc] object-cover shadow-sm"
+        onError={() => setImgSrc("/images/default-avatar.png")}
         priority
       />
     </motion.div>
