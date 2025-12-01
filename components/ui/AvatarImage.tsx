@@ -1,39 +1,17 @@
 "use client";
-
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { supabase } from "@/utils/supabase/client";
 import { useAvatar } from "@/context/AvatarContext";
 import { motion } from "framer-motion";
+import { normalizeAvatarUrl } from "@/lib/normalizeAvatarUrl";
 
-interface AvatarImageProps {
-  userId: string | null;
-  size?: number;
-  className?: string;
-  alt?: string;
-}
-
-/**
- * AvatarImage — Displays a user avatar that automatically updates
- * when the user uploads a new one (via AvatarContext).
- *
- * Data source:
- * - Primary: `profiles.avatar_url`
- * - Fallback: `/images/default-avatar.png`
- */
-export function AvatarImage({
-  userId,
-  size = 120,
-  className = "",
-  alt = "User avatar",
-}: AvatarImageProps) {
-  const { avatarUrl } = useAvatar(); // ✅ live global context for instant updates
+export function AvatarImage({ userId, size = 120, className = "", alt = "User avatar" }) {
+  const { avatarUrl } = useAvatar();
   const [imgSrc, setImgSrc] = useState("/images/default-avatar.png");
 
-  // ✅ Load avatar from DB when userId or context changes
   useEffect(() => {
     if (!userId) return;
-
     async function fetchAvatar() {
       try {
         const { data, error } = await supabase
@@ -47,19 +25,15 @@ export function AvatarImage({
           return;
         }
 
-        if (data?.avatar_url) {
-          setImgSrc(data.avatar_url);
-        } else {
-          setImgSrc("/images/default-avatar.png");
-        }
+        const normalized = normalizeAvatarUrl(data?.avatar_url);
+        setImgSrc(normalized || "/images/default-avatar.png");
       } catch (err: any) {
         console.error("Error fetching avatar:", err.message);
         setImgSrc("/images/default-avatar.png");
       }
     }
-
     fetchAvatar();
-  }, [userId, avatarUrl]); // reacts to both login and avatar updates
+  }, [userId, avatarUrl]);
 
   return (
     <motion.div

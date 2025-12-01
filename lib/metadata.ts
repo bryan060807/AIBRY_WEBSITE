@@ -15,7 +15,6 @@ export const siteMetadata = {
 
   // Visuals & theme
   image: "/images/og-banner.jpg",
-  themeColor: "#000000",
   favicon: "/favicon.ico",
   logo: "/images/logo.png",
 

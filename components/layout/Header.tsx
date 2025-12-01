@@ -8,7 +8,6 @@ import { supabase } from "@/utils/supabase/client";
 import { Menu, X } from "lucide-react";
 import UserMenu from "@/components/ui/UserMenu";
 import { useAvatar } from "@/context/AvatarContext";
-import { AvatarImage } from "@/components/ui/AvatarImage";
 
 export default function Header() {
   const pathname = usePathname();
@@ -39,6 +38,7 @@ export default function Header() {
     { href: "/store", label: "Store" },
     { href: "/todo", label: "To-Do" },
     { href: "/merch", label: "Merch" },
+    { href: "/blackbox", label: "Emotional Black Box" },
     { href: "/about", label: "About" },
     { href: "/contact", label: "Contact" },
   ];
@@ -71,23 +71,14 @@ export default function Header() {
 
           <div className="ml-4 flex items-center gap-3">
             {session ? (
-              <>
-                {/* Animated Avatar */}
-                <motion.div
-                  key={session.user?.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.25 }}
-                  className="relative w-9 h-9"
-                >
-                  <AvatarImage
-                    userId={session.user.id}
-                    size={36}
-                    className="border-gray-700"
-                  />
-                </motion.div>
-                <UserMenu session={session} />
-              </>
+              <motion.div
+                key={session.user?.id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.25 }}
+              >
+                <UserMenu />
+              </motion.div>
             ) : (
               <Link
                 href="/login"
@@ -137,22 +128,14 @@ export default function Header() {
 
               <div className="pt-3 border-t border-gray-800 flex items-center gap-3">
                 {session ? (
-                  <>
-                    <motion.div
-                      key={session.user?.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.25 }}
-                      className="relative w-9 h-9"
-                    >
-                      <AvatarImage
-                        userId={session.user.id}
-                        size={36}
-                        className="border-gray-700"
-                      />
-                    </motion.div>
-                    <UserMenu session={session} />
-                  </>
+                  <motion.div
+                    key={session.user?.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.25 }}
+                  >
+                    <UserMenu />
+                  </motion.div>
                 ) : (
                   <Link
                     href="/login"

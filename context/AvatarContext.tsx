@@ -1,77 +1,116 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabase } from '@/utils/supabase/client';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  ReactNode,
+} from "react";
+import { supabase } from "@/utils/supabase/client";
+import { normalizeAvatarUrl } from "@/lib/normalizeAvatarUrl";
 
-type AvatarContextType = {
+/**
+ * AvatarContext
+ * Centralized avatar state management.
+ * Keeps avatar in sync across the app (UserMenu, Dashboard, Profile, etc.)
+ */
+
+interface AvatarContextType {
   avatarUrl: string | null;
-  setAvatarUrl: (url: string | null) => void;
-  refreshAvatar: (userId?: string) => Promise<void>; // ✅ optional param
-};
+  refreshAvatar: (userId?: string) => Promise<void>;
+}
 
-const AvatarContext = createContext<AvatarContextType | undefined>(undefined);
+const AvatarContext = createContext<AvatarContextType>({
+  avatarUrl: null,
+  refreshAvatar: async () => {},
+});
 
 export function AvatarProvider({ children }: { children: ReactNode }) {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchAvatar() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+  /**
+   * Fetch and refresh the current user's avatar.
+   * - Loads avatar from Supabase `profiles` table
+   * - Normalizes to full public URL
+   * - Appends cache-busting query param so new uploads show instantly
+   */
+  const refreshAvatar = useCallback(async (userId?: string) => {
+    try {
+      // Get current user ID if not provided
+      if (!userId) {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        userId = user?.id;
+      }
 
+      if (!userId) {
+        console.warn("No user found when refreshing avatar.");
+        setAvatarUrl("/images/default-avatar.png");
+        return;
+      }
+
+      // Fetch profile from Supabase
       const { data, error } = await supabase
-        .from('profiles')
-        .select('avatar_url')
-        .eq('id', user.id)
+        .from("profiles")
+        .select("avatar_url")
+        .eq("id", userId)
         .single();
 
-      if (!error && data?.avatar_url) {
-        setAvatarUrl(data.avatar_url);
-      } else {
-        setAvatarUrl(null);
+      if (error) {
+        console.error("Error fetching avatar:", error.message);
+        setAvatarUrl("/images/default-avatar.png");
+        return;
       }
+
+      // Normalize Supabase URL to full public URL
+      const normalized = normalizeAvatarUrl(data?.avatar_url);
+
+      // Add cache-busting param to force refresh after updates
+      const cacheBusted = normalized ? `${normalized}?v=${Date.now()}` : null;
+
+      setAvatarUrl(cacheBusted || "/images/default-avatar.png");
+    } catch (err: any) {
+      console.error("Unexpected error refreshing avatar:", err.message);
+      setAvatarUrl("/images/default-avatar.png");
     }
-
-    fetchAvatar();
-
-    const { data: subscription } = supabase.auth.onAuthStateChange((_e, sess) => {
-      if (sess?.user) fetchAvatar();
-      else setAvatarUrl(null);
-    });
-
-    return () => subscription?.subscription.unsubscribe();
   }, []);
 
-  // ✅ Allow refresh with or without explicit userId
-  async function refreshAvatar(userId?: string) {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const targetId = userId || user?.id;
-      if (!targetId) return;
+  /**
+   * Initialize avatar on mount.
+   * Will refresh automatically on login or session change.
+   */
+  useEffect(() => {
+    refreshAvatar();
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('avatar_url')
-        .eq('id', targetId)
-        .single();
-
-      if (!error && data?.avatar_url) {
-        setAvatarUrl(data.avatar_url);
+    // Optionally, subscribe to Supabase auth state changes
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+          await refreshAvatar(session?.user?.id);
+        }
+        if (event === "SIGNED_OUT") {
+          setAvatarUrl("/images/default-avatar.png");
+        }
       }
-    } catch (err) {
-      console.error('Error refreshing avatar:', err);
-    }
-  }
+    );
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, [refreshAvatar]);
 
   return (
-    <AvatarContext.Provider value={{ avatarUrl, setAvatarUrl, refreshAvatar }}>
+    <AvatarContext.Provider value={{ avatarUrl, refreshAvatar }}>
       {children}
     </AvatarContext.Provider>
   );
 }
 
-export function useAvatar() {
-  const ctx = useContext(AvatarContext);
-  if (!ctx) throw new Error('useAvatar must be used within an AvatarProvider');
-  return ctx;
-}
+/**
+ * Hook: useAvatar()
+ * Access the global avatar URL and refresh function.
+ */
+export const useAvatar = () => useContext(AvatarContext);

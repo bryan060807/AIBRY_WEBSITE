@@ -1,0 +1,67 @@
+---
+title: "Choosing the Basement: Where the Black Box Lives"
+slug: "choosing-the-basement"
+date: "2025-11-29"
+tags: ["setup", "structure", "foundation"]
+order: 1
+---
+
+## DEVLOG 01 – **Choosing the Basement: Where the Black Box Lives**
+
+Today I officially carved out a home for the Emotional Black Box on my site.
+
+Nothing fancy. No AI wizardry yet. Just a simple decision:
+
+The Black Box gets its own universe under /blackbox inside the Next.js /app directory.
+
+That’s the moment it stopped being “a cool idea I talked about” and started being an actual thing I’m building.
+
+The plan:
+
+/app
+  /blackbox
+    layout.tsx            // special bunker layout
+    page.tsx              // hub: /blackbox
+
+    /devlog
+      page.tsx            // /blackbox/devlog
+      /[slug]
+        page.tsx          // /blackbox/devlog/my-first-tape
+
+    /podcast
+      page.tsx            // /blackbox/podcast
+
+    /behind-the-scenes
+      page.tsx            // /blackbox/behind-the-scenes
+
+    /lore
+      page.tsx            // /blackbox/lore
+
+    /alpha
+      page.tsx            // /blackbox/alpha
+
+This does a couple important things:
+
+The Emotional Black Box is not just a feature tucked into the rest of the site.
+It’s a section, with its own look, mood, and story.
+
+I can wrap everything under /blackbox in its own layout, so it feels like you stepped into a different room of the AIBRY universe.
+
+Devlogs, podcast episodes, lore, and the actual AI interface all live under the same “vault” instead of being scattered all over the site.
+
+I also decided this whole thing should feel like it lives in the basement of the website:
+dark, static, stripped-down UI, like you’re sitting in front of an old tape deck with bad intentions.
+
+Next steps from here:
+
+Build the /blackbox layout so it has its own header and bunker aesthetic
+
+Set up the simple devlog index page
+
+Start wiring up how I’ll store entries (static first, dynamic later)
+
+Nothing “impressive” happened today in terms of AI.
+But this is the part most people skip talking about: the decision of where the project lives.
+
+This is me officially giving the Emotional Black Box a room in the house.
+The wiring hell and emotional chaos come next.
