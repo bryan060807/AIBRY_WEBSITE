@@ -36,7 +36,6 @@ export default function Header() {
     { href: "/", label: "Home" },
     { href: "/forum", label: "Forum" },
     { href: "/store", label: "Store" },
-    { href: "/todo", label: "To-Do" },
     { href: "/merch", label: "Merch" },
     { href: "/blackbox", label: "Emotional Black Box" },
     { href: "/about", label: "About" },
