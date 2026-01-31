@@ -63,15 +63,6 @@ export default function ForumPage() {
           <ForumCard key={cat.href} {...cat} />
         ))}
       </nav>
-
-      <div className="mt-10 text-center">
-        <Link
-          href="/forum/new"
-          className="inline-block bg-blue-600 px-5 py-3 rounded-lg text-white font-semibold hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400"
-        >
-          Start a Discussion
-        </Link>
-      </div>
     </main>
   );
 }

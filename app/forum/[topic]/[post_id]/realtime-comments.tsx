@@ -1,65 +1,53 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { supabase } from '@/utils/supabase/client';
-import { toast } from 'react-hot-toast';
-import Link from 'next/link';
-
-interface Comment {
-  id: string;
-  content: string;
-  user_id: string;
-  display_name: string;
-  created_at: string;
-  post_id?: string;
-}
+import { useState, useEffect } from "react";
+import { supabase } from "@/utils/supabase/client";
 
 export default function RealtimeComments({ postId }: { postId: string }) {
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [newComment, setNewComment] = useState('');
-  const [user, setUser] = useState<any>(null);
-  const [displayName, setDisplayName] = useState<string>('Anonymous');
+  const [comments, setComments] = useState<any[]>([]);
+  const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
 
+  // 🧠 Load session (logged-in user)
   useEffect(() => {
-    const loadUserAndComments = async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      const currentUser = userData?.user || null;
-      setUser(currentUser);
+    const getUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUser(user);
 
-      // Fetch user's display_name from profiles table
-      if (currentUser) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('display_name')
-          .eq('id', currentUser.id)
-          .single();
+      // Watch for auth state changes
+      supabase.auth.onAuthStateChange((_event, session) => {
+        setUser(session?.user || null);
+      });
+    };
+    getUser();
+  }, []);
 
-        if (profile?.display_name) setDisplayName(profile.display_name);
-      }
+  // 🧠 Load comments + Realtime updates
+  useEffect(() => {
+    const loadComments = async () => {
+      const { data, error } = await supabase
+        .from("comments")
+        .select("*")
+        .eq("post_id", postId)
+        .order("created_at", { ascending: true });
 
-      const { data: initialComments } = await supabase
-        .from('comments')
-        .select('*')
-        .eq('post_id', postId)
-        .order('created_at', { ascending: false });
-
-      setComments(initialComments || []);
+      if (!error && data) setComments(data);
       setLoading(false);
     };
 
-    loadUserAndComments();
+    loadComments();
 
-    // Subscribe to new comments in realtime
     const channel = supabase
       .channel(`comments-${postId}`)
       .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'comments' },
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "comments" },
         (payload) => {
-          const comment = payload.new as Comment;
-          if (comment.post_id === postId) {
-            setComments((prev) => [comment, ...prev]);
+          if (payload.new.post_id === postId) {
+            setComments((prev) => [...prev, payload.new]);
           }
         }
       )
@@ -70,102 +58,90 @@ export default function RealtimeComments({ postId }: { postId: string }) {
     };
   }, [postId]);
 
+  // 💬 Add comment
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const content = newComment.trim();
-    if (!content) return;
+    if (!newComment.trim()) return;
 
-    const optimisticComment: Comment = {
-      id: crypto.randomUUID(),
-      content,
-      user_id: user?.id || 'anon',
-      display_name: displayName,
-      created_at: new Date().toISOString(),
+    const author =
+      user?.user_metadata?.username ||
+      user?.email?.split("@")[0] ||
+      "Anonymous";
+
+    const comment = {
       post_id: postId,
+      content: newComment.trim(),
+      author,
+      created_at: new Date().toISOString(),
     };
 
-    // Optimistic UI update
-    setComments((prev) => [optimisticComment, ...prev]);
-    setNewComment('');
+    // Optimistic UI
+    setComments((prev) => [...prev, comment]);
+    setNewComment("");
 
-    const { error } = await supabase.from('comments').insert([
-      {
-        post_id: postId,
-        user_id: user?.id,
-        display_name: displayName,
-        content,
-      },
-    ]);
-
-    if (error) {
-      toast.error('Failed to post comment.');
-      setComments((prev) => prev.filter((c) => c.id !== optimisticComment.id));
-    } else {
-      toast.success('Comment added!');
-    }
+    const { error } = await supabase.from("comments").insert(comment);
+    if (error) console.error("Failed to post comment:", error.message);
   };
 
   return (
-    <div className="mt-6">
-      {loading ? (
-        <div className="animate-pulse space-y-4">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-12 bg-gray-800 rounded-lg" />
-          ))}
+    <div className="space-y-6">
+      {/* New comment form */}
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <textarea
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          placeholder={
+            user
+              ? `Comment as ${user.user_metadata?.username || user.email}`
+              : "Comment as Anonymous..."
+          }
+          className="w-full rounded-lg bg-gray-800 text-gray-100 p-3 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#83c0cc]"
+          rows={3}
+        />
+        <div className="flex justify-between items-center">
+          <p className="text-sm text-gray-400">
+            {user
+              ? `Signed in as ${
+                  user.user_metadata?.username || user.email
+                }`
+              : "You are posting as Anonymous"}
+          </p>
+          <button
+            type="submit"
+            className="bg-[#83c0cc] hover:bg-[#6eb5c0] text-black font-semibold px-6 py-2 rounded-lg transition-colors"
+          >
+            Post Comment
+          </button>
         </div>
+      </form>
+
+      {/* Comment list */}
+      {loading ? (
+        <p className="text-gray-500 text-sm">Loading comments...</p>
       ) : comments.length > 0 ? (
-        <ul className="space-y-4 mb-6">
+        <ul className="space-y-4">
           {comments.map((comment) => (
             <li
-              key={comment.id}
-              className="border border-gray-800 bg-gray-900 p-4 rounded-md"
+              key={comment.id || comment.created_at}
+              className="bg-gray-900 border border-gray-800 rounded-lg p-4"
             >
-              <div className="flex items-center justify-between mb-1">
-                <Link
-                  href={`/user/${comment.user_id}`}
-                  className="font-semibold text-white hover:text-blue-400 transition"
-                >
-                  {comment.display_name || 'Anonymous'}
-                </Link>
-                <span className="text-xs text-gray-500">
-                  {new Date(comment.created_at).toLocaleString(undefined, {
-                    dateStyle: 'medium',
-                    timeStyle: 'short',
-                  })}
-                </span>
+              <p className="text-gray-300 mb-2">{comment.content}</p>
+              <div className="text-sm text-gray-500">
+                {comment.author || "Anonymous"} ·{" "}
+                {new Date(comment.created_at).toLocaleString(undefined, {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })}
               </div>
-              <p className="text-gray-300 whitespace-pre-line">
-                {comment.content}
-              </p>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-gray-500 italic mb-6">
-          No comments yet. Be the first to share your thoughts.
+        <p className="text-gray-500 text-sm italic">
+          No comments yet. Be the first to reply.
         </p>
-      )}
-
-      {user ? (
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <textarea
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Write a comment..."
-            className="w-full rounded-md border border-gray-700 bg-gray-900 p-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-            rows={3}
-          />
-          <button
-            type="submit"
-            disabled={!newComment.trim()}
-            className="rounded-md bg-blue-600 px-5 py-2 font-semibold text-white hover:bg-blue-500 disabled:opacity-50 transition"
-          >
-            Comment
-          </button>
-        </form>
-      ) : (
-        <p className="text-gray-500">Sign in to post a comment.</p>
       )}
     </div>
   );
 }
+
