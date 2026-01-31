@@ -36,7 +36,7 @@ export default function AudiobookPage() {
           <Image
             src="/images/audiobook-cover.jpg"
             alt="Audiobook Cover"
-            fit
+            fill
             className="object-cover"
             priority
           />
