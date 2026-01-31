@@ -13,7 +13,8 @@ export default function AudiobookPlayer({ src }: { src: string }) {
     const audio = audioRef.current;
     if (!audio) return;
 
-    audio.volume = volume; // Set initial volume
+    // Set initial volume on mount
+    audio.volume = volume;
 
     const setPlay = () => setIsPlaying(true);
     const setPause = () => setIsPlaying(false);
@@ -25,30 +26,38 @@ export default function AudiobookPlayer({ src }: { src: string }) {
       audio.removeEventListener('play', setPlay);
       audio.removeEventListener('pause', setPause);
     };
-  }, []);
+    // Added 'volume' to dependency array to satisfy ESLint
+  }, [volume]);
 
   // Force reload and sync volume when src changes
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.load();
-      audioRef.current.volume = volume; 
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.load();
+      audio.volume = volume; 
       if (isPlaying) {
-        audioRef.current.play().catch(e => console.error("Playback failed", e));
+        audio.play().catch(e => console.error("Playback failed", e));
       }
     }
-  }, [src]);
+    // Added 'isPlaying' and 'volume' to dependency array to ensure consistent 
+    // behavior when switching chapters
+  }, [src, isPlaying, volume]);
 
   const togglePlay = () => {
     if (!audioRef.current) return;
-    audioRef.current.paused ? audioRef.current.play() : audioRef.current.pause();
+    if (audioRef.current.paused) {
+      audioRef.current.play();
+    } else {
+      audioRef.current.pause();
+    }
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
     if (audioRef.current) {
-      audioRef.current.volume = newVolume; // Update real audio volume
+      audioRef.current.volume = newVolume;
     }
   };
 
@@ -59,7 +68,11 @@ export default function AudiobookPlayer({ src }: { src: string }) {
       <div className="flex flex-col items-center gap-8">
         {/* Playback Progress Indicator */}
         <div className="h-1.5 w-full rounded-full bg-gray-800 overflow-hidden">
-          <div className={`h-full bg-[var(--cassette-red)] transition-all duration-300 ${isPlaying ? 'w-1/2 opacity-100' : 'w-0 opacity-50'}`} />
+          <div 
+            className={`h-full bg-[var(--cassette-red)] transition-all duration-300 ${
+              isPlaying ? 'w-1/2 opacity-100' : 'w-0 opacity-50'
+            }`} 
+          />
         </div>
 
         <div className="flex w-full flex-col items-center justify-between gap-8 md:flex-row">
@@ -67,8 +80,9 @@ export default function AudiobookPlayer({ src }: { src: string }) {
           {/* Playback Controls */}
           <div className="flex items-center gap-8 flex-1 justify-center">
             <button 
-              onClick={() => {if(audioRef.current) audioRef.current.currentTime -= 15}} 
+              onClick={() => { if(audioRef.current) audioRef.current.currentTime -= 15 }} 
               className="text-gray-500 hover:text-white transition-colors"
+              aria-label="Skip back 15 seconds"
             >
               <RotateCcw size={24} />
             </button>
@@ -76,14 +90,23 @@ export default function AudiobookPlayer({ src }: { src: string }) {
             <button
               onClick={togglePlay}
               className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--cassette-red)] text-white shadow-lg transition hover:scale-105 active:scale-95"
+              aria-label={isPlaying ? "Pause" : "Play"}
             >
-              {isPlaying ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" className="ml-1" />}
+              {isPlaying ? (
+                <Pause size={32} fill="currentColor" />
+              ) : (
+                <Play size={32} fill="currentColor" className="ml-1" />
+              )}
             </button>
           </div>
 
           {/* Volume Slider Section */}
           <div className="flex items-center gap-3 bg-black/40 px-4 py-2 rounded-full border border-gray-800 min-w-[180px]">
-            {volume === 0 ? <VolumeX size={20} className="text-gray-600" /> : <Volume2 size={20} className="text-gray-400" />}
+            {volume === 0 ? (
+              <VolumeX size={20} className="text-gray-600" />
+            ) : (
+              <Volume2 size={20} className="text-gray-400" />
+            )}
             <input
               type="range"
               min="0"

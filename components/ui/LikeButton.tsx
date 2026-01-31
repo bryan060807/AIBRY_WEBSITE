@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import { Heart } from 'lucide-react';
+import { User } from '@supabase/supabase-js';
 
 /**
  * LikeButton
@@ -21,8 +22,7 @@ interface LikeButtonProps {
 export default function LikeButton({ postId, commentId }: LikeButtonProps) {
   const [liked, setLiked] = useState(false);
   const [count, setCount] = useState<number>(0);
-  const [user, setUser] = useState<any>(null);
-
+  const [user, setUser] = useState<User | null>(null);
 
   // Determine which column to use (post_id or comment_id)
   const column = postId ? 'post_id' : 'comment_id';
@@ -30,8 +30,9 @@ export default function LikeButton({ postId, commentId }: LikeButtonProps) {
 
   // Get current user on mount
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data?.user));
-  }, [supabase]);
+    supabase.auth.getUser().then(({ data }) => setUser(data?.user ?? null));
+    // Removed 'supabase' from dependency array to satisfy ESLint
+  }, []);
 
   // Load like state and count
   useEffect(() => {
@@ -54,19 +55,19 @@ export default function LikeButton({ postId, commentId }: LikeButtonProps) {
     };
 
     fetchLikes();
-  }, [targetId, user, supabase, column]);
+    // Removed 'supabase' from dependency array
+  }, [targetId, user, column]);
 
   // Subscribe to realtime updates
   useEffect(() => {
     if (!targetId) return;
 
     const channel = supabase
-      .channel('likes_realtime')
+      .channel(`likes_realtime_${targetId}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'likes' },
         (payload) => {
-          // Cast to Record<string, any> to allow dynamic indexing
           const newData = payload.new as Record<string, any> | null;
           const oldData = payload.old as Record<string, any> | null;
           const affectedId = newData?.[column] ?? oldData?.[column];
@@ -88,7 +89,8 @@ export default function LikeButton({ postId, commentId }: LikeButtonProps) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [targetId, supabase, column]);
+    // Removed 'supabase' from dependency array
+  }, [targetId, column]);
 
   // Handle like toggle
   const toggleLike = async () => {

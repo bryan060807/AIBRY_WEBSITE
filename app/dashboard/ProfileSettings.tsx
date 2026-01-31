@@ -1,9 +1,16 @@
 'use client';
 
+import Image from 'next/image';
 import { useFormState } from 'react-dom';
 import { updateProfile, updateEmail as updateAuth, updatePassword } from '@/actions/account-actions';
 
-const initialState = { message: '', success: false };
+// Define the state type to satisfy TypeScript strict mode
+interface FormState {
+  message: string;
+  success: boolean;
+}
+
+const initialState: FormState = { message: '', success: false };
 
 export default function ProfileSettings() {
   const [profileState, profileAction] = useFormState(updateProfile, initialState);
@@ -12,6 +19,22 @@ export default function ProfileSettings() {
 
   return (
     <div className="space-y-12">
+      {/* --- Profile Header with Optimized Image --- */}
+      <section className="bg-gray-900 border border-gray-800 rounded-2xl p-6 flex items-center gap-6">
+        <div className="relative h-20 w-20 overflow-hidden rounded-full border-2 border-[#629aa9]">
+          <Image 
+            src="/images/logo.png" // Replace with actual avatar logic if dynamic
+            alt="Profile Avatar"
+            fill
+            className="object-cover"
+          />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold text-white">Account Settings</h2>
+          <p className="text-sm text-gray-400">Manage your AIBRY identity and security.</p>
+        </div>
+      </section>
+
       {/* --- Update Display Name --- */}
       <section className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
         <h2 className="text-2xl font-bold text-white mb-3">Display Name</h2>
@@ -95,7 +118,7 @@ export default function ProfileSettings() {
 }
 
 /* --- Shared message component --- */
-function FormMessage({ state }: { state: { message?: string; success?: boolean } }) {
+function FormMessage({ state }: { state: FormState }) {
   if (!state.message) return null;
   return (
     <p
