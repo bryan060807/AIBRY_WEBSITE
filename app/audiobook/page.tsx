@@ -15,7 +15,7 @@ const CHAPTERS = [
   { id: 9, title: "Chapter 9: Boundaries, Somehow", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%209.mp3" },
   { id: 10, title: "Chapter 10: The Gap Between Who They Are & Who They Thought They'd Be", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%2010.mp3" },
   { id: 11, title: "Chapter 11: When Nothing Happens", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%2011.mp3" },
-  { id: 12, title: "Chapter 12: Rewrites", url: "hhttps://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%2012.mp3" },
+  { id: 12, title: "Chapter 12: Rewrites", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%2012.mp3" },
   { id: 13, title: "Chapter 13: The Cursor", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%2013.mp3" },
   { id: 14, title: "Chapter 14: A Beginning in Desguise", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%2014.mp3" },
 ];
