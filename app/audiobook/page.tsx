@@ -4,20 +4,20 @@ import Image from "next/image";
 import AudiobookPlayer from "@/components/AudiobookPlayer";
 
 const CHAPTERS = [
-  { id: 1, title: "Chapter 1", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%201.mp3" },
-  { id: 2, title: "Chapter 2", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%202.mp3" },
-  { id: 3, title: "Chapter 3", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%203.mp3" },
-  { id: 4, title: "Chapter 4", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%204.mp3" },
-  { id: 5, title: "Chapter 5", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%205.mp3" },
-  { id: 6, title: "Chapter 6", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%206.mp3" },
-  { id: 7, title: "Chapter 7", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%207.mp3" },
-  { id: 8, title: "Chapter 8", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%208.mp3" },
-  { id: 9, title: "Chapter 9", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%209.mp3" },
-  { id: 10, title: "Chapter 10", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%2010.mp3" },
-  { id: 11, title: "Chapter 11", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%2011.mp3" },
-  { id: 12, title: "Chapter 12", url: "hhttps://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%2012.mp3" },
-  { id: 13, title: "Chapter 13", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%2013.mp3" },
-  { id: 14, title: "Chapter 14", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%2014.mp3" },
+  { id: 1, title: "Chapter 1: 2:37 A.M", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%201.mp3" },
+  { id: 2, title: "Chapter 2: A Prologue That Won't Sit Down", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%202.mp3" },
+  { id: 3, title: "Chapter 3: Life Admin (a Horror Story)", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%203.mp3" },
+  { id: 4, title: "Chapter 4: Emotional App Store", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%204.mp3" },
+  { id: 5, title: "Chapter 5: Coversations Ellis Rehearsed 14 Times", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%205.mp3" },
+  { id: 6, title: "Chapter 6: The AI Oracle", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%206.mp3" },
+  { id: 7, title: "Chapter 7: The Almosts", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%207.mp3" },
+  { id: 8, title: "Chapter 8: Unscheduled Honesty", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%208.mp3" },
+  { id: 9, title: "Chapter 9: Boundaries, Somehow", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%209.mp3" },
+  { id: 10, title: "Chapter 10: The Gap Between Who They Are & Who They Thought They'd Be", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%2010.mp3" },
+  { id: 11, title: "Chapter 11: When Nothing Happens", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%2011.mp3" },
+  { id: 12, title: "Chapter 12: Rewrites", url: "hhttps://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%2012.mp3" },
+  { id: 13, title: "Chapter 13: The Cursor", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%2013.mp3" },
+  { id: 14, title: "Chapter 14: A Beginning in Desguise", url: "https://u1ghapomlq4xkvj9.public.blob.vercel-storage.com/Chapter%2014.mp3" },
 ];
 
 export default function AudiobookPage() {
@@ -27,7 +27,7 @@ export default function AudiobookPage() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-20 text-center">
       <h1 className="mb-2 text-4xl font-bold text-white uppercase tracking-tighter">
-        The AIBRY Audiobook
+        Recalculating... Audiobook
       </h1>
       <p className="mb-10 text-gray-400">Now Playing: {currentChapter.title}</p>
 
@@ -36,7 +36,7 @@ export default function AudiobookPage() {
           <Image
             src="/images/audiobook-cover.jpg"
             alt="Audiobook Cover"
-            fill
+            fit
             className="object-cover"
             priority
           />
