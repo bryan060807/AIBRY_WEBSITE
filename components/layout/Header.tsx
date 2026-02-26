@@ -34,11 +34,7 @@ export default function Header() {
 
   const navLinks = [
     { href: "/", label: "Home" },
-    { href: "/forum", label: "Forum" },
     { href: "/store", label: "Store" },
-    { href: "/merch", label: "Merch" },
-    { href: "/audiobook", label: "Audiobook" },
-    { href: "/blackbox", label: "Emotional Black Box" },
     { href: "/about", label: "About" },
     { href: "/contact", label: "Contact" },
   ];

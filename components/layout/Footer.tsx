@@ -5,10 +5,7 @@ export default function Footer() {
     <footer className="border-t border-gray-800 bg-black text-gray-400 py-10 text-center">
       <nav className="flex justify-center flex-wrap gap-6 text-[#83c0cc] font-medium mb-6">
         <Link href="/" className="hover:text-[#6eb5c0] transition-colors">Home</Link>
-        <Link href="/merch" className="hover:text-[#6eb5c0] transition-colors">AIBRY Merch</Link>
         <Link href="/discography" className="hover:text-[#6eb5c0] transition-colors">Discography</Link>
-        <Link href="/forum" className="hover:text-[#6eb5c0] transition-colors">Forum</Link>
-        <Link href="https://aibry-merch.aibry.shop/" target="_blank" className="hover:text-[#6eb5c0] transition-colors">Store</Link>
         <Link href="/about" className="hover:text-[#6eb5c0] transition-colors">About</Link>
       </nav>
 
