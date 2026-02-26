@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -28,6 +29,37 @@ const artistSchema = {
 };
 
 export default function HomePage() {
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
+
+  useEffect(() => {
+    // Target date: February 28, 2026
+    const targetDate = new Date("2026-02-28T00:00:00").getTime();
+
+    const timer = setInterval(() => {
+      const now = new Date().getTime();
+      const distance = targetDate - now;
+
+      if (distance < 0) {
+        clearInterval(timer);
+        return;
+      }
+
+      setTimeLeft({
+        days: Math.floor(distance / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+        minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
+        seconds: Math.floor((distance % (1000 * 60)) / 1000),
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <main className="min-h-screen bg-black text-gray-100">
       {/* SEO Schema */}
@@ -64,21 +96,41 @@ export default function HomePage() {
       {/* Divider */}
       <div className="h-[2px] w-4/5 mx-auto my-16 bg-gradient-to-r from-transparent via-[#4cc9f0]/40 to-transparent shadow-[0_0_10px_#4cc9f0]/20" />
 
-      {/* Upcoming Album Section */}
+      {/* Upcoming Album Section with Countdown */}
       <section className="py-24 bg-gradient-to-b from-black via-gray-900 to-black text-center">
         <h2 className="text-4xl font-bold text-white mb-2 uppercase tracking-tighter">
           Upcoming Album
         </h2>
-        <p className="text-2xl text-[#83c0cc] font-semibold mb-8">
+        <p className="text-2xl text-[#83c0cc] font-semibold mb-10">
           The Echo Integration
         </p>
+
+        {/* Countdown Timer Visual */}
+        <div className="flex justify-center gap-4 mb-12">
+          {[
+            { label: "Days", value: timeLeft.days },
+            { label: "Hours", value: timeLeft.hours },
+            { label: "Min", value: timeLeft.minutes },
+            { label: "Sec", value: timeLeft.seconds },
+          ].map((item) => (
+            <div key={item.label} className="flex flex-col items-center min-w-[70px]">
+              <div className="text-4xl md:text-5xl font-bold text-white tabular-nums">
+                {String(item.value).padStart(2, "0")}
+              </div>
+              <div className="text-xs uppercase tracking-widest text-[#83c0cc] font-bold">
+                {item.label}
+              </div>
+            </div>
+          ))}
+        </div>
+
         <div className="flex flex-col items-center">
           <Image
             src="/images/echo.jpg"
             alt="The Echo Integration Album Art"
             width={400}
             height={400}
-            className="rounded-2xl shadow-[0_0_30px_rgba(131,192,204,0.3)] border border-gray-700 mb-8 transition-transform hover:scale-[1.02]"
+            className="rounded-2xl shadow-[0_0_40px_rgba(131,192,204,0.4)] border border-gray-700 mb-8 transition-transform hover:scale-[1.02]"
           />
           <div className="flex flex-wrap justify-center gap-4">
             <span className="bg-gray-800 text-gray-400 font-semibold px-6 py-3 rounded-xl border border-gray-700 cursor-default">
@@ -120,12 +172,12 @@ export default function HomePage() {
       {/* Divider */}
       <div className="h-[2px] w-4/5 mx-auto my-16 bg-gradient-to-r from-transparent via-[#4cc9f0]/40 to-transparent shadow-[0_0_10px_#4cc9f0]/20" />
 
-      {/* Video Gallery Section - UPDATED LINKS */}
+      {/* Video Gallery Section */}
       <VideoGallery
         videos={[
-          { src: "https://www.youtube.com/embed/tZfnAs9eloA", title: "AIBRY - New Visual 1" },
-          { src: "https://www.youtube.com/embed/jEXTP-xYLNA", title: "AIBRY - New Visual 2" },
-          { src: "https://www.youtube.com/embed/UsBiI6AcS2Y", title: "AIBRY - New Visual 3" },
+          { src: "https://www.youtube.com/embed/tZfnAs9eloA", title: "AIBRY Visual 1" },
+          { src: "https://www.youtube.com/embed/jEXTP-xYLNA", title: "AIBRY Visual 2" },
+          { src: "https://www.youtube.com/embed/UsBiI6AcS2Y", title: "AIBRY Visual 3" },
         ]}
       />
 
