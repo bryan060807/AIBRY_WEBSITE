@@ -22,7 +22,6 @@ const artistSchema = {
   sameAs: [
     "https://www.instagram.com/aibrymusic/",
     "https://www.tiktok.com/@_aibry",
-    "https://open.spotify.com/artist/6gw6SIOYGPhuMqOfLwJE9h",
     "https://music.apple.com/us/artist/aibry/1830943798",
     "https://allmylinks.com/aibry",
   ],
@@ -54,11 +53,11 @@ export default function HomePage() {
           The official home of AIBRY – where darkness meets sound.
         </p>
         <Link
-          href="https://open.spotify.com/artist/6gw6SIOYGPhuMqOfLwJE9h"
+          href="https://allmylinks.com/aibry"
           target="_blank"
           className="bg-[#83c0cc] hover:bg-[#6eb5c0] text-black font-semibold px-8 py-3 rounded-lg transition-colors"
         >
-          Listen Now
+          Stream Music
         </Link>
       </section>
 
@@ -121,45 +120,27 @@ export default function HomePage() {
       {/* Divider */}
       <div className="h-[2px] w-4/5 mx-auto my-16 bg-gradient-to-r from-transparent via-[#4cc9f0]/40 to-transparent shadow-[0_0_10px_#4cc9f0]/20" />
 
-      {/* Video Gallery Section */}
+      {/* Video Gallery Section - UPDATED LINKS */}
       <VideoGallery
         videos={[
-          { src: "https://www.youtube.com/embed/e0RgNe3aJqM", title: "AIBRY Music Video" },
-          { src: "https://www.youtube.com/embed/udzBpCnujmE", title: "AIBRY - Visual 1" },
-          { src: "https://www.youtube.com/embed/he_8CDhStN4", title: "AIBRY - Visual 2" },
+          { src: "https://www.youtube.com/embed/tZfnAs9eloA", title: "AIBRY - New Visual 1" },
+          { src: "https://www.youtube.com/embed/jEXTP-xYLNA", title: "AIBRY - New Visual 2" },
+          { src: "https://www.youtube.com/embed/UsBiI6AcS2Y", title: "AIBRY - New Visual 3" },
         ]}
       />
 
       {/* Divider */}
       <div className="h-[2px] w-4/5 mx-auto my-16 bg-gradient-to-r from-transparent via-[#4cc9f0]/40 to-transparent shadow-[0_0_10px_#4cc9f0]/20" />
 
-      {/* Support Section */}
-      <section className="py-24 bg-gradient-to-b from-gray-900 to-black text-center">
-        <h2 className="text-3xl font-semibold text-white mb-6">Support the Sound</h2>
-        <p className="text-gray-400 mb-8">
-          Rep the movement. Grab exclusive AIBRY merch and join the chaos.
-        </p>
-        <Link
-          href="https://aibry-merch.aibry.shop/"
-          target="_blank"
-          className="bg-[#83c0cc] hover:bg-[#6eb5c0] text-black font-semibold px-8 py-3 rounded-lg transition-colors"
-        >
-          Visit the Store
-        </Link>
-      </section>
-
-      {/* Divider */}
-      <div className="h-[2px] w-4/5 mx-auto my-16 bg-gradient-to-r from-transparent via-[#4cc9f0]/40 to-transparent shadow-[0_0_10px_#4cc9f0]/20" />
-
       {/* Social Section */}
-      <section className="py-16 bg-black text-center">
-        <h2 className="text-2xl font-semibold text-white mb-6">Follow AIBRY</h2>
-        <div className="flex flex-wrap justify-center gap-5 text-[#83c0cc]">
-          <Link href="https://www.instagram.com/aibrymusic/" target="_blank">Instagram</Link>
-          <Link href="https://www.facebook.com/profile.php?id=61579129561083" target="_blank">Facebook</Link>
-          <Link href="https://www.tiktok.com/@_aibry" target="_blank">TikTok</Link>
-          <Link href="https://discord.com/channels/1433362326177845331/143372248437293087" target="_blank">Discord</Link>
-          <Link href="https://allmylinks.com/aibry" target="_blank">AllMyLinks</Link>
+      <section className="py-24 bg-black text-center">
+        <h2 className="text-3xl font-semibold text-white mb-10">Follow AIBRY</h2>
+        <div className="flex flex-wrap justify-center gap-8 text-[#83c0cc] text-lg">
+          <Link href="https://www.instagram.com/aibrymusic/" target="_blank" className="hover:text-white transition-colors">Instagram</Link>
+          <Link href="https://www.facebook.com/profile.php?id=61579129561083" target="_blank" className="hover:text-white transition-colors">Facebook</Link>
+          <Link href="https://www.tiktok.com/@_aibry" target="_blank" className="hover:text-white transition-colors">TikTok</Link>
+          <Link href="https://discord.com/channels/1433362326177845331/143372248437293087" target="_blank" className="hover:text-white transition-colors">Discord</Link>
+          <Link href="https://allmylinks.com/aibry" target="_blank" className="hover:text-white transition-colors">AllMyLinks</Link>
         </div>
       </section>
     </main>
