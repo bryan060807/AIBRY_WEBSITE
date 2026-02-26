@@ -65,46 +65,32 @@ export default function HomePage() {
       {/* Divider */}
       <div className="h-[2px] w-4/5 mx-auto my-16 bg-gradient-to-r from-transparent via-[#4cc9f0]/40 to-transparent shadow-[0_0_10px_#4cc9f0]/20" />
 
-      {/* Latest Album (Merged Section) */}
+      {/* Upcoming Album Section */}
       <section className="py-24 bg-gradient-to-b from-black via-gray-900 to-black text-center">
-        <h2 className="text-4xl font-bold text-white mb-2">
-          New Album Out Now!!
+        <h2 className="text-4xl font-bold text-white mb-2 uppercase tracking-tighter">
+          Upcoming Album
         </h2>
         <p className="text-2xl text-[#83c0cc] font-semibold mb-8">
-          The Phantom Weight (No Chains Anthology)
+          The Echo Integration
         </p>
         <div className="flex flex-col items-center">
           <Image
-            src="/images/discography/the-phantom-weight.jpg"
-            alt="The Phantom Weight Album Cover"
+            src="/images/echo.jpg"
+            alt="The Echo Integration Album Art"
             width={400}
             height={400}
-            className="rounded-2xl shadow-lg border border-gray-700 mb-8"
+            className="rounded-2xl shadow-[0_0_30px_rgba(131,192,204,0.3)] border border-gray-700 mb-8 transition-transform hover:scale-[1.02]"
           />
           <div className="flex flex-wrap justify-center gap-4">
-            {/* YouTube */}
+            <span className="bg-gray-800 text-gray-400 font-semibold px-6 py-3 rounded-xl border border-gray-700 cursor-default">
+              Presave Coming Soon
+            </span>
             <Link
-              href="https://www.youtube.com/playlist?list=OLAK5uy_msan9YoWccVg732xpdJFz_CopIyTAmCag"
+              href="https://allmylinks.com/aibry"
               target="_blank"
-              className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-3 rounded-xl transition-transform hover:scale-105 shadow-[0_0_15px_rgba(239,68,68,0.4)] hover:shadow-[0_0_25px_rgba(239,68,68,0.7)]"
+              className="bg-transparent border border-[#83c0cc] text-[#83c0cc] hover:bg-[#83c0cc] hover:text-black font-semibold px-6 py-3 rounded-xl transition-all"
             >
-              ▶️ YouTube
-            </Link>
-            {/* Spotify */}
-            <Link
-              href="https://open.spotify.com/album/74G6qP8A380iHLLXvESAiY"
-              target="_blank"
-              className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3 rounded-xl transition-transform hover:scale-105 shadow-[0_0_15px_rgba(34,197,94,0.4)] hover:shadow-[0_0_25px_rgba(34,197,94,0.7)]"
-            >
-              🟢 Spotify
-            </Link>
-            {/* Apple Music */}
-            <Link
-              href="https://music.apple.com/us/album/the-phantom-weight-no-chains-anthology-ep/1856225940"
-              target="_blank"
-              className="bg-[#fc3c44] hover:bg-[#e0333a] text-white font-semibold px-6 py-3 rounded-xl transition-transform hover:scale-105 shadow-[0_0_15px_rgba(252,60,68,0.4)] hover:shadow-[0_0_25px_rgba(252,60,68,0.7)]"
-            >
-              🍎 Apple Music
+              Get Notified
             </Link>
           </div>
         </div>
