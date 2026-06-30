@@ -1,259 +1,359 @@
 "use client";
 
-import { useFormState } from "react-dom";
-import { useState, useEffect } from "react";
-import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Camera, Loader2, ShieldCheck, Trash2 } from "lucide-react";
+import { toast } from "react-hot-toast";
+import { getCurrentProfile, updateProfile } from "@/lib/auth/client";
 import {
-  updateProfile,
-  updateEmail,
-  updatePassword,
-  updateAvatar,
-} from "@/actions/account-actions";
-import { useAvatar } from "@/context/AvatarContext";
-import { normalizeAvatarUrl } from "@/lib/normalizeAvatarUrl";
+  previewAvatar,
+  removeAvatar,
+  uploadAvatar,
+  validateAvatarFile,
+} from "@/lib/storage/avatarClient";
+import type { WebsiteProfile } from "@/lib/websiteProfile";
+import { useAuth } from "@/hooks/useAuth";
 
 type FormState = {
-  message?: string;
-  success?: boolean;
+  displayName: string;
+  username: string;
+  bio: string;
+  instagram: string;
+  tiktok: string;
+  spotify: string;
+  soundcloud: string;
+  facebook: string;
+  bandcamp: string;
+  newsletterOptIn: boolean;
 };
 
-const tabs = ["profile", "email", "password"] as const;
-const buttonClasses =
-  "w-full bg-[#629aa9] hover:bg-[#4f7f86] text-white rounded-md py-2 font-semibold transition disabled:opacity-50";
+const emptyForm: FormState = {
+  displayName: "",
+  username: "",
+  bio: "",
+  instagram: "",
+  tiktok: "",
+  spotify: "",
+  soundcloud: "",
+  facebook: "",
+  bandcamp: "",
+  newsletterOptIn: false,
+};
 
 export default function ProfileSettings({
-  userData,
+  canModerateForum = false,
 }: {
-  userData: { display_name?: string; email?: string; avatar_url?: string };
+  canModerateForum?: boolean;
 }) {
-  const [activeForm, setActiveForm] = useState<typeof tabs[number]>("profile");
-  const [loading, setLoading] = useState(false);
-  const [preview, setPreview] = useState<string | null>(
-    normalizeAvatarUrl(userData.avatar_url) || "/images/default-avatar.png"
+  const { applyProfile, refresh } = useAuth();
+  const [profile, setProfile] = useState<WebsiteProfile | null>(null);
+  const [form, setForm] = useState<FormState>(emptyForm);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const previewUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getCurrentProfile()
+      .then((nextProfile) => {
+        if (cancelled) return;
+        if (!nextProfile) {
+          setError("Profile details could not be loaded for this session.");
+          return;
+        }
+        setProfile(nextProfile);
+        setForm(toForm(nextProfile));
+        applyProfile(nextProfile);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Unable to load profile.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    };
+  }, [applyProfile]);
+
+  const initials = useMemo(
+    () => getInitials(form.displayName || form.username || profile?.email || "AIBRY"),
+    [form.displayName, form.username, profile?.email]
   );
 
-  const { refreshAvatar } = useAvatar();
-
-  const [profileState, profileAction] = useFormState(updateProfile, {
-    message: "",
-    success: false,
-  });
-  const [emailState, emailAction] = useFormState(updateEmail, {
-    message: "",
-    success: false,
-  });
-  const [passwordState, passwordAction] = useFormState(updatePassword, {
-    message: "",
-    success: false,
-  });
-  const [avatarState, avatarAction] = useFormState(updateAvatar, {
-    message: "",
-    success: false,
-  });
-
-  // Handle local loading state for better UX
-  useEffect(() => {
-    if (avatarState.message || profileState.message || emailState.message || passwordState.message) {
-      setLoading(false);
+  async function submitProfile(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true);
+    setError(null);
+    try {
+      const nextProfile = await updateProfile({
+        displayName: form.displayName.trim(),
+        username: form.username.trim(),
+        bio: form.bio.trim(),
+        instagram: form.instagram.trim(),
+        tiktok: form.tiktok.trim(),
+        spotify: form.spotify.trim(),
+        soundcloud: form.soundcloud.trim(),
+        facebook: form.facebook.trim(),
+        bandcamp: form.bandcamp.trim(),
+        newsletterOptIn: form.newsletterOptIn,
+      });
+      if (nextProfile) {
+        setProfile(nextProfile);
+        setForm(toForm(nextProfile));
+        applyProfile(nextProfile);
+        await refresh();
+        applyProfile(nextProfile);
+      }
+      toast.success("Profile updated.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unable to update profile.";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setSaving(false);
     }
-  }, [avatarState, profileState, emailState, passwordState]);
+  }
 
-  useEffect(() => {
-    if (avatarState.success) {
-      refreshAvatar();
+  async function handleAvatar(file: File | null) {
+    if (!file) return;
+    const validationError = validateAvatarFile(file);
+    if (validationError) {
+      setError(validationError);
+      toast.error(validationError);
+      return;
     }
-  }, [avatarState.success, refreshAvatar]);
+
+    const nextPreview = previewAvatar(file);
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    previewUrlRef.current = nextPreview;
+    setPreviewUrl(nextPreview);
+    setAvatarBusy(true);
+    setError(null);
+
+    try {
+      const nextProfile = await uploadAvatar(file);
+      if (nextProfile) {
+        setProfile(nextProfile);
+        setForm(toForm(nextProfile));
+        applyProfile(nextProfile);
+        await refresh();
+        applyProfile(nextProfile);
+      }
+      toast.success("Avatar updated.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Avatar upload failed.";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setAvatarBusy(false);
+    }
+  }
+
+  async function handleRemoveAvatar() {
+    setAvatarBusy(true);
+    setError(null);
+    try {
+      const nextProfile = await removeAvatar();
+      if (nextProfile) {
+        setProfile(nextProfile);
+        setForm(toForm(nextProfile));
+        applyProfile(nextProfile);
+        await refresh();
+        applyProfile(nextProfile);
+      }
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = null;
+      setPreviewUrl(null);
+      toast.success("Avatar removed.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Avatar removal failed.";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setAvatarBusy(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="mx-auto flex min-h-[360px] max-w-4xl items-center justify-center text-gray-300">
+        <Loader2 className="mr-2 h-5 w-5 animate-spin text-[#629aa9]" />
+        Loading profile
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="mx-auto max-w-2xl rounded-md border border-red-900/70 bg-red-950/30 p-6 text-red-100">
+        {error || "Profile unavailable."}
+      </div>
+    );
+  }
+
+  const avatarSrc = previewUrl || profile.avatarUrl;
+  const hasAvatar = avatarSrc && avatarSrc !== "/images/default-avatar.png";
 
   return (
-    <section className="space-y-8">
-      <h1 className="text-2xl font-bold text-white mb-4 uppercase tracking-tight">Account Settings</h1>
-
-      {/* Tabs */}
-      <div className="flex space-x-4 border-b border-gray-800 pb-2 text-gray-400">
-        {tabs.map((key) => (
-          <button
-            key={key}
-            onClick={() => setActiveForm(key)}
-            className={`capitalize pb-1 transition-colors ${
-              activeForm === key
-                ? "border-b-2 border-[#629aa9] text-white"
-                : "hover:text-gray-200"
-            }`}
-          >
-            {key}
-          </button>
-        ))}
-      </div>
-
-      {/* === AVATAR UPLOAD === */}
-      <form
-        action={avatarAction}
-        method="post"
-        encType="multipart/form-data"
-        className="rounded-2xl bg-gray-900 border border-gray-800 p-6 shadow-sm space-y-4"
-        onSubmit={() => setLoading(true)}
-      >
-        <h2 className="text-lg font-semibold text-white mb-2">
-          Profile Picture
-        </h2>
-
-        <div className="flex items-center space-x-6">
-          <div className="relative w-20 h-20 overflow-hidden rounded-full border border-gray-700 bg-gray-800">
-            <Image
-              src={preview || "/images/default-avatar.png"}
-              alt="User avatar"
-              fill
-              className="object-cover"
-              onError={() => setPreview("/images/default-avatar.png")}
-              sizes="80px"
-              priority
-            />
-          </div>
-          <input
-            type="file"
-            name="avatar"
-            accept="image/*"
-            className="text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-800 file:text-gray-300 hover:file:bg-gray-700"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) setPreview(URL.createObjectURL(file));
-            }}
-          />
-        </div>
-
-        {avatarState.message && (
-          <p
-            role="status"
-            className={`text-sm ${
-              avatarState.success ? "text-green-500" : "text-red-500"
-            }`}
-          >
-            {avatarState.message}
+    <form onSubmit={submitProfile} className="mx-auto max-w-5xl px-4 py-10">
+      <div className="mb-8 flex flex-col gap-6 border-b border-gray-800 pb-8 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p className="text-sm uppercase tracking-[0.2em] text-[#629aa9]">Account</p>
+          <h1 className="mt-2 text-3xl font-semibold text-white md:text-4xl">Profile</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-400">
+            Manage the public profile fields stored by the Fedora website backend.
           </p>
-        )}
-
+        </div>
         <button
           type="submit"
-          className={buttonClasses}
-          disabled={loading}
+          disabled={saving}
+          className="inline-flex min-h-11 items-center justify-center rounded-md bg-[#629aa9] px-5 py-2 text-sm font-semibold text-black transition hover:bg-[#7ab3c0] focus:outline-none focus:ring-2 focus:ring-[#629aa9] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loading ? "Processing..." : "Update Avatar"}
+          {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          Save profile
         </button>
-      </form>
+      </div>
 
-      {/* === PROFILE FORM === */}
-      {activeForm === "profile" && (
-        <form
-          action={profileAction}
-          className="rounded-2xl bg-gray-900 border border-gray-800 p-6 shadow-sm"
-          onSubmit={() => setLoading(true)}
-        >
-          <h2 className="text-lg font-semibold text-white mb-4">
-            Display Name
-          </h2>
-          <label className="block text-sm text-gray-300 mb-4">
-            New Display Name
-            <input
-              type="text"
-              name="display_name"
-              defaultValue={userData.display_name || ""}
-              className="mt-1 w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white placeholder-gray-500 focus:border-[#629aa9] focus:ring-1 focus:ring-[#629aa9] outline-none"
-              required
+      {error ? (
+        <p className="mb-6 rounded-md border border-red-900/70 bg-red-950/30 px-4 py-3 text-sm text-red-100">
+          {error}
+        </p>
+      ) : null}
+
+      <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
+        <section className="lg:sticky lg:top-24 lg:self-start">
+          <div className="flex flex-col items-center gap-4 rounded-md border border-gray-800 bg-gray-950/60 p-6">
+            <div className="grid h-32 w-32 place-items-center overflow-hidden rounded-full border border-gray-700 bg-[#1f3b43] text-3xl font-semibold text-white">
+              {hasAvatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={avatarSrc} alt="Current profile avatar" className="h-full w-full object-cover" />
+              ) : (
+                initials
+              )}
+            </div>
+            <div className="flex w-full flex-col gap-2">
+              <label className="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-md border border-gray-700 px-3 py-2 text-sm text-gray-100 transition hover:border-[#629aa9] focus-within:ring-2 focus-within:ring-[#629aa9]">
+                {avatarBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                Replace avatar
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="sr-only"
+                  onChange={(event) => handleAvatar(event.target.files?.[0] ?? null)}
+                  disabled={avatarBusy}
+                />
+              </label>
+              <button
+                type="button"
+                onClick={handleRemoveAvatar}
+                disabled={avatarBusy}
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm text-gray-300 transition hover:bg-gray-900 hover:text-red-300 focus:outline-none focus:ring-2 focus:ring-[#629aa9] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Trash2 className="h-4 w-4" />
+                Remove avatar
+              </button>
+            </div>
+            <p className="text-center text-xs leading-5 text-gray-500">
+              JPG, PNG, or WebP. Maximum 5 MB.
+            </p>
+          </div>
+
+          {canModerateForum ? (
+            <Link
+              href="/forum/admin"
+              className="mt-4 flex items-center gap-3 rounded-md border border-[#629aa9]/40 bg-[#629aa9]/10 p-4 text-sm text-gray-200 transition hover:border-[#629aa9] hover:bg-[#629aa9]/20"
+            >
+              <ShieldCheck className="h-5 w-5 text-[#83c0cc]" aria-hidden="true" />
+              <span>
+                <span className="block font-semibold text-white">Forum Admin</span>
+                <span className="text-gray-400">Moderate topics, threads, and replies.</span>
+              </span>
+            </Link>
+          ) : null}
+        </section>
+
+        <section className="grid gap-5 sm:grid-cols-2">
+          <Field label="Display name" value={form.displayName} onChange={(displayName) => setForm({ ...form, displayName })} />
+          <Field label="Username" value={form.username} onChange={(username) => setForm({ ...form, username })} />
+          <label className="sm:col-span-2">
+            <span className="mb-2 block text-sm font-medium text-gray-200">Bio</span>
+            <textarea
+              value={form.bio}
+              onChange={(event) => setForm({ ...form, bio: event.target.value })}
+              rows={5}
+              className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-[#629aa9] focus:ring-2 focus:ring-[#629aa9]/40"
             />
           </label>
-
-          {profileState.message && (
-            <p
-              role="status"
-              className={`text-sm mb-4 ${
-                profileState.success ? "text-green-500" : "text-red-500"
-              }`}
-            >
-              {profileState.message}
-            </p>
-          )}
-
-          <button type="submit" className={buttonClasses} disabled={loading}>
-            {loading ? "Processing..." : "Update Profile"}
-          </button>
-        </form>
-      )}
-
-      {/* === EMAIL FORM === */}
-      {activeForm === "email" && (
-        <form
-          action={emailAction}
-          className="rounded-2xl bg-gray-900 border border-gray-800 p-6 shadow-sm"
-          onSubmit={() => setLoading(true)}
-        >
-          <h2 className="text-lg font-semibold text-white mb-4">
-            Email Address
-          </h2>
-          <label className="block text-sm text-gray-300 mb-4">
-            New Email
+          <Field label="Instagram" value={form.instagram} onChange={(instagram) => setForm({ ...form, instagram })} />
+          <Field label="TikTok" value={form.tiktok} onChange={(tiktok) => setForm({ ...form, tiktok })} />
+          <Field label="Spotify" value={form.spotify} onChange={(spotify) => setForm({ ...form, spotify })} />
+          <Field label="SoundCloud" value={form.soundcloud} onChange={(soundcloud) => setForm({ ...form, soundcloud })} />
+          <Field label="Bandcamp" value={form.bandcamp} onChange={(bandcamp) => setForm({ ...form, bandcamp })} />
+          <Field label="Facebook" value={form.facebook} onChange={(facebook) => setForm({ ...form, facebook })} />
+          <label className="flex min-h-11 items-center gap-3 rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-gray-200">
             <input
-              type="email"
-              name="email"
-              defaultValue={userData.email || ""}
-              className="mt-1 w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white placeholder-gray-500 focus:border-[#629aa9] focus:ring-1 focus:ring-[#629aa9] outline-none"
-              required
+              type="checkbox"
+              checked={form.newsletterOptIn}
+              onChange={(event) => setForm({ ...form, newsletterOptIn: event.target.checked })}
+              className="h-4 w-4 rounded border-gray-700 bg-black text-[#629aa9] focus:ring-[#629aa9]"
             />
+            Newsletter opt-in
           </label>
-
-          {emailState.message && (
-            <p
-              role="status"
-              className={`text-sm mb-4 ${
-                emailState.success ? "text-green-500" : "text-red-500"
-              }`}
-            >
-              {emailState.message}
-            </p>
-          )}
-
-          <button type="submit" className={buttonClasses} disabled={loading}>
-            {loading ? "Processing..." : "Update Email"}
-          </button>
-        </form>
-      )}
-
-      {/* === PASSWORD FORM === */}
-      {activeForm === "password" && (
-        <form
-          action={passwordAction}
-          className="rounded-2xl bg-gray-900 border border-gray-800 p-6 shadow-sm"
-          onSubmit={() => setLoading(true)}
-        >
-          <h2 className="text-lg font-semibold text-white mb-4">
-            Change Password
-          </h2>
-          <label className="block text-sm text-gray-300 mb-4">
-            New Password
-            <input
-              type="password"
-              name="password"
-              minLength={6}
-              className="mt-1 w-full rounded-md border border-gray-700 bg-gray-800 p-3 text-white placeholder-gray-500 focus:border-[#629aa9] focus:ring-1 focus:ring-[#629aa9] outline-none"
-              required
-            />
-          </label>
-
-          {passwordState.message && (
-            <p
-              role="status"
-              className={`text-sm mb-4 ${
-                passwordState.success ? "text-green-500" : "text-red-500"
-              }`}
-            >
-              {passwordState.message}
-            </p>
-          )}
-
-          <button type="submit" className={buttonClasses} disabled={loading}>
-            {loading ? "Processing..." : "Update Password"}
-          </button>
-        </form>
-      )}
-    </section>
+        </section>
+      </div>
+    </form>
   );
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label>
+      <span className="mb-2 block text-sm font-medium text-gray-200">{label}</span>
+      <input
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="h-11 w-full rounded-md border border-gray-800 bg-gray-950 px-3 text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-[#629aa9] focus:ring-2 focus:ring-[#629aa9]/40"
+      />
+    </label>
+  );
+}
+
+function toForm(profile: WebsiteProfile): FormState {
+  return {
+    displayName: profile.displayName ?? "",
+    username: profile.username ?? "",
+    bio: profile.bio ?? "",
+    instagram: profile.instagram ?? "",
+    tiktok: profile.tiktok ?? "",
+    spotify: profile.spotify ?? "",
+    soundcloud: profile.soundcloud ?? "",
+    facebook: profile.facebook ?? "",
+    bandcamp: profile.bandcamp ?? "",
+    newsletterOptIn: profile.newsletterOptIn,
+  };
+}
+
+function getInitials(value: string) {
+  return value
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
 }

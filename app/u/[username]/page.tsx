@@ -1,118 +1,213 @@
-import { supabase } from '@/utils/supabase/client';
-import Image from 'next/image';
-import Link from 'next/link';
-import type { Metadata } from 'next';
+/* eslint-disable @next/next/no-img-element */
+import Link from "next/link";
+import type { Metadata } from "next";
+import type { ReactNode } from "react";
+import { notFound } from "next/navigation";
+import {
+  getPublicProfileActivityByUsername,
+  getPublicProfileByUsername,
+  type PublicProfileCommentActivity,
+  type PublicProfilePostActivity,
+} from "@/lib/server/profile";
 
-// Generate metadata dynamically for SEO
-export async function generateMetadata({ params }: { params: { username: string } }): Promise<Metadata> {
-  const { data } = await supabase
-    .from('profiles')
-    .select('display_name, bio, avatar_url')
-    .eq('username', params.username)
-    .single();
+interface PublicProfilePageProps {
+  params: { username: string };
+}
 
-  if (!data) {
+function formatActivityDate(value: string | null) {
+  if (!value) return "Recently";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Recently";
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
+function safeExternalHref(value: string) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  if (/^https?:\/\//i.test(text)) return text;
+  return `https://${text}`;
+}
+
+export async function generateMetadata({
+  params,
+}: PublicProfilePageProps): Promise<Metadata> {
+  const profile = await getPublicProfileByUsername(params.username).catch(() => null);
+
+  if (!profile) {
     return {
-      title: 'User Not Found | AIBRY',
-      description: 'The requested profile could not be found.',
+      title: "Profile not found | AIBRY",
+      description: "This AIBRY profile could not be found.",
     };
   }
 
-  const avatarUrl = data.avatar_url
-    ? supabase.storage.from('avatars').getPublicUrl(data.avatar_url).data.publicUrl
-    : '/images/default-avatar.png';
-
   return {
-    title: `${data.display_name || params.username} | AIBRY`,
-    description: data.bio || 'View artist profile and links.',
-    openGraph: {
-      title: `${data.display_name || params.username} | AIBRY`,
-      description: data.bio || '',
-      images: [{ url: avatarUrl }],
-      type: 'profile',
-    },
-    twitter: {
-      card: 'summary',
-      title: data.display_name || params.username,
-      description: data.bio || '',
-      images: [avatarUrl],
-    },
+    title: `${profile.displayName || profile.username || params.username} | AIBRY`,
+    description: profile.bio || `View ${profile.displayName || profile.username || params.username}'s public AIBRY profile.`,
   };
 }
 
-export default async function PublicProfile({ params }: { params: { username: string } }) {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('username', params.username)
-    .single();
+export default async function PublicProfile({ params }: PublicProfilePageProps) {
+  const [profile, activity] = await Promise.all([
+    getPublicProfileByUsername(params.username).catch(() => null),
+    getPublicProfileActivityByUsername(params.username, 5).catch(() => ({ posts: [], comments: [] })),
+  ]);
 
-  if (!data || error) {
-    return (
-      <main className="min-h-screen bg-black text-gray-400 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-[#83c0cc] mb-3">Profile Not Found</h1>
-          <p className="text-gray-500 mb-6">This user doesn’t exist or their profile is private.</p>
-          <Link href="/" className="text-[#83c0cc] underline hover:text-[#6eb5c0]">
-            Go Home
-          </Link>
-        </div>
-      </main>
-    );
+  if (!profile || !profile.username) {
+    notFound();
   }
 
-  const avatarUrl = data.avatar_url
-    ? supabase.storage.from('avatars').getPublicUrl(data.avatar_url).data.publicUrl
-    : '/images/default-avatar.png';
+  const links = [
+    profile.websiteUrl ? { label: "Website", href: safeExternalHref(profile.websiteUrl) } : null,
+    profile.instagram ? { label: "Instagram", href: safeExternalHref(profile.instagram) } : null,
+    profile.tiktok ? { label: "TikTok", href: safeExternalHref(profile.tiktok) } : null,
+    profile.spotify ? { label: "Spotify", href: safeExternalHref(profile.spotify) } : null,
+    profile.soundcloud ? { label: "SoundCloud", href: safeExternalHref(profile.soundcloud) } : null,
+    profile.bandcamp ? { label: "Bandcamp", href: safeExternalHref(profile.bandcamp) } : null,
+    profile.facebook ? { label: "Facebook", href: safeExternalHref(profile.facebook) } : null,
+  ].filter(Boolean) as { label: string; href: string }[];
+
+  const hasActivity = activity.posts.length > 0 || activity.comments.length > 0;
 
   return (
-    <main className="min-h-screen bg-black text-gray-100 py-24 px-6 flex flex-col items-center">
-      <div className="max-w-xl text-center">
-        <Image
-          src={avatarUrl}
-          alt={`${data.display_name || data.username} avatar`}
-          width={160}
-          height={160}
-          className="rounded-full border border-[#83c0cc] mx-auto mb-6 object-cover"
-        />
+    <main className="min-h-screen bg-black px-6 py-16 text-gray-100">
+      <section className="mx-auto max-w-5xl">
+        <Link href="/forum" className="mb-8 inline-block text-sm font-semibold text-gray-400 transition hover:text-white">
+          ← Back to Forum
+        </Link>
 
-        <h1 className="text-4xl font-bold text-[#83c0cc] mb-2">
-          {data.display_name || data.username}
-        </h1>
-        {data.bio && <p className="text-gray-400 mb-6">{data.bio}</p>}
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+          <div className="rounded-3xl border border-gray-800 bg-gray-950/70 p-8 shadow-2xl shadow-black/30">
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-center lg:flex-col lg:items-start">
+              <img
+                src={profile.avatarUrl || "/images/default-avatar.png"}
+                alt={`${profile.displayName || profile.username} avatar`}
+                width={112}
+                height={112}
+                className="h-28 w-28 rounded-full border border-gray-800 object-cover"
+              />
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[#83c0cc]">AIBRY Profile</p>
+                <h1 className="mt-3 text-4xl font-black text-white">{profile.displayName || profile.username}</h1>
+                <p className="mt-2 text-gray-500">@{profile.username}</p>
+                {profile.location ? <p className="mt-2 text-sm text-gray-400">{profile.location}</p> : null}
+              </div>
+            </div>
 
-        <div className="flex flex-wrap justify-center gap-5 text-[#83c0cc] mb-6">
-          {data.instagram && (
-            <Link href={data.instagram} target="_blank">
-              Instagram
-            </Link>
-          )}
-          {data.tiktok && (
-            <Link href={data.tiktok} target="_blank">
-              TikTok
-            </Link>
-          )}
-          {data.spotify && (
-            <Link href={data.spotify} target="_blank">
-              Spotify
-            </Link>
-          )}
-          {data.soundcloud && (
-            <Link href={data.soundcloud} target="_blank">
-              SoundCloud
-            </Link>
-          )}
-          {data.facebook && (
-            <Link href={data.facebook} target="_blank">
-              Facebook
-            </Link>
-          )}
+            {profile.bio ? (
+              <p className="mt-8 whitespace-pre-wrap text-lg leading-8 text-gray-300">{profile.bio}</p>
+            ) : (
+              <p className="mt-8 rounded-2xl border border-gray-800 bg-black/40 p-5 text-gray-500">
+                This user has not added a bio yet.
+              </p>
+            )}
+
+            {links.length ? (
+              <div className="mt-8 flex flex-wrap gap-3">
+                {links.map((link) => (
+                  <a
+                    key={link.label}
+                    href={link.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-full border border-gray-700 px-4 py-2 text-sm font-semibold text-gray-200 transition hover:border-[#83c0cc]/70 hover:bg-[#83c0cc]/10"
+                  >
+                    {link.label}
+                  </a>
+                ))}
+              </div>
+            ) : null}
+          </div>
+
+          <div className="space-y-6">
+            <section className="rounded-3xl border border-gray-800 bg-gray-950/70 p-6 shadow-2xl shadow-black/30">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[#83c0cc]">Forum Activity</p>
+                  <h2 className="mt-2 text-2xl font-black text-white">Recent activity</h2>
+                </div>
+                <Link href="/forum" className="text-sm font-semibold text-gray-400 transition hover:text-white">
+                  Browse forum →
+                </Link>
+              </div>
+
+              {!hasActivity ? (
+                <p className="mt-6 rounded-2xl border border-gray-800 bg-black/40 p-5 text-gray-500">
+                  This user has not posted public forum activity yet.
+                </p>
+              ) : null}
+
+              {activity.posts.length ? (
+                <ActivitySection title="Recent Threads">
+                  {activity.posts.map((post) => (
+                    <ThreadActivityCard key={post.id} post={post} />
+                  ))}
+                </ActivitySection>
+              ) : null}
+
+              {activity.comments.length ? (
+                <ActivitySection title="Recent Replies">
+                  {activity.comments.map((comment) => (
+                    <ReplyActivityCard key={comment.id} comment={comment} />
+                  ))}
+                </ActivitySection>
+              ) : null}
+            </section>
+          </div>
         </div>
-
-        <p className="text-xs text-gray-600 mt-8">
-          © {new Date().getFullYear()} {data.display_name || data.username} — Hosted on AIBRY
-        </p>
-      </div>
+      </section>
     </main>
+  );
+}
+
+function ActivitySection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="mt-6">
+      <h3 className="text-sm font-bold uppercase tracking-[0.25em] text-gray-500">{title}</h3>
+      <div className="mt-3 space-y-3">{children}</div>
+    </div>
+  );
+}
+
+function ThreadActivityCard({ post }: { post: PublicProfilePostActivity }) {
+  return (
+    <Link
+      href={post.href || "/forum"}
+      className="block rounded-2xl border border-gray-800 bg-black/40 p-5 transition hover:border-[#83c0cc]/50 hover:bg-[#83c0cc]/5"
+    >
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+            {post.topic.title || "Forum"} · {formatActivityDate(post.createdAt)}
+          </p>
+          <h4 className="mt-2 text-lg font-black text-white">{post.title}</h4>
+        </div>
+        <span className="rounded-full border border-gray-800 px-3 py-1 text-xs font-semibold text-gray-400">
+          {post.commentCount} {post.commentCount === 1 ? "reply" : "replies"}
+        </span>
+      </div>
+      {post.excerpt ? <p className="mt-3 text-sm leading-6 text-gray-400">{post.excerpt}</p> : null}
+    </Link>
+  );
+}
+
+function ReplyActivityCard({ comment }: { comment: PublicProfileCommentActivity }) {
+  return (
+    <Link
+      href={comment.href || "/forum"}
+      className="block rounded-2xl border border-gray-800 bg-black/40 p-5 transition hover:border-[#83c0cc]/50 hover:bg-[#83c0cc]/5"
+    >
+      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+        Reply in {comment.topic.title || "Forum"} · {formatActivityDate(comment.createdAt)}
+      </p>
+      <h4 className="mt-2 text-lg font-black text-white">{comment.postTitle}</h4>
+      {comment.excerpt ? <p className="mt-3 text-sm leading-6 text-gray-400">{comment.excerpt}</p> : null}
+      <p className="mt-3 text-xs font-semibold text-gray-500">
+        {comment.likeCount} {comment.likeCount === 1 ? "like" : "likes"}
+      </p>
+    </Link>
   );
 }
