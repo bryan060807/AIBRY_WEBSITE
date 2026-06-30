@@ -11,7 +11,7 @@ import {
   uploadAvatar,
   validateAvatarFile,
 } from "@/lib/storage/avatarClient";
-import type { WebsiteProfile } from "@/lib/websiteProfile";
+import { DEFAULT_PROFILE_AVATAR_URL, type WebsiteProfile } from "@/lib/websiteProfile";
 import { useAuth } from "@/hooks/useAuth";
 
 type FormState = {
@@ -83,8 +83,8 @@ export default function ProfileSettings({
     };
   }, [applyProfile]);
 
-  const initials = useMemo(
-    () => getInitials(form.displayName || form.username || profile?.email || "AIBRY"),
+  const avatarAlt = useMemo(
+    () => `${form.displayName || form.username || profile?.email || "AIBRY"} avatar`,
     [form.displayName, form.username, profile?.email]
   );
 
@@ -199,8 +199,8 @@ export default function ProfileSettings({
     );
   }
 
-  const avatarSrc = previewUrl || profile.avatarUrl;
-  const hasAvatar = avatarSrc && avatarSrc !== "/images/default-avatar.png";
+  const avatarSrc = previewUrl || profile.avatarUrl || DEFAULT_PROFILE_AVATAR_URL;
+  const hasCustomAvatar = Boolean(previewUrl || (profile.avatarUrl && profile.avatarUrl !== DEFAULT_PROFILE_AVATAR_URL));
 
   return (
     <form onSubmit={submitProfile} className="mx-auto max-w-5xl px-4 py-10">
@@ -232,12 +232,8 @@ export default function ProfileSettings({
         <section className="lg:sticky lg:top-24 lg:self-start">
           <div className="flex flex-col items-center gap-4 rounded-md border border-gray-800 bg-gray-950/60 p-6">
             <div className="grid h-32 w-32 place-items-center overflow-hidden rounded-full border border-gray-700 bg-[#1f3b43] text-3xl font-semibold text-white">
-              {hasAvatar ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={avatarSrc} alt="Current profile avatar" className="h-full w-full object-cover" />
-              ) : (
-                initials
-              )}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={avatarSrc} alt={avatarAlt} className="h-full w-full object-cover" />
             </div>
             <div className="flex w-full flex-col gap-2">
               <label className="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-md border border-gray-700 px-3 py-2 text-sm text-gray-100 transition hover:border-[#629aa9] focus-within:ring-2 focus-within:ring-[#629aa9]">
@@ -254,7 +250,7 @@ export default function ProfileSettings({
               <button
                 type="button"
                 onClick={handleRemoveAvatar}
-                disabled={avatarBusy}
+                disabled={avatarBusy || !hasCustomAvatar}
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm text-gray-300 transition hover:bg-gray-900 hover:text-red-300 focus:outline-none focus:ring-2 focus:ring-[#629aa9] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Trash2 className="h-4 w-4" />
@@ -347,13 +343,4 @@ function toForm(profile: WebsiteProfile): FormState {
     bandcamp: profile.bandcamp ?? "",
     newsletterOptIn: profile.newsletterOptIn,
   };
-}
-
-function getInitials(value: string) {
-  return value
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
 }

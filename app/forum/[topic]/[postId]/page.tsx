@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { CommentForm } from "@/components/forms";
 import LikeButton from "@/components/ui/LikeButton";
 import { getForumThread, getForumTopic } from "@/lib/server/forum";
+import { DEFAULT_PROFILE_AVATAR_URL } from "@/lib/websiteProfile";
 
 interface ForumThreadPageProps {
   params: {
@@ -142,7 +143,7 @@ function ForumAuthorLine({
   return (
     <div className="mt-4 flex items-center gap-3 text-sm text-gray-400">
       <img
-        src={avatarUrl || "/images/default-avatar.png"}
+        src={avatarUrl || DEFAULT_PROFILE_AVATAR_URL}
         alt={`${displayName} avatar`}
         width={avatarSize}
         height={avatarSize}

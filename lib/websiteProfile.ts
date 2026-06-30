@@ -1,5 +1,11 @@
 import { versionedAvatarUrl } from "@/lib/normalizeAvatarUrl";
 
+export const DEFAULT_PROFILE_AVATAR_URL = "/images/default-avatar.png";
+
+function profileAvatarUrl(value: string | null, version: number) {
+  return versionedAvatarUrl(value, version) || DEFAULT_PROFILE_AVATAR_URL;
+}
+
 export interface WebsiteProfile {
   id: string;
   email?: string | null;
@@ -67,14 +73,13 @@ export function normalizeProfile(payload: ProfileResponse): WebsiteProfile | nul
     location: stringField(profile.location) || "",
     websiteUrl: stringField(profile.website_url) || stringField(profile.websiteUrl) || "",
     avatarVersion: numberField(profile.avatar_version ?? profile.avatarVersion ?? user.avatar_version ?? user.avatarVersion),
-    avatarUrl:
-      versionedAvatarUrl(
-        stringField(profile.avatar_url) ||
-          stringField(profile.avatarUrl) ||
-          stringField(user.avatar_url) ||
-          stringField(user.avatarUrl),
-        numberField(profile.avatar_version ?? profile.avatarVersion ?? user.avatar_version ?? user.avatarVersion)
-      ) || null,
+    avatarUrl: profileAvatarUrl(
+      stringField(profile.avatar_url) ||
+        stringField(profile.avatarUrl) ||
+        stringField(user.avatar_url) ||
+        stringField(user.avatarUrl),
+      numberField(profile.avatar_version ?? profile.avatarVersion ?? user.avatar_version ?? user.avatarVersion)
+    ),
     instagram: stringField(profile.instagram) || "",
     tiktok: stringField(profile.tiktok) || "",
     spotify: stringField(profile.spotify) || "",
@@ -132,11 +137,10 @@ function defaultProfileFromUser(user: Record<string, unknown>): WebsiteProfile |
     location: "",
     websiteUrl: "",
     avatarVersion: numberField(user.avatar_version ?? user.avatarVersion),
-    avatarUrl:
-      versionedAvatarUrl(
-        stringField(user.avatar_url) || stringField(user.avatarUrl),
-        numberField(user.avatar_version ?? user.avatarVersion)
-      ) || null,
+    avatarUrl: profileAvatarUrl(
+      stringField(user.avatar_url) || stringField(user.avatarUrl),
+      numberField(user.avatar_version ?? user.avatarVersion)
+    ),
     instagram: "",
     tiktok: "",
     spotify: "",
