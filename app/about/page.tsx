@@ -11,8 +11,8 @@ const aboutSchema = {
   genre: ["Metal", "Trapmetal", "Dark Trap"],
   description:
     "A deeper look at AIBRY — an artist forging raw emotion into sound. Metal. Emotion. Chaos.",
-  url: "https://aibry.shop/about",
-  image: "https://aibry.shop/images/banner1.jpg",
+  url: "https://aibrylabs.com/about",
+  image: "https://aibrylabs.com/images/banner1.jpg",
   sameAs: [
     "https://www.instagram.com/aibrymusic/",
     "https://www.tiktok.com/@_aibry",

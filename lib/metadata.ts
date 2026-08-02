@@ -12,7 +12,7 @@ export const siteMetadata = {
   themeColor: "#0a0a0a",
 
   // Canonical domain
-  url: "https://aibry.shop",
+  url: "https://aibrylabs.com",
 
   // Visuals & theme
   image: "/images/og-banner.jpg",
@@ -47,11 +47,11 @@ export const siteMetadata = {
     title: "AIBRY | Metal. Emotion. Chaos.",
     description:
       "AIBRY is the sound of unfiltered emotion — a fusion of metal, trapmetal, and raw chaos. Explore music, visuals, and exclusive releases.",
-    url: "https://aibry.shop",
+    url: "https://aibrylabs.com",
     siteName: "AIBRY",
     images: [
       {
-        url: "https://aibry.shop/images/og-banner.jpg",
+        url: "https://aibrylabs.com/images/og-banner.jpg",
         width: 1200,
         height: 630,
         alt: "AIBRY — Metal. Emotion. Chaos.",
@@ -65,5 +65,5 @@ export const siteMetadata = {
     disallow: ["/api/", "/dashboard/", "/login"],
     crawlDelay: 10,
   },
-  sitemap: "https://aibry.shop/sitemap.xml",
+  sitemap: "https://aibrylabs.com/sitemap.xml",
 };

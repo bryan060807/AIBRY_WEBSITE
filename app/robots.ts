@@ -2,7 +2,7 @@ import { MetadataRoute } from "next";
 import { siteMetadata } from "@/lib/metadata";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = siteMetadata?.url || "https://aibry.shop";
+  const baseUrl = siteMetadata?.url || "https://aibrylabs.com";
 
   return {
     rules: [

@@ -6,6 +6,34 @@ const nextConfig = {
     optimizeCss: true,
   },
 
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.aibrylabs.com" }],
+        destination: "https://aibrylabs.com/:path*",
+        permanent: true,
+      },
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "aibry.shop" }],
+        destination: "https://aibrylabs.com/:path*",
+        permanent: true,
+      },
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.aibry.shop" }],
+        destination: "https://aibrylabs.com/:path*",
+        permanent: true,
+      },
+      {
+        source: "/merch",
+        destination: "/store",
+        permanent: true,
+      },
+    ];
+  },
+
   // 🔧 Configure Next Image to handle Supabase avatars
   images: {
     remotePatterns: [

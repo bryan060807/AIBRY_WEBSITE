@@ -2,17 +2,17 @@ import { MetadataRoute } from "next";
 import { siteMetadata } from "@/lib/metadata";
 
 /**
- * Sitemap generator for AIBRY.shop
+ * Sitemap generator for the AIBRY website.
  * Keeps all key pages indexable with correct priorities.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = siteMetadata?.url || "https://aibry.shop";
+  const baseUrl = siteMetadata?.url || "https://aibrylabs.com";
 
   const routes: MetadataRoute.Sitemap = [
     "",
     "/about",
     "/contact",
-    "/merch",
+    "/store",
     "/discography",
   ].map((route) => ({
     url: `${baseUrl}${route}`,
