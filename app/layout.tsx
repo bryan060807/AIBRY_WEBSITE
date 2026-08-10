@@ -5,16 +5,14 @@ import "@/app/globals.css";
 
 import { siteMetadata } from "@/lib/metadata";
 import { Header, Footer, ToasterProvider } from "@/components/layout";
-import { AvatarProvider } from "@/context/AvatarContext";
+import { AuthProvider } from "@/context/AuthContext";
 import { Analytics } from "@vercel/analytics/react";
 
-// ✅ Font setup
 const inter = Inter({
   subsets: ["latin"],
   display: "swap",
 });
 
-// ✅ Centralized Metadata
 export const metadata: Metadata = {
   title: {
     default: siteMetadata.title,
@@ -38,98 +36,49 @@ export const metadata: Metadata = {
   },
 };
 
-// ✅ Viewport configuration (for theme color)
 export const viewport: Viewport = {
   themeColor: siteMetadata.themeColor || "#0a0a0a",
 };
 
-// ✅ JSON-LD Structured Data
 const jsonLd = {
   "@context": "https://schema.org",
   "@graph": [
     {
-      "@type": "MusicGroup",
-      "@id": "https://aibrylabs.com/#musicgroup",
+      "@type": "Organization",
+      "@id": "https://aibrylabs.com/#organization",
       name: "AIBRY",
       url: "https://aibrylabs.com",
       description:
-        "AIBRY is the sound of unfiltered emotion — a fusion of metal, trapmetal, and raw chaos.",
-      genre: ["Metal", "Trapmetal", "Dark Trap"],
+        "AIBRY Labs builds applied AI systems, operator infrastructure, creative software, and real-world client platforms.",
       image: "https://aibrylabs.com/images/og-banner.jpg",
       logo: "https://aibrylabs.com/images/logo.png",
-      sameAs: [
-        "https://www.instagram.com/aibrymusic/",
-        "https://www.tiktok.com/@_aibry",
-        "https://open.spotify.com/artist/6gw6SIOYGPhuMqOfLwJE9h",
-        "https://music.apple.com/us/artist/aibry/1830943798",
-      ],
-      member: [
-        {
-          "@type": "Person",
-          name: "AIBRY",
-          roleName: "Vocalist / Producer",
-        },
-      ],
+      sameAs: Object.values(siteMetadata.social),
     },
     {
       "@type": "WebSite",
       "@id": "https://aibrylabs.com/#website",
       url: "https://aibrylabs.com",
-      name: "AIBRY.shop",
-      publisher: { "@id": "https://aibrylabs.com/#musicgroup" },
+      name: "AIBRY",
+      publisher: { "@id": "https://aibrylabs.com/#organization" },
       inLanguage: "en-US",
-      potentialAction: {
-        "@type": "SearchAction",
-        target: "https://aibrylabs.com/search?q={search_term_string}",
-        "query-input": "required name=search_term_string",
-      },
     },
     {
-      "@type": "MusicRecording",
-      name: "BLOODWIRE",
-      url: "https://aibrylabs.com/discography/bloodwire",
-      inAlbum: {
-        "@type": "MusicAlbum",
-        name: "BLOODWIRE",
-        byArtist: { "@id": "https://aibrylabs.com/#musicgroup" },
-      },
-      byArtist: { "@id": "https://aibrylabs.com/#musicgroup" },
-      datePublished: "2024-06-01",
-      duration: "PT3M12S",
-      genre: "Trapmetal",
-      offers: {
-        "@type": "Offer",
-        url: "https://open.spotify.com/track/xxx",
-        price: "0.00",
-        priceCurrency: "USD",
-        availability: "https://schema.org/InStock",
-      },
+      "@type": "WebApplication",
+      name: "AIBRY Apps",
+      url: "https://aibrylabs.com/apps",
+      applicationCategory: "ProductivityApplication",
+      operatingSystem: "Web",
+      creator: { "@id": "https://aibrylabs.com/#organization" },
     },
     {
-      "@type": "MusicRecording",
-      name: "MIRRORS",
-      url: "https://aibrylabs.com/discography/mirrors",
-      inAlbum: {
-        "@type": "MusicAlbum",
-        name: "MIRRORS",
-        byArtist: { "@id": "https://aibrylabs.com/#musicgroup" },
-      },
-      byArtist: { "@id": "https://aibrylabs.com/#musicgroup" },
-      datePublished: "2024-09-15",
-      duration: "PT2M58S",
-      genre: "Metal / Industrial",
-      offers: {
-        "@type": "Offer",
-        url: "https://music.apple.com/us/album/mirrors/1830943798",
-        price: "0.00",
-        priceCurrency: "USD",
-        availability: "https://schema.org/InStock",
-      },
+      "@type": "Store",
+      name: "AIBRY Store",
+      url: "https://aibrylabs.com/store",
+      parentOrganization: { "@id": "https://aibrylabs.com/#organization" },
     },
   ],
 };
 
-// ✅ Root Layout
 export default function RootLayout({
   children,
 }: {
@@ -138,7 +87,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* JSON-LD structured data for artist, website, and recordings */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -147,7 +95,7 @@ export default function RootLayout({
       <body
         className={`bg-black text-gray-100 scroll-smooth dark:bg-black dark:text-gray-100 ${inter.className}`}
       >
-        <AvatarProvider>
+        <AuthProvider>
           <ToasterProvider />
           <Header />
           <main id="main-content" className="flex-1">
@@ -155,7 +103,7 @@ export default function RootLayout({
           </main>
           <Footer />
           <Analytics />
-        </AvatarProvider>
+        </AuthProvider>
       </body>
     </html>
   );

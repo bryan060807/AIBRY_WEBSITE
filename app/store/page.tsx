@@ -1,151 +1,43 @@
-// app/store/page.tsx
+import Link from "next/link";
+
 export const metadata = {
-  title: "AIBRY Store",
-  description: "Buy music and merch from AIBRY on Bandcamp.",
+  title: "Store | AIBRY",
+  description: "Official AIBRY merch and apparel.",
 };
 
 export default function StorePage() {
   return (
-    <main className="mx-auto max-w-6xl px-4 py-12">
-      <h1 className="mb-8 text-center text-3xl font-bold">Music Store</h1>
-      <p className="mb-12 text-center text-gray-300">
-        Support my music by purchasing albums and tracks directly from Bandcamp.
-      </p>
+    <main className="min-h-screen bg-black text-gray-100">
+      <section className="mx-auto flex max-w-5xl flex-col items-center px-6 py-20 text-center md:py-28">
+        <p className="mb-4 text-sm font-semibold uppercase tracking-[0.45em] text-[#83c0cc]">
+          Official Merch
+        </p>
+        <h1 className="mb-6 text-4xl font-black uppercase tracking-tight text-white md:text-6xl">
+          AIBRY Store
+        </h1>
+        <p className="max-w-2xl text-lg leading-8 text-gray-300">
+          Apparel and merch now live through the official AIBRY merch storefront.
+        </p>
 
-      {/* Grid layout for Bandcamp embeds */}
-      <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3">
-        
-        {/* Album: Fault Line Bloom (Tall) */}
-        <iframe 
-          style={{ border: 0, width: "100%", height: "786px" }} 
-          src="https://bandcamp.com/EmbeddedPlayer/album=247455740/size=large/bgcol=333333/linkcol=0f91ff/transparent=true/" 
-          seamless
+        <a
+          href="https://merch.aibry.shop"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-10 rounded-full bg-[#83c0cc] px-8 py-4 font-semibold text-black transition hover:bg-[#6eb5c0]"
         >
-          <a href="https://aibry.bandcamp.com/album/fault-line-bloom">Fault Line Bloom by AIBRY</a>
-        </iframe>
+          Open Merch Store
+        </a>
 
-        {/* Album: Epitaphs From the Neon Dust (Tall) */}
-        <iframe 
-          style={{ border: 0, width: "100%", height: "786px" }} 
-          src="https://bandcamp.com/EmbeddedPlayer/album=815869680/size=large/bgcol=333333/linkcol=e32c14/transparent=true/" 
-          seamless
+        <p className="mt-8 max-w-xl text-sm leading-6 text-gray-500">
+          Music purchases and Bandcamp embeds have moved to the Bandcamp page.
+        </p>
+        <Link
+          href="/discography"
+          className="mt-4 text-sm font-semibold text-[#83c0cc] transition hover:text-white"
         >
-          <a href="https://aibry.bandcamp.com/album/epitaphs-from-the-neon-dust">Epitaphs From the Neon Dust by AIBRY</a>
-        </iframe>
-
-        {/* Album: Boots On, Heart Open (Medium-Tall) */}
-        <iframe
-          style={{ border: 0, width: "100%", height: "687px" }}
-          src="https://bandcamp.com/EmbeddedPlayer/album=1310026364/size=large/bgcol=333333/linkcol=0f91ff/transparent=true/"
-          seamless
-        >
-          <a href="https://aibry.bandcamp.com/album/boots-on-heart-open">
-            Boots On, Heart Open by AIBRY
-          </a>
-        </iframe>
-
-        {/* --- GROUPED SINGLES (442px height) --- */}
-        
-        {/* Single: Forty Years in the Fire */}
-        <iframe
-          style={{ border: 0, width: "100%", height: "442px" }}
-          src="https://bandcamp.com/EmbeddedPlayer/track=998306284/size=large/bgcol=000000/linkcol=ffffff/tracklist=false/transparent=true/"
-          seamless
-        >
-          <a href="https://aibry.bandcamp.com/track/forty-years-in-the-fire">
-            Forty Years in the Fire by AIBRY
-          </a>
-        </iframe>
-        
-        {/* Single: Bullet in the Halo */}
-        <iframe
-          style={{ border: 0, width: "100%", height: "442px" }}
-          src="https://bandcamp.com/EmbeddedPlayer/track=2675874009/size=large/bgcol=333333/linkcol=0f91ff/tracklist=false/transparent=true/"
-          seamless
-        >
-          <a href="https://aibry.bandcamp.com/track/bullet-in-the-halo">
-            Bullet in the Halo by AIBRY
-          </a>
-        </iframe>
-
-        {/* NEW Single: Fractured Circuits */}
-        <iframe 
-          style={{ border: 0, width: "100%", height: "442px" }} 
-          src="https://bandcamp.com/EmbeddedPlayer/track=2535016510/size=large/bgcol=333333/linkcol=e32c14/tracklist=false/transparent=true/" 
-          seamless>
-          <a href="https://aibry.bandcamp.com/track/fractured-circuits">Fractured Circuits by AIBRY</a>
-        </iframe>
-        
-        {/* NEW Single: Glass Eyes */}
-        <iframe 
-          style={{ border: 0, width: "100%", height: "442px" }} 
-          src="https://bandcamp.com/EmbeddedPlayer/track=3292875180/size=large/bgcol=333333/linkcol=e32c14/tracklist=false/transparent=true/" 
-          seamless>
-          <a href="https://aibry.bandcamp.com/track/glass-eyes">Glass Eyes by AIBRY</a>
-        </iframe>
-
-        {/* NEW Single: Ghost in the Glass */}
-        <iframe 
-          style={{ border: 0, width: "100%", height: "442px" }} 
-          src="https://bandcamp.com/EmbeddedPlayer/track=3893703159/size=large/bgcol=333333/linkcol=0f91ff/tracklist=false/transparent=true/" 
-          seamless>
-          <a href="https://aibry.bandcamp.com/track/ghost-in-the-glass">Ghost in the Glass by AIBRY</a>
-        </iframe>
-
-        {/* NEW Single: The Scar That Sings */}
-        <iframe 
-          style={{ border: 0, width: "100%", height: "442px" }} 
-          src="https://bandcamp.com/EmbeddedPlayer/track=1206278272/size=large/bgcol=333333/linkcol=e32c14/tracklist=false/transparent=true/" 
-          seamless>
-          <a href="https://aibry.bandcamp.com/track/the-scar-that-sings">The Scar That Sings by AIBRY</a>
-        </iframe>
-
-        {/* --- ALBUMS (mixed heights) --- */}
-
-        {/* Album: Whispers Beneath the Ash (Tall) */}
-        <iframe
-          style={{ border: 0, width: "100%", height: "786px" }}
-          src="https://bandcamp.com/EmbeddedPlayer/album=2736056972/size=large/bgcol=333333/linkcol=e32c14/transparent=true/"
-          seamless
-        >
-          <a href="https://aibry.bandcamp.com/album/whispers-beneath-the-ash">
-            Whispers Beneath the Ash by AIBRY
-          </a>
-        </iframe>
-
-        {/* Album: Choir of Broken Mouths (Tall) */}
-        <iframe
-          style={{ border: 0, width: "100%", height: "786px" }}
-          src="https://bandcamp.com/EmbeddedPlayer/album=1635215421/size=large/bgcol=333333/linkcol=2ebd35/transparent=true/"
-          seamless
-        >
-          <a href="https://aibry.bandcamp.com/album/choir-of-broken-mouths">
-            Choir of Broken Mouths by AIBRY
-          </a>
-        </iframe>
-
-        {/* Album: The Cassette Tapes (Tall) */}
-        <iframe
-          style={{ border: 0, width: "100%", height: "786px" }}
-          src="https://bandcamp.com/EmbeddedPlayer/album=3106363030/size=large/bgcol=333333/linkcol=2ebd35/transparent=true/"
-          seamless
-        >
-          <a href="https://aibry.bandcamp.com/album/the-cassette-tapes">
-            The Cassette Tapes by AIBRY
-          </a>
-        </iframe>
-        
-        {/* Track: I Stayed, I Wish You Had Too (Short) */}
-        <iframe
-          style={{ border: 0, width: "100%", height: "442px" }}
-          src="https://bandcamp.com/EmbeddedPlayer/track=4075630752/size=large/bgcol=333333/linkcol=2ebd35/tracklist=false/transparent=true/"
-          seamless
-        >
-          <a href="https://aibry.bandcamp.com/track/i-stayed-i-wish-you-had-too">
-            I Stayed, I Wish You Had Too by AIBRY
-          </a>
-        </iframe>
-      </div>
+          Visit Bandcamp page
+        </Link>
+      </section>
     </main>
   );
 }

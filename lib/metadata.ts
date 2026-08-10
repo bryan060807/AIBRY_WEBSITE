@@ -1,52 +1,45 @@
 // lib/metadata.ts
 
 export const siteMetadata = {
-  // Core identity
-  title: "AIBRY | Metal. Emotion. Chaos.",
+  title: "AIBRY Labs | Applied AI. Software Systems. Real-World Tools.",
   description:
-    "AIBRY is the sound of unfiltered emotion — a fusion of metal, trapmetal, and raw chaos. Explore music, visuals, and exclusive releases.",
+    "AIBRY Labs builds applied AI systems, operator infrastructure, creative software, and real-world client platforms.",
   siteName: "AIBRY",
   author: "AIBRY",
   language: "en-US",
   locale: "en_US",
   themeColor: "#0a0a0a",
 
-  // Canonical domain
   url: "https://aibrylabs.com",
 
-  // Visuals & theme
   image: "/images/og-banner.jpg",
   favicon: "/favicon.ico",
   logo: "/images/logo.png",
 
-  // SEO keywords (still relevant for crawlers)
   keywords: [
-    "AIBRY",
-    "metal",
-    "trapmetal",
-    "dark trap",
-    "alternative artist",
-    "metal rapper",
-    "emotional music",
-    "metal visuals",
+    "AIBRY Labs",
+    "applied AI",
+    "AI systems",
+    "operator infrastructure",
+    "software development",
+    "creative tools",
+    "audio software",
+    "automation",
+    "client platforms",
+    "Bandcamp",
   ],
 
-  // Social links
   social: {
-    tiktok: "https://www.tiktok.com/@_aibry",
-    instagram: "https://www.instagram.com/aibrymusic/",
-    spotify: "https://open.spotify.com/artist/6gw6SIOYGPhuMqOfLwJE9h",
-    appleMusic: "https://music.apple.com/us/artist/aibry/1830943798",
-    github: "https://github.com/bryan060807/AIBRY_WEBSITE", // keep your source link visible for trust
+    soundcloud: "https://soundcloud.com/aibry_music",
+    youtube: "https://www.youtube.com/@AIBRY_Music",
   },
 
-  // SEO meta extensions
   openGraph: {
     type: "website",
     locale: "en_US",
-    title: "AIBRY | Metal. Emotion. Chaos.",
+    title: "AIBRY Labs | Applied AI. Software Systems. Real-World Tools.",
     description:
-      "AIBRY is the sound of unfiltered emotion — a fusion of metal, trapmetal, and raw chaos. Explore music, visuals, and exclusive releases.",
+      "AIBRY Labs builds applied AI systems, operator infrastructure, creative software, and real-world client platforms.",
     url: "https://aibrylabs.com",
     siteName: "AIBRY",
     images: [
@@ -54,12 +47,11 @@ export const siteMetadata = {
         url: "https://aibrylabs.com/images/og-banner.jpg",
         width: 1200,
         height: 630,
-        alt: "AIBRY — Metal. Emotion. Chaos.",
+        alt: "AIBRY Labs — Applied AI. Software Systems. Real-World Tools.",
       },
     ],
   },
 
-  // Robots & sitemap data
   robots: {
     allow: ["/"],
     disallow: ["/api/", "/dashboard/", "/login"],

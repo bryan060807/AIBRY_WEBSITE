@@ -1,87 +1,63 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useAvatar } from "@/context/AvatarContext";
-import { supabase } from "@/utils/supabase/client";
-import { AvatarBase } from "@/components/ui/AvatarBase";
+import { useRouter } from "next/navigation";
+import { LogOut, UserRound } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function UserMenu() {
-  const [open, setOpen] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const { avatarUrl, refreshAvatar } = useAvatar();
+  const router = useRouter();
+  const { user, logout } = useAuth();
 
-  useEffect(() => {
-    async function loadUser() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) setUser(user);
-    }
-    loadUser();
-    refreshAvatar();
-  }, [refreshAvatar]);
+  if (!user) return null;
 
-  // Close menu when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    window.location.href = "/login";
-  };
+  const initials = getInitials(user.displayName || user.email || user.username || "AIBRY");
 
   return (
-    <div ref={menuRef} className="relative">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 focus:outline-none"
+    <div className="flex items-center gap-3">
+      <Link
+        href="/profile"
+        className="group flex items-center gap-2 rounded-md border border-gray-800 bg-gray-950/70 px-2 py-1.5 text-sm text-gray-200 transition hover:border-[#629aa9] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#629aa9]"
       >
-        <AvatarBase src={avatarUrl} size={40} />
-        <span className="hidden sm:inline text-gray-300 text-sm font-medium">
-          {user?.email || "Account"}
+        <span className="grid h-8 w-8 place-items-center overflow-hidden rounded-full bg-[#1f3b43] text-xs font-semibold text-white">
+          {user.avatarUrl && user.avatarUrl !== "/images/default-avatar.png" ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={user.avatarUrl}
+              alt=""
+              className="h-full w-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            initials
+          )}
         </span>
+        <span className="hidden max-w-28 truncate sm:inline">
+          {user.displayName || user.username || "Profile"}
+        </span>
+        <UserRound className="h-4 w-4 text-gray-400 transition group-hover:text-[#629aa9]" />
+      </Link>
+      <button
+        type="button"
+        onClick={async () => {
+          await logout();
+          router.push("/");
+          router.refresh();
+        }}
+        className="rounded-md p-2 text-gray-300 transition hover:bg-gray-900 hover:text-[#629aa9] focus:outline-none focus:ring-2 focus:ring-[#629aa9]"
+        aria-label="Log out"
+      >
+        <LogOut className="h-5 w-5" />
       </button>
-
-      {open && (
-        <div className="absolute right-0 mt-2 w-48 bg-[#111] border border-gray-800 rounded-lg shadow-lg overflow-hidden z-50">
-          <Link
-            href="/dashboard"
-            className="block px-4 py-2 text-sm text-gray-200 hover:bg-[#1c1c1c] transition"
-            onClick={() => setOpen(false)}
-          >
-            Dashboard
-          </Link>
-          <Link
-            href="/profile"
-            className="block px-4 py-2 text-sm text-gray-200 hover:bg-[#1c1c1c] transition"
-            onClick={() => setOpen(false)}
-          >
-            Profile
-          </Link>
-          <Link
-            href="/profile/edit"
-            className="block px-4 py-2 text-sm text-gray-200 hover:bg-[#1c1c1c] transition"
-            onClick={() => setOpen(false)}
-          >
-            Edit Profile
-          </Link>
-          <button
-            onClick={handleSignOut}
-            className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#1c1c1c] transition"
-          >
-            Sign Out
-          </button>
-        </div>
-      )}
     </div>
   );
+}
+
+function getInitials(value: string) {
+  return value
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
 }

@@ -9,6 +9,7 @@ function profileAvatarUrl(value: string | null, version: number) {
 export interface WebsiteProfile {
   id: string;
   email?: string | null;
+  role?: string | null;
   displayName: string | null;
   username: string | null;
   bio: string | null;
@@ -62,6 +63,7 @@ export function normalizeProfile(payload: ProfileResponse): WebsiteProfile | nul
   return {
     id,
     email: stringField(profile.email) || stringField(user.email),
+    role: stringField(profile.role) || stringField(user.role),
     displayName:
       stringField(profile.display_name) ||
       stringField(profile.displayName) ||
@@ -127,6 +129,7 @@ function defaultProfileFromUser(user: Record<string, unknown>): WebsiteProfile |
   return {
     id,
     email: stringField(user.email),
+    role: stringField(user.role),
     displayName:
       stringField(user.display_name) ||
       stringField(user.displayName) ||

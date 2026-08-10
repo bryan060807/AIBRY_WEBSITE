@@ -59,3 +59,7 @@ pnpm-lock.yaml
 *.bak
 *.tmp
 .vercel
+# Generated TypeScript state
+*.tsbuildinfo
+# Local config backups
+*.bak-*

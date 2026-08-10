@@ -2,6 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
+.event-horizon-grid {
+  background-image: radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 0.055) 1px,
+    transparent 1px
+  );
+  background-size: 32px 32px;
+}
+
+.event-horizon-button {
+  height: 3rem;
+  white-space: nowrap;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 9999px;
+  background: rgb(30 41 59);
+  padding: 0 1.25rem;
+  color: rgb(226 232 240);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.event-horizon-button:hover {
+  background: rgb(51 65 85);
+}
+
 /* === GLOBAL VARIABLES === */
 :root {
   --color-bg: #0a0a0a;

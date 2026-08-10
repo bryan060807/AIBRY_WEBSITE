@@ -2,44 +2,29 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "@/utils/supabase/client";
 import { Menu, X } from "lucide-react";
 import UserMenu from "@/components/ui/UserMenu";
-import { useAvatar } from "@/context/AvatarContext";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Header() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [session, setSession] = useState<any>(null);
-  const { refreshAvatar } = useAvatar();
-
-  useEffect(() => {
-    // 🔹 Fetch current session and avatar on mount
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data?.session);
-      if (data?.session?.user) refreshAvatar(data.session.user.id);
-    });
-
-    // 🔹 Listen for login/logout events
-    const { data: listener } = supabase.auth.onAuthStateChange((_e, sess) => {
-      setSession(sess);
-      if (sess?.user) refreshAvatar(sess.user.id);
-      else refreshAvatar(); // clear on logout
-    });
-
-    return () => listener.subscription.unsubscribe();
-  }, [refreshAvatar]);
+  const { user, loading } = useAuth();
 
   const navLinks = [
     { href: "/", label: "Home" },
+    { href: "/apps", label: "Apps & Systems" },
     { href: "/store", label: "Store" },
+    { href: "/discography", label: "Music" },
+    { href: "/forum", label: "Forum" },
     { href: "/about", label: "About" },
     { href: "/contact", label: "Contact" },
   ];
 
-  const isActive = (path: string) => pathname === path;
+  const isActive = (path: string) =>
+    path === "/" ? pathname === path : pathname.startsWith(path);
 
   return (
     <header className="bg-black/70 backdrop-blur border-b border-gray-800 sticky top-0 z-50">
@@ -66,23 +51,23 @@ export default function Header() {
           ))}
 
           <div className="ml-4 flex items-center gap-3">
-            {session ? (
+            {user ? (
               <motion.div
-                key={session.user?.id}
+                key={user.id}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.25 }}
               >
                 <UserMenu />
               </motion.div>
-            ) : (
+            ) : !loading ? (
               <Link
                 href="/login"
                 className="text-gray-300 hover:text-[#629aa9] transition-colors"
               >
                 Login
               </Link>
-            )}
+            ) : null}
           </div>
         </nav>
 
@@ -123,16 +108,16 @@ export default function Header() {
               ))}
 
               <div className="pt-3 border-t border-gray-800 flex items-center gap-3">
-                {session ? (
+                {user ? (
                   <motion.div
-                    key={session.user?.id}
+                    key={user.id}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.25 }}
                   >
                     <UserMenu />
                   </motion.div>
-                ) : (
+                ) : !loading ? (
                   <Link
                     href="/login"
                     onClick={() => setMenuOpen(false)}
@@ -140,7 +125,7 @@ export default function Header() {
                   >
                     Login
                   </Link>
-                )}
+                ) : null}
               </div>
             </div>
           </motion.nav>

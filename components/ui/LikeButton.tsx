@@ -1,124 +1,49 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { supabase } from '@/utils/supabase/client';
+import { useState, useTransition } from 'react';
 import { Heart } from 'lucide-react';
-import { User } from '@supabase/supabase-js';
+import { toggleLike } from '@/actions/comment-actions';
 
 /**
  * LikeButton
  * Reusable component for liking posts or comments.
- * Supports:
- * - Live like counts via Supabase Realtime
- * - Optimistic UI updates
- * - Works for both posts and comments
+ * Server-action like toggle for forum comments. Final authorization happens
+ * server-side in the forum adapter.
  */
 
 interface LikeButtonProps {
-  postId?: string;
-  commentId?: string;
+  commentId: string;
+  postId: string;
+  topic: string;
+  initialCount?: number;
+  initialLiked?: boolean;
 }
 
-export default function LikeButton({ postId, commentId }: LikeButtonProps) {
-  const [liked, setLiked] = useState(false);
-  const [count, setCount] = useState<number>(0);
-  const [user, setUser] = useState<User | null>(null);
+export default function LikeButton({
+  commentId,
+  postId,
+  topic,
+  initialCount = 0,
+  initialLiked = false,
+}: LikeButtonProps) {
+  const [liked, setLiked] = useState(initialLiked);
+  const [count, setCount] = useState(initialCount);
+  const [isPending, startTransition] = useTransition();
 
-  // Determine which column to use (post_id or comment_id)
-  const column = postId ? 'post_id' : 'comment_id';
-  const targetId = postId || commentId;
+  function handleToggle() {
+    const nextLiked = !liked;
+    setLiked(nextLiked);
+    setCount((current) => (nextLiked ? current + 1 : Math.max(0, current - 1)));
 
-  // Get current user on mount
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data?.user ?? null));
-    // Removed 'supabase' from dependency array to satisfy ESLint
-  }, []);
-
-  // Load like state and count
-  useEffect(() => {
-    if (!targetId) return;
-
-    const fetchLikes = async () => {
-      const { data, error } = await supabase
-        .from('likes')
-        .select('user_id')
-        .eq(column, targetId);
-
-      if (!error && data) {
-        setCount(data.length);
-        if (user && data.some((row) => row.user_id === user.id)) {
-          setLiked(true);
-        } else {
-          setLiked(false);
-        }
-      }
-    };
-
-    fetchLikes();
-    // Removed 'supabase' from dependency array
-  }, [targetId, user, column]);
-
-  // Subscribe to realtime updates
-  useEffect(() => {
-    if (!targetId) return;
-
-    const channel = supabase
-      .channel(`likes_realtime_${targetId}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'likes' },
-        (payload) => {
-          const newData = payload.new as Record<string, any> | null;
-          const oldData = payload.old as Record<string, any> | null;
-          const affectedId = newData?.[column] ?? oldData?.[column];
-
-          if (affectedId === targetId) {
-            // Refresh like count
-            supabase
-              .from('likes')
-              .select('user_id')
-              .eq(column, targetId)
-              .then(({ data }) => {
-                if (data) setCount(data.length);
-              });
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-    // Removed 'supabase' from dependency array
-  }, [targetId, column]);
-
-  // Handle like toggle
-  const toggleLike = async () => {
-    if (!user) {
-      alert('Sign in to like.');
-      return;
-    }
-
-    if (liked) {
-      setLiked(false);
-      setCount((c) => Math.max(0, c - 1));
-      await supabase
-        .from('likes')
-        .delete()
-        .eq(column, targetId)
-        .eq('user_id', user.id);
-    } else {
-      setLiked(true);
-      setCount((c) => c + 1);
-      await supabase
-        .from('likes')
-        .insert([{ [column]: targetId, user_id: user.id }]);
-    }
-  };
+    startTransition(async () => {
+      await toggleLike(commentId, topic, postId, liked);
+    });
+  }
 
   return (
     <button
-      onClick={toggleLike}
+      onClick={handleToggle}
+      disabled={isPending}
       className="flex items-center gap-2 text-sm text-gray-400 hover:text-[#629aa9] transition"
     >
       <Heart

@@ -1,110 +1,205 @@
-"use client";
-
-import HeadTags from "@/components/ui/HeadTags";
 import Image from "next/image";
 import Link from "next/link";
 
-const aboutSchema = {
-  "@context": "https://schema.org",
-  "@type": "MusicGroup",
-  name: "AIBRY",
-  genre: ["Metal", "Trapmetal", "Dark Trap"],
+export const metadata = {
+  title: "About | AIBRY Labs",
   description:
-    "A deeper look at AIBRY — an artist forging raw emotion into sound. Metal. Emotion. Chaos.",
-  url: "https://aibrylabs.com/about",
-  image: "https://aibrylabs.com/images/banner1.jpg",
-  sameAs: [
-    "https://www.instagram.com/aibrymusic/",
-    "https://www.tiktok.com/@_aibry",
-    "https://open.spotify.com/artist/6gw6SIOYGPhuMqOfLwJE9h",
-    "https://music.apple.com/us/artist/aibry/1830943798",
-    "https://allmylinks.com/aibry",
-  ],
+    "AIBRY Labs is a working software and applied AI lab building operator systems, creative tools, infrastructure, and real-world client platforms.",
 };
 
+const principles = [
+  {
+    title: "Build for real work",
+    description:
+      "Projects are judged by whether they survive real users, real operations, and real constraints — not whether they only look good in a demo.",
+  },
+  {
+    title: "Keep humans in authority",
+    description:
+      "AI-assisted systems should observe, propose, and validate without quietly taking irreversible control away from the people responsible for the work.",
+  },
+  {
+    title: "Own the infrastructure",
+    description:
+      "AIBRY operates its own mix of Windows and Fedora infrastructure, private services, routing, storage, and application runtimes instead of treating deployment as an afterthought.",
+  },
+  {
+    title: "Let projects teach the next project",
+    description:
+      "Audio tools, identity, task systems, operator consoles, vision bridges, and customer platforms all feed lessons back into the shared architecture of the lab.",
+  },
+];
+
+const areas = [
+  "Applied AI and specialist systems",
+  "Operator and infrastructure tooling",
+  "Creative and audio software",
+  "Identity and productivity products",
+  "Customer-facing platforms",
+  "Music and catalog operations",
+];
+
 export default function AboutPage() {
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "AIBRY Labs",
+    url: "https://aibrylabs.com",
+    description:
+      "AIBRY Labs builds applied AI systems, operator infrastructure, creative software, and real-world client platforms.",
+  };
+
   return (
     <main className="min-h-screen bg-black text-gray-100">
-      {/* SEO Metadata */}
-      <HeadTags
-        title="About AIBRY | The Sound of Surviving"
-        description="AIBRY creates unfiltered metal and trapmetal with raw emotion and unflinching honesty. Learn the story behind the sound."
-        image="/images/banner1.jpg"
-      />
-
-      {/* JSON-LD Structured Data */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(aboutSchema) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
       />
 
-      {/* About Hero */}
-      <section className="relative py-24 bg-gradient-to-b from-black via-gray-900 to-black text-center">
-        <div className="max-w-4xl mx-auto px-6">
-          <h1 className="text-5xl font-bold text-[#83c0cc] mb-6">The Sound of Surviving</h1>
-          <p className="text-gray-400 text-lg leading-relaxed max-w-2xl mx-auto">
-            AIBRY began as a raw outlet — a collision between survival and self-expression.  
-            Blending metal, trapmetal, and chaos, AIBRY transforms emotion into distortion and pain into art.
-          </p>
+      <section className="relative overflow-hidden border-b border-gray-900 px-6 py-20 md:py-28">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(131,192,204,0.18),_transparent_34rem)]" />
+        <div className="relative mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[1.15fr_0.85fr]">
+          <div>
+            <p className="mb-4 text-sm font-semibold uppercase tracking-[0.4em] text-[#83c0cc]">
+              About AIBRY Labs
+            </p>
+            <h1 className="max-w-4xl text-5xl font-black uppercase tracking-tight text-white md:text-7xl">
+              A Working Lab for Software, AI, and Systems
+            </h1>
+            <p className="mt-7 max-w-3xl text-lg leading-8 text-gray-300 md:text-xl">
+              AIBRY Labs is a hands-on software and applied AI lab built around a
+              simple idea: useful systems come from doing real work with them.
+            </p>
+            <p className="mt-5 max-w-3xl leading-8 text-gray-400">
+              What began with music and creative software has grown into a broader
+              ecosystem of identity, productivity, audio tools, operator systems,
+              private infrastructure, AI-assisted workflows, and customer-facing
+              platforms.
+            </p>
+          </div>
+
+          <div className="mx-auto w-full max-w-sm rounded-3xl border border-gray-800 bg-gray-950/80 p-8 text-center shadow-[0_0_60px_rgba(131,192,204,0.12)]">
+            <Image
+              src="/images/logo.png"
+              alt="AIBRY Labs logo"
+              width={180}
+              height={180}
+              priority
+              className="mx-auto h-40 w-40 rounded-full object-contain shadow-[0_0_35px_rgba(131,192,204,0.2)]"
+            />
+            <p className="mt-6 text-xs font-semibold uppercase tracking-[0.3em] text-[#83c0cc]">
+              Built from the garage
+            </p>
+            <p className="mt-3 text-2xl font-bold text-white">
+              Practical systems over polished demos.
+            </p>
+          </div>
         </div>
       </section>
 
-      {/* Image + Bio */}
-      <section className="py-16 bg-black border-t border-gray-800 flex flex-col md:flex-row items-center justify-center gap-10 px-8">
-        <Image
-          src="/images/about/about-photo.jpg"
-          alt="AIBRY performing live"
-          width={400}
-          height={400}
-          className="rounded-xl shadow-lg object-cover"
-        />
-        <div className="max-w-lg">
-          <h2 className="text-3xl font-semibold text-white mb-4">More Than Music</h2>
-          <p className="text-gray-400 mb-6 leading-relaxed">
-            Every track is a reflection of chaos, control, and catharsis — 
-            a fight between destruction and creation.  
-            AIBRY stands for honesty in emotion, intensity in sound, and connection through darkness.
-          </p>
-          <p className="text-gray-400 mb-6 leading-relaxed">
-            Whether screaming into distortion or whispering through a storm,  
-            AIBRY’s art is survival — not spectacle.
-          </p>
-          <Link
-            href="https://open.spotify.com/artist/6gw6SIOYGPhuMqOfLwJE9h"
-            target="_blank"
-            className="bg-[#83c0cc] hover:bg-[#6eb5c0] text-black font-semibold px-6 py-3 rounded-lg transition-colors"
-          >
-            Listen on Spotify
-          </Link>
+      <section className="mx-auto max-w-6xl px-6 py-16 md:py-20">
+        <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
+          <div>
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.35em] text-[#83c0cc]">
+              What AIBRY Is Now
+            </p>
+            <h2 className="text-3xl font-bold text-white md:text-5xl">
+              One lab, several kinds of systems
+            </h2>
+          </div>
+          <div>
+            <p className="text-lg leading-8 text-gray-300">
+              The current work crosses traditional product boundaries. AIBRY builds
+              public applications, internal operator tools, AI-assisted systems,
+              infrastructure services, and complete platforms for outside organizations.
+            </p>
+            <p className="mt-5 leading-8 text-gray-400">
+              The common thread is ownership of the full problem: interface, backend,
+              data, deployment, operations, and the process people use around the software.
+              That is why the lab now looks less like a collection of unrelated apps and
+              more like a connected operating environment for building and running useful systems.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {areas.map((area) => (
+            <div
+              key={area}
+              className="rounded-2xl border border-gray-800 bg-gray-950/70 px-5 py-4 font-medium text-gray-300"
+            >
+              {area}
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* Call to Action */}
-      <section className="py-24 bg-gradient-to-t from-gray-900 to-black text-center border-t border-gray-800">
-        <h2 className="text-3xl font-semibold text-white mb-4">Join the Movement</h2>
-        <p className="text-gray-400 mb-8">
-          Be part of something louder than pain — follow AIBRY and stay connected.
-        </p>
-        <div className="flex flex-wrap justify-center gap-5 text-[#83c0cc]">
-          <Link href="https://www.instagram.com/aibrymusic/" target="_blank">
-            Instagram
-          </Link>
-          <Link href="https://www.tiktok.com/@_aibry" target="_blank">
-            TikTok
-          </Link>
-          <Link href="https://open.spotify.com/artist/6gw6SIOYGPhuMqOfLwJE9h" target="_blank">
-            Spotify
-          </Link>
-          <Link href="https://music.apple.com/us/artist/aibry/1830943798" target="_blank">
-            Apple Music
-          </Link>
+      <section className="border-y border-gray-900 bg-gray-950/60 px-6 py-16 md:py-20">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-10 max-w-3xl">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.35em] text-[#83c0cc]">
+              How the Lab Works
+            </p>
+            <h2 className="text-3xl font-bold text-white md:text-5xl">
+              Principles that shape the projects
+            </h2>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-2">
+            {principles.map((principle) => (
+              <article
+                key={principle.title}
+                className="rounded-2xl border border-gray-800 bg-black/70 p-6"
+              >
+                <h3 className="text-2xl font-bold text-white">{principle.title}</h3>
+                <p className="mt-4 leading-7 text-gray-400">{principle.description}</p>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-gray-800 bg-black text-center py-6 text-sm text-gray-500">
-        <p>© {new Date().getFullYear()} AIBRY. Built for the broken and the bold.</p>
-      </footer>
+      <section className="mx-auto max-w-6xl px-6 py-16 md:py-20">
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="rounded-3xl border border-gray-800 bg-gray-950/70 p-8">
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[#83c0cc]">
+              See the Work
+            </p>
+            <h2 className="mt-4 text-3xl font-bold text-white">
+              Explore the current portfolio.
+            </h2>
+            <p className="mt-4 leading-7 text-gray-400">
+              The apps and systems directory separates the active platform work from
+              the established products that continue to serve the wider ecosystem.
+            </p>
+            <Link
+              href="/apps"
+              className="mt-6 inline-block font-semibold text-[#83c0cc] transition hover:text-[#a6dce5]"
+            >
+              View Apps & Systems →
+            </Link>
+          </div>
+
+          <div className="rounded-3xl border border-gray-800 bg-gray-950/70 p-8">
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[#83c0cc]">
+              Work With AIBRY
+            </p>
+            <h2 className="mt-4 text-3xl font-bold text-white">
+              Bring a problem worth solving.
+            </h2>
+            <p className="mt-4 leading-7 text-gray-400">
+              AIBRY is most useful when software has to connect to the real operation
+              around it — people, infrastructure, data, workflows, and constraints.
+            </p>
+            <Link
+              href="/contact"
+              className="mt-6 inline-block rounded-full bg-[#83c0cc] px-6 py-3 font-semibold text-black transition hover:bg-[#6eb5c0]"
+            >
+              Start a Conversation
+            </Link>
+          </div>
+        </div>
+      </section>
     </main>
   );
 }

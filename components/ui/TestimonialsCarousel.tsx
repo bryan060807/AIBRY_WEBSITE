@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/utils/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Testimonial {
@@ -20,19 +19,17 @@ export default function TestimonialsCarousel() {
   useEffect(() => {
     const fetchTestimonials = async () => {
       try {
-        const { data, error } = await supabase
-          .from('testimonials')
-          .select('id, name, message')
-          .eq('approved', true)
-          .order('created_at', { ascending: false });
+        const response = await fetch('/api/testimonials', { cache: 'no-store' });
+        const payload = await response.json().catch(() => ({}));
 
-        if (error) {
-          console.error('Supabase error fetching testimonials:', error);
-          setErrorMessage('Unable to load testimonials at the moment.');
+        if (!response.ok) {
+          setErrorMessage(payload.message || payload.error || 'Unable to load testimonials at the moment.');
           setTestimonials([]);
-        } else {
-          setTestimonials(Array.isArray(data) ? data : []);
+          return;
         }
+
+        const data = Array.isArray(payload) ? payload : payload.testimonials;
+        setTestimonials(Array.isArray(data) ? data : []);
       } catch (err: any) {
         console.error('Unexpected fetch error:', err.message);
         setErrorMessage('An unexpected error occurred.');
@@ -42,7 +39,6 @@ export default function TestimonialsCarousel() {
     };
 
     fetchTestimonials();
-    // 👇 no need to include `supabase` in deps; it never changes
   }, []);
 
   useEffect(() => {

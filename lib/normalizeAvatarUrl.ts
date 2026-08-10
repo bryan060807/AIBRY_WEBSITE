@@ -1,33 +1,38 @@
-// /lib/normalizeAvatarUrl.ts
-
 /**
- * Normalize and sanitize avatar URLs for Supabase + Next.js Image.
- * Handles local dev, production, and malformed storage paths.
+ * Normalize and sanitize avatar URLs returned by the Fedora website backend.
  */
 export function normalizeAvatarUrl(url?: string | null): string | null {
   if (!url) return null;
 
-  // If it’s already an HTTPS URL (Supabase public or CDN)
-  if (url.startsWith("https://")) {
-    // Strip any query params (?t=timestamp, etc.) that break Next Image
-    const cleanUrl = url.split("?")[0];
+  const cleanUrl = url.trim();
+
+  if (cleanUrl.startsWith("https://") || cleanUrl.startsWith("http://")) {
     return cleanUrl;
   }
 
-  // If it's a relative Supabase storage path
-  if (url.startsWith("avatars/")) {
-    // Use Supabase project URL from env
-    const supabaseUrl =
-      process.env.NEXT_PUBLIC_SUPABASE_URL ??
-      "https://vuxfewsadivsbtuuulkn.supabase.co";
-    return `${supabaseUrl}/storage/v1/object/public/${url}`;
+  if (cleanUrl.startsWith("avatars/")) {
+    const garageMediaUrl = process.env.NEXT_PUBLIC_AIBRY_MEDIA_URL;
+    if (garageMediaUrl) {
+      return `${garageMediaUrl.replace(/\/$/, "")}/${cleanUrl}`;
+    }
   }
 
-  // If it's already a valid local asset
-  if (url.startsWith("/images/")) {
-    return url;
+  if (cleanUrl.startsWith("/images/")) {
+    return cleanUrl;
   }
 
-  // Otherwise, fall back to the default local avatar
+  if (cleanUrl.startsWith("/api/storage/")) {
+    return cleanUrl;
+  }
+
   return "/images/default-avatar.png";
+}
+
+export function versionedAvatarUrl(url?: string | null, version?: number | null) {
+  const normalized = normalizeAvatarUrl(url);
+  if (!normalized || normalized === "/images/default-avatar.png") return normalized;
+  if (!Number.isFinite(version) || !version || normalized.includes("v=")) return normalized;
+
+  const separator = normalized.includes("?") ? "&" : "?";
+  return `${normalized}${separator}v=${version}`;
 }

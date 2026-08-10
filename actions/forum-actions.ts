@@ -2,7 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { createSupabaseServerClient } from '@/utils/supabase/server';
+import { createForumPost, deleteForumPost, updateForumPost } from '@/lib/server/forum';
+import { logWebsiteOperationError, WebsiteApiError } from '@/lib/server/websiteApi';
 
 interface ForumActionState {
   message: string;
@@ -20,37 +21,70 @@ export async function postToForum(
     return { message: 'Title and content are required.' };
   }
 
-  const supabase = createSupabaseServerClient();
+  let insertedPost: { id: string; topic: string };
+  try {
+    insertedPost = await createForumPost({ topic, title, content });
+  } catch (error) {
+    if (isAuthError(error)) {
+      return { message: 'You must be logged in to post. Please log in and try again.' };
+    }
 
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-
-  if (userError || !user) {
-    return { message: 'You must be logged in to post.' };
+    logWebsiteOperationError('forum.post.create', error);
+    return {
+      message:
+        error instanceof WebsiteApiError
+          ? error.message
+          : 'Failed to post to forum. Please try again.',
+    };
   }
 
-  // Insert directly using the auth user ID (it matches profiles.id by FK)
-  const { data: insertedPost, error: insertError } = await supabase
-    .from('posts')
-    .insert({
-      title,
-      content,
-      topic,
-      user_id: user.id,
-    })
-    .select('id, topic')
-    .single();
-
-  if (insertError || !insertedPost) {
-    console.error('Error inserting post:', insertError);
-    return { message: 'Failed to post to forum. Please try again.' };
-  }
-
-  // Revalidate the topic list page before redirecting
   revalidatePath(`/forum/${insertedPost.topic}`);
 
-  // Redirect to the new thread’s detail page
   redirect(`/forum/${insertedPost.topic}/${insertedPost.id}`);
+}
+
+export async function updateForumPostAction(
+  postId: string,
+  topic: string,
+  formData: FormData
+) {
+  const title = (formData.get('title') as string)?.trim();
+  const content = (formData.get('content') as string)?.trim();
+
+  if (!title || !content) {
+    return;
+  }
+
+  try {
+    await updateForumPost(postId, { title, content });
+  } catch (error) {
+    logWebsiteOperationError('forum.post.update', error);
+    return;
+  }
+
+  revalidatePath(`/forum/${topic}`);
+  revalidatePath(`/forum/${topic}/${postId}`);
+}
+
+export async function deleteForumPostAction(postId: string, topic: string) {
+  try {
+    await deleteForumPost(postId);
+  } catch (error) {
+    logWebsiteOperationError('forum.post.delete', error);
+    return;
+  }
+
+  revalidatePath(`/forum/${topic}`);
+  revalidatePath(`/forum/${topic}/${postId}`);
+  redirect(`/forum/${topic}`);
+}
+
+function isAuthError(error: unknown) {
+  return (
+    error instanceof WebsiteApiError &&
+    (error.status === 401 ||
+      error.status === 403 ||
+      error.code === "auth_required" ||
+      error.code === "AUTH_REQUIRED")
+  );
 }

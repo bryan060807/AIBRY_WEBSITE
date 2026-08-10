@@ -44,17 +44,23 @@ export interface PublicProfileActivity {
   comments: PublicProfileCommentActivity[];
 }
 
-interface PublicProfileActivityResponse {
+interface PublicProfileActivityPayload {
   activity?: {
     posts?: PublicProfilePostActivity[];
     comments?: PublicProfileCommentActivity[];
   };
 }
 
+interface PublicProfileActivityResponse extends PublicProfileActivityPayload {
+  data?: PublicProfileActivityPayload | null;
+}
+
 function normalizeActivity(payload: PublicProfileActivityResponse): PublicProfileActivity {
+  const record = payload.data && typeof payload.data === "object" ? payload.data : payload;
+
   return {
-    posts: Array.isArray(payload.activity?.posts) ? payload.activity.posts : [],
-    comments: Array.isArray(payload.activity?.comments) ? payload.activity.comments : [],
+    posts: Array.isArray(record.activity?.posts) ? record.activity.posts : [],
+    comments: Array.isArray(record.activity?.comments) ? record.activity.comments : [],
   };
 }
 

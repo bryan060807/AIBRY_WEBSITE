@@ -1,7 +1,11 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { createSupabaseServerClient } from '@/utils/supabase/server';
+import {
+  websiteApiFetch,
+  logWebsiteOperationError,
+  WebsiteApiError,
+} from '@/lib/server/websiteApi';
 
 interface ContactActionState {
   message: string;
@@ -19,19 +23,19 @@ export async function sendContactMessage(
     return { message: 'All fields are required.' };
   }
 
-  const supabase = createSupabaseServerClient();
-
-  const { error } = await supabase.from('contact_messages').insert([
-    {
-      name,
-      email,
-      message,
-    },
-  ]);
-
-  if (error) {
-    console.error('Error inserting contact message:', error);
-    return { message: 'Failed to send message. Please try again.' };
+  try {
+    await websiteApiFetch('/api/contact-messages', {
+      method: 'POST',
+      body: { name, email, message },
+    });
+  } catch (error) {
+    logWebsiteOperationError('contact.message.create', error);
+    return {
+      message:
+        error instanceof WebsiteApiError
+          ? error.message
+          : 'Failed to send message. Please try again.',
+    };
   }
 
   // Redirect user to success page

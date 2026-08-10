@@ -1,48 +1,25 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import { toast } from 'react-hot-toast';
-import { useState } from 'react';
-import { supabase } from '@/utils/supabase/client';
+import { useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
-/**
- * LogoutButton — safely signs the user out and redirects to /login.
- */
 export default function LogoutButton() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-
-  const handleLogout = async () => {
-    if (loading) return; // prevent double-clicks
-    setLoading(true);
-
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-
-      toast.success('Logged out successfully.');
-      router.refresh(); // ensures server components re-fetch with no session
-      router.push('/login');
-    } catch (err: any) {
-      console.error('Logout failed:', err.message);
-      toast.error('Logout failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { logout } = useAuth();
 
   return (
     <button
-      onClick={handleLogout}
-      disabled={loading}
-      aria-busy={loading}
-      className={`rounded px-4 py-2 text-sm font-semibold transition ${
-        loading
-          ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-          : 'bg-[#629aa9] text-white hover:bg-[#4f7f86]'
-      }`}
+      type="button"
+      onClick={async () => {
+        await logout();
+        router.push("/");
+        router.refresh();
+      }}
+      className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-700 px-4 py-2 text-sm font-medium text-gray-100 transition hover:border-[#629aa9] hover:text-[#629aa9] focus:outline-none focus:ring-2 focus:ring-[#629aa9]"
     >
-      {loading ? 'Logging out…' : 'Logout'}
+      <LogOut className="h-4 w-4" />
+      Log out
     </button>
   );
 }
