@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { apps } from "@/lib/appCatalog";
+import LocalTownRunnersSpotlight from "@/components/LocalTownRunnersSpotlight";
 
 const activeSystems = [
   {
@@ -65,6 +66,8 @@ export default function AppsPage() {
           </p>
         </div>
       </section>
+
+      <LocalTownRunnersSpotlight />
 
       <section className="mx-auto max-w-6xl px-6 py-16 md:py-20">
         <div className="mb-10 max-w-3xl">

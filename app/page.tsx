@@ -1,4 +1,5 @@
 import Link from "next/link";
+import LocalTownRunnersSpotlight from "@/components/LocalTownRunnersSpotlight";
 
 const currentWork = [
   {
@@ -116,6 +117,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <LocalTownRunnersSpotlight />
 
       <section className="border-b border-gray-900 bg-gray-950/70 px-6 py-16 md:py-20">
         <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[0.8fr_1.2fr]">
